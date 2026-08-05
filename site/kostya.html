@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Артём зовёт пить пиво — Костя</title>
+<link rel="icon" href="./favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="./img/favicon-32.png">
+<link rel="apple-touch-icon" href="./img/apple-touch-icon.png">
+<script>
+// Локальные копии React/ReactDOM вместо unpkg.com: support.js берёт URL
+// из этой карты (см. cdnScriptFor), поэтому сам support.js менять не нужно.
+window.__resources = {
+  "https://unpkg.com/react@18.3.1/umd/react.production.min.js": "./vendor/react.production.min.js",
+  "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js": "./vendor/react-dom.production.min.js"
+};
+</script>
+<script src="./support.js"></script>
+<link href="./fonts/fonts.css" rel="stylesheet">
+<script src="./envelope-intro.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="./fonts/fonts.css" rel="stylesheet">
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: #EFE9DE; color: #453C33; }
+  * { box-sizing: border-box; }
+  a { color: #8A382F; text-decoration: none; border-bottom: 1px solid rgba(138,56,47,.35); }
+  a:hover { color: #A9584A; border-bottom-color: rgba(169,88,74,.6); }
+  input, textarea, button { font: inherit; color: inherit; }
+  input:focus, textarea:focus { outline: none; }
+  ::placeholder { color: rgba(69,60,51,.35); }
+  @keyframes floatUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  /* Соня выезжает снизу ровно наполовину: конечное состояние — translateY(50%).
+     Тайминги сцены держим синхронно с ENVELOPE_FLIGHT в скрипте компонента:
+     0.35–2.95с подъём, 2.6–4.2с полёт конверта, 4.25с облачко,
+     7.2с (ровно через 3с после прилёта конверта) — уход вниз. */
+  @keyframes sonyaRise { from { transform: translateY(100%); } to { transform: translateY(50%); } }
+  @keyframes sonyaLeave { from { transform: translateY(50%); } to { transform: translateY(100%); } }
+  @keyframes bubblePop {
+    0% { opacity: 0; transform: scale(.3) rotate(-6deg); }
+    62% { opacity: 1; transform: scale(1.09) rotate(1.5deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-sonya] { animation: none !important; transform: translateY(50%); }
+    [data-sonya-bubble] { animation: none !important; }
+  }
+</style>
+</helmet>
+<!-- Страница Кости — тот же бланк приглашения, что у гостей Сони, но зовут
+     здесь не на день рождения, а на пиво: нет площадки, матрёшек, фильмов и
+     вишлиста, вопросов два — куда пойдём и что пьём. -->
+<div style="min-height: 100vh; background: #EFE9DE; display: flex; justify-content: center">
+  <div style="width: 100%; max-width: 620px; position: relative; background: #EFE9DE; box-shadow: 0 0 80px rgba(93,74,58,.09)">
+    <!-- Фон карточки: три слоя тиснёной бумаги. Середина — паттерн, он повторяется
+         по вертикали; картинка склеена из оригинала и его зеркального отражения,
+         поэтому стык при repeat-y не виден. Роза сверху и накрытый стол снизу лежат
+         поверх паттерна и растворяются в нём градиентной маской, чтобы не было
+         границы между разными кадрами одной и той же бумаги. -->
+    <div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none">
+      <div style="position: absolute; inset: 0; background: url('./img/bg/pattern.jpg') top center / 100% auto repeat-y"></div>
+      <div style="position: absolute; left: 0; right: 0; top: 0; aspect-ratio: 941 / 1672; background: url('./img/bg/top.jpg') top center / 100% auto no-repeat; -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%); mask-image: linear-gradient(180deg, #000 58%, transparent 100%)"></div>
+      <div style="position: absolute; left: 0; right: 0; bottom: 0; aspect-ratio: 941 / 1672; background: url('./img/bg/bottom.jpg') bottom center / 100% auto no-repeat; -webkit-mask-image: linear-gradient(0deg, #000 58%, transparent 100%); mask-image: linear-gradient(0deg, #000 58%, transparent 100%)"></div>
+    </div>
+    <div style="position: relative; z-index: 1">
+
+    <div style="position: fixed; top: 18px; right: 18px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 10px">
+      <button type="button" onClick="{{ toggleHelp }}" aria-label="Анекдот" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(247,243,236,.92); border: 1px solid rgba(138,56,47,.28); backdrop-filter: blur(6px); font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #8A382F; cursor: pointer; transition: background .25s, color .25s" style-hover="background: #8A382F; color: #FBF8F2">?</button>
+      <sc-if value="{{ helpOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="width: min(300px, calc(100vw - 36px)); padding: 18px 20px; border-radius: 20px; background: rgba(247,243,236,.97); border: 1px solid rgba(138,56,47,.22); box-shadow: 0 12px 34px rgba(93,74,58,.16); text-align: left">
+          <p style="margin: 0 0 12px; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(138,56,47,.75)">Анекдот от Соньки</p>
+          <p style="margin: 0 0 16px; white-space: pre-line; font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.55; color: #3E342C; text-wrap: pretty">{{ joke }}</p>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+            <button type="button" onClick="{{ nextJoke }}" style="padding: 9px 16px; border-radius: 999px; background: #8A382F; border: 1px solid #8A382F; font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s" style-hover="background: #742E27">Ещё</button>
+            <button type="button" onClick="{{ toggleHelp }}" style="padding: 9px 4px; background: transparent; border: none; font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: rgba(69,60,51,.5); cursor: pointer">Закрыть</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <section style="position: relative; padding: 0 0 4px">
+      <div style="position: relative; width: 100%">
+        <!-- Верхний отступ отдан розе из фона: она занимает примерно 24% высоты
+             своей картинки, а та выводится во всю ширину карточки (соотношение
+             941:1672). Отсюда .45 от ширины — заголовок начинается под розой на
+             любом экране, а не только на телефоне. -->
+        <div data-reveal="1" style="padding: calc(min(100vw, 620px) * .45) 30px 6px; text-align: center">
+          <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #8A382F">{{ guestGreeting }}</p>
+          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(32px, 8.8vw, 50px); line-height: 1.08; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Я <em style="font-style: italic; color: #8A382F">не</em> приглашаю тебя<br>на день рождения,<br><em style="font-style: italic; color: #8A382F">но Артём приглашает<br>тебя пить пиво!</em></h1>
+        </div>
+      </div>
+
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: 18px; align-items: center; padding: 26px 30px 6px; text-align: center">
+        <p style="margin: 0; max-width: 34ch; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 20px; line-height: 1.55; font-style: italic; color: #6A5C4F; text-wrap: pretty">Ни красок, ни матрёшек, ни торта. Пиво, разговоры и хорошее настроение!</p>
+        <div style="width: 44px; height: 1px; background: #8A382F; opacity: .45"></div>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 14px; width: 100%; max-width: 420px; font-family: 'Manrope', sans-serif">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(138,56,47,.14)">
+            <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Когда</span>
+            <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #3E342C">суббота, 5 сентября</span>
+          </div>
+          <!-- «Где» тут нет: место выбирает сам Костя в первом вопросе ниже. -->
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px">
+            <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Во сколько</span>
+            <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #3E342C">18:00</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <section data-reveal="1" style="padding: 78px 30px 0; text-align: center">
+      <div style="width: 1px; height: 46px; margin: 0 auto 28px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
+      <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-style: italic; font-size: clamp(27px, 7.4vw, 38px); color: #3E342C">Выбери, что тебе<br>больше нравится</h2>
+      <p style="margin: 14px auto 0; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 14px; line-height: 1.7; color: #3E342C">Два маленьких вопроса, чтобы все прошло великолепно!</p>
+    </section>
+
+    <section data-reveal="1" style="padding: 46px 22px 0">
+      <div style="padding: 28px 24px 30px; background: rgba(255,253,248,.72); border: 1px solid rgba(138,56,47,.16); border-radius: 3px">
+        <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px">
+          <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">01</span>
+          <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Куда пойдем?</h3>
+        </div>
+        <p style="margin: 0 0 10px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Где встречаемся. Можно отметить несколько.</p>
+        <div style="max-width: 460px; margin: 0 auto">
+          <sc-for list="{{ places }}" as="place" hint-placeholder-count="4">
+            <button type="button" onClick="{{ place.pick }}" style="{{ place.rowStyle }}">
+              <span style="{{ place.dotStyle }}"></span>
+              <span style="flex: 1; text-align: left">{{ place.title }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section data-reveal="1" style="padding: 18px 22px 0">
+      <div style="padding: 28px 24px 30px; background: rgba(255,253,248,.72); border: 1px solid rgba(138,56,47,.16); border-radius: 3px">
+        <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px">
+          <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">02</span>
+          <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Что пьём?</h3>
+        </div>
+        <p style="margin: 0 0 10px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Что брать именно тебе. Можно отметить несколько.</p>
+        <div style="max-width: 460px; margin: 0 auto">
+          <sc-for list="{{ beers }}" as="beer" hint-placeholder-count="4">
+            <button type="button" onClick="{{ beer.pick }}" style="{{ beer.rowStyle }}">
+              <span style="{{ beer.dotStyle }}"></span>
+              <span style="flex: 1; text-align: left">{{ beer.title }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <!-- Нижний отступ отдан накрытому столу из фона: рисунок занимает нижние ~47%
+         своей картинки, а та выводится во всю ширину карточки (941:1672). Отсюда
+         .92 от ширины — свечи начинаются под карточкой «Я приду», а не поверх неё. -->
+    <section data-reveal="1" style="padding: 62px 22px calc(min(100vw, 620px) * .92)">
+      <div style="position: relative; padding: 46px 24px 34px; background: linear-gradient(180deg, rgba(138,56,47,.05), rgba(138,56,47,.02)); border: 1px solid rgba(138,56,47,.2); border-radius: 30px; text-align: center">
+        <!-- Печать та же, что закрывает интро-конверт и летит к Соне в финале:
+             один предмет проходит через всю страницу. Висит на верхней границе,
+             поэтому overflow у карточки должен остаться видимым. -->
+        <img src="./img/seal.png" alt="" style="position: absolute; left: 50%; top: -26px; width: 56px; height: 56px; margin-left: -28px; transform: rotate(-8deg); filter: drop-shadow(0 4px 10px rgba(96,72,48,.24)); pointer-events: none">
+        <!-- Уголковые засечки: приём из типографской вёрстки приглашений. Отступ
+             14px выводит их из зоны скругления, радиус 6px рифмуется с ним. -->
+        <div style="position: absolute; left: 14px; top: 14px; width: 16px; height: 16px; border-left: 1px solid rgba(138,56,47,.32); border-top: 1px solid rgba(138,56,47,.32); border-top-left-radius: 6px; pointer-events: none"></div>
+        <div style="position: absolute; right: 14px; top: 14px; width: 16px; height: 16px; border-right: 1px solid rgba(138,56,47,.32); border-top: 1px solid rgba(138,56,47,.32); border-top-right-radius: 6px; pointer-events: none"></div>
+        <div style="position: absolute; left: 14px; bottom: 14px; width: 16px; height: 16px; border-left: 1px solid rgba(138,56,47,.32); border-bottom: 1px solid rgba(138,56,47,.32); border-bottom-left-radius: 6px; pointer-events: none"></div>
+        <div style="position: absolute; right: 14px; bottom: 14px; width: 16px; height: 16px; border-right: 1px solid rgba(138,56,47,.32); border-bottom: 1px solid rgba(138,56,47,.32); border-bottom-right-radius: 6px; pointer-events: none"></div>
+        <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+          <div data-sent-card="1" style="padding: 18px 0 10px">
+            <h3 style="margin: 0 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 28px; color: #3E342C">Спасибо, записали!</h3>
+            <p style="margin: 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Артём в курсе. Пиво за ним.</p>
+          </div>
+        </sc-if>
+        <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <p style="margin: 0 auto 22px; max-width: 24ch; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(20px, 5vw, 25px); line-height: 1.45; color: #5C4F44; text-wrap: pretty">Нажми — и Артём будет знать, что ты придёшь.</p>
+            <button type="button" onClick="{{ submit }}" style="width: 100%; padding: 28px 20px; background: #8A382F; border: 1px solid #8A382F; border-radius: 999px; font-family: 'Manrope', sans-serif; font-size: 14px; letter-spacing: .3em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s, letter-spacing .25s, transform .12s" style-hover="background: #742E27; letter-spacing: .34em" style-active="transform: scale(.985)">{{ buttonLabel }}</button>
+          </div>
+        </sc-if>
+      </div>
+    </section>
+
+    <!-- Соня после «Я приду»: живёт вне секций с data-reveal, потому что floatUp
+         вешает на них transform, а он делает из секции контейнер для position: fixed.
+         Реплика тут своя: на день рождения Костю никто не звал, шутка держится
+         до конца страницы. -->
+    <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+      <!-- Конверт-ответ. Лежит в углу экрана с opacity: 0 и ждёт flyEnvelope():
+           маршрут от карточки к Соне считается по факту, а не в CSS, — иначе он
+           поедет от вёрстки и прокрутки. Цвета те же, что у интро-конверта. -->
+      <div data-flying-envelope="1" style="position: fixed; left: 0; top: 0; z-index: 13; width: 132px; height: 86px; opacity: 0; pointer-events: none; will-change: transform, opacity">
+        <div style="position: absolute; inset: 0; border-radius: 3px; background: linear-gradient(180deg, #E8DCC8, #DCCEB8); box-shadow: 0 12px 28px rgba(96,72,48,.28)"></div>
+        <div style="position: absolute; left: 0; top: 0; width: 100%; height: 58%; background: linear-gradient(180deg, #EADFCB, #E8DCC8); clip-path: polygon(0 0, 100% 0, 50% 100%); -webkit-clip-path: polygon(0 0, 100% 0, 50% 100%); filter: drop-shadow(0 3px 4px rgba(96,72,48,.22))"></div>
+        <img src="./img/seal.png" alt="" style="position: absolute; left: 50%; top: 51%; display: block; width: 36px; height: 36px; margin: -18px 0 0 -18px">
+      </div>
+      <div style="position: fixed; left: 0; right: 0; bottom: 0; z-index: 12; display: flex; justify-content: center; pointer-events: none">
+        <div style="position: relative; width: 100%; max-width: 620px; height: 0">
+          <div data-sonya="1" style="position: absolute; right: 0; bottom: 0; height: min(76vh, 640px); will-change: transform; animation: sonyaRise 2.6s cubic-bezier(.22,.68,.24,1) .35s both, sonyaLeave 1.5s cubic-bezier(.55,.06,.68,.19) 7.2s forwards">
+            <img src="./img/sonya.png" alt="Софья в праздничном колпаке" style="display: block; height: 100%; width: auto; filter: drop-shadow(0 6px 24px rgba(93,74,58,.3))">
+            <div data-sonya-bubble="1" style="position: absolute; right: 64%; top: 2%; padding: 11px 20px 13px; background: #FBF8F2; border: 2px solid #3E342C; border-radius: 20px 20px 20px 5px; box-shadow: 3px 4px 0 rgba(62,52,44,.85); font-family: 'Cormorant Garamond', serif; font-weight: 600; font-style: italic; font-size: clamp(24px, 6.4vw, 32px); line-height: 1; color: #8A382F; white-space: nowrap; transform-origin: 92% 100%; animation: bubblePop .6s cubic-bezier(.2,1.5,.4,1) 4.25s both">Не жду!<span style="position: absolute; right: -16px; bottom: 7px; width: 0; height: 0; border-style: solid; border-width: 9px 0 9px 17px; border-color: transparent transparent transparent #3E342C"></span><span style="position: absolute; right: -11px; bottom: 10px; width: 0; height: 0; border-style: solid; border-width: 6px 0 6px 12px; border-color: transparent transparent transparent #FBF8F2"></span></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;answersUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;/api/answers&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;placeOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Spontan, Пивная диета, К тебе, На улице&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;beerOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Lager, IPA, Stout, Weissbier&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
+class Component extends DCLogic {
+  state = { place: [], beer: [], sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null };
+
+  // Ответы уезжают в тот же сервис, что и у гостей Сони (deploy/answers-api.py),
+  // и читаются на /sonechka. Гость здесь один, поэтому ключ и имя — константы.
+  guest = { key: 'kostya', name: 'Костя' };
+
+  jokes = [
+    '— Петька, что такое нюанс?\n— Не знаю, Василий Иванович.\n— Ну вот смотри: и ты голый, и я голый. Но есть нюанс.',
+    '— Петька, ты чего такой довольный?\n— Так я, Василий Иванович, у Анки ночевал. Три раза!\n— Врёшь.\n— Ну два. Зато с разбегу.',
+    '— Василий Иванович, а правда, что вы всю ночь у Анки карту изучали?\n— Правда, Петька. Рельеф там сложный, без разведки не подступишься.',
+    '— Василий Иванович, а как отличить любовь от страсти?\n— Просто, Петька. Любовь — это когда до утра разговариваешь. А страсть — это когда поговорить некогда.',
+    '— Петька, ты чего в окно полез?\n— Так муж вернулся, Василий Иванович!\n— Петька, ты же холостой!\n— Я-то холостой. А вот Анка, оказывается, нет.',
+    '— Василий Иванович, Анка спрашивает: вы её уважаете?\n— Уважаю, Петька. Особенно после двух.\n— После двух чего?\n— Петька, ты не в том месте уточняешь.',
+    '— Василий Иванович, а что делать, если Анка говорит «не сегодня»?\n— Ждать, Петька.\n— А если «не сегодня» уже неделю?\n— Значит, Петька, это не Анка занята. Это ты неубедителен.',
+    '— Петька, чем занят?\n— Анку взглядом раздеваю, Василий Иванович.\n— Успехи есть?\n— Раздел. Теперь не соображу, как взглядом обратно одеть.',
+    '— Василий Иванович, а правда, что размер значения не имеет?\n— Правда, Петька. Так говорят двое: у кого его нет и кому уже всё равно.',
+    '— Василий Иванович, а что такое дуэль?\n— Это, Петька, когда двое стреляются из-за дамы.\n— А если дама не против обоих?\n— Тогда, Петька, это уже манёвры.',
+    '— Петька, ты Анке предложение делал?\n— Делал, Василий Иванович. Дважды.\n— И что?\n— В первый раз отказала. Во второй я предложение переформулировал — до сих пор детали согласовываем.',
+    '— Василий Иванович, а сколько раз в неделю — это норма?\n— Смотря чего, Петька.\n— Ну этого…\n— Тогда норма — это когда соседи стучат не по расписанию, а по вдохновению.',
+    '— Петька, что с рукой?\n— Анку из реки вытаскивал, Василий Иванович.\n— Так она плавает как рыба!\n— Плавает. Это я тонул. По-крупному и в правильном месте.',
+    '— Василий Иванович, Анка сказала, что я в дивизии лучший!\n— В чём, Петька?\n— Не уточнила. Но улыбалась так, что я до утра погоны искал.'
+  ];
+
+  pickJoke() {
+    const n = this.jokes.length;
+    const cur = this.state.jokeIndex;
+    if (n < 2) return 0;
+    if (cur == null) return Math.floor(Math.random() * n);
+    const i = Math.floor(Math.random() * (n - 1));
+    return i >= cur ? i + 1 : i; // не повторяем тот же самый
+  }
+
+  componentDidMount() {
+    // Пока играет конверт (envelope-intro.js), появления секций ждут:
+    // страница должна ожить ровно в тот момент, когда письмо развернулось.
+    if (window.__envelopeIntroActive) {
+      document.addEventListener('envelope-intro:done', () => this.scan(), { once: true });
+    }
+    this.scan();
+    this.flyEnvelope();
+    // Ответ, не доехавший в прошлый раз (не было сети), досылаем молча.
+    this.flushStash();
+  }
+  componentDidUpdate() { this.scan(); this.flyEnvelope(); }
+
+  // Конверт вылетает из карточки «Спасибо, записали!» и уменьшается к Соне.
+  // Начало и конец маршрута замеряем в момент вылета: до него пользователь мог
+  // прокрутить страницу, и заранее посчитанные координаты увели бы конверт мимо.
+  flyEnvelope() {
+    if (!this.state.sent || this._flew) return;
+    this._flew = true;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    setTimeout(() => {
+      const env = document.querySelector('[data-flying-envelope]');
+      const card = document.querySelector('[data-sent-card]');
+      const sonya = document.querySelector('[data-sonya]');
+      if (!env || !card || !sonya || !env.animate) return;
+      const w = env.offsetWidth, h = env.offsetHeight;
+      const from = card.getBoundingClientRect();
+      const to = sonya.getBoundingClientRect();
+      const x0 = from.left + from.width / 2 - w / 2;
+      const y0 = from.top + from.height / 2 - h / 2;
+      // Соня в этот момент ещё договаривает подъём, поэтому целимся не в её
+      // текущий прямоугольник, а в конечный: низ прижат к экрану + translateY(50%).
+      const height = sonya.offsetHeight;
+      const x1 = to.left + to.width * 0.5 - w / 2;
+      const y1 = window.innerHeight - height / 2 + height * 0.3 - h / 2;
+      const xm = (x0 + x1) / 2;
+      const ym = (y0 + y1) / 2 - Math.max(60, Math.abs(y1 - y0) * 0.22);
+      env.animate([
+        { transform: 'translate(' + x0 + 'px, ' + y0 + 'px) scale(.35) rotate(-8deg)', opacity: 0, offset: 0 },
+        { transform: 'translate(' + x0 + 'px, ' + y0 + 'px) scale(1) rotate(-4deg)', opacity: 1, offset: .16 },
+        { transform: 'translate(' + xm + 'px, ' + ym + 'px) scale(.58) rotate(7deg)', opacity: 1, offset: .58 },
+        { transform: 'translate(' + x1 + 'px, ' + y1 + 'px) scale(.08) rotate(16deg)', opacity: 0, offset: 1 }
+      ], { duration: 1600, easing: 'cubic-bezier(.42,.02,.4,1)', fill: 'both' });
+    }, 2600);
+  }
+
+  scan() {
+    if (window.__envelopeIntroActive) return;
+    const nodes = Array.from(document.querySelectorAll('[data-reveal]'));
+    if (this.props.reveal === false) {
+      nodes.forEach(n => { n.style.opacity = ''; n.style.animation = ''; });
+      return;
+    }
+    if (!this._io) {
+      this._io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          e.target.style.animation = 'floatUp .9s cubic-bezier(.22,.7,.25,1) forwards';
+          this._io.unobserve(e.target);
+        });
+      }, { threshold: 0, rootMargin: '0px 0px -5% 0px' });
+    }
+    nodes.forEach(n => {
+      if (n.dataset.revealInit) return;
+      n.dataset.revealInit = '1';
+      const visible = n.getBoundingClientRect().top < window.innerHeight;
+      if (visible) { n.style.animation = 'floatUp .9s cubic-bezier(.22,.7,.25,1) forwards'; return; }
+      n.style.opacity = '0';
+      this._io.observe(n);
+      // подстраховка: если наблюдатель не сработал, показать через 4с
+      setTimeout(() => { if (getComputedStyle(n).opacity === '0') n.style.animation = 'floatUp .6s ease forwards'; }, 4000);
+    });
+  }
+
+  componentWillUnmount() {
+    if (this._io) this._io.disconnect();
+  }
+
+  placeList() {
+    const raw = this.props.placeOptions || 'Spontan, Пивная диета, К тебе, На улице';
+    return raw.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  beerList() {
+    const raw = this.props.beerOptions || 'Lager, IPA, Stout, Weissbier';
+    return raw.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  // Оба вопроса — множественный выбор: повторный клик снимает отметку.
+  toggle(list, title) {
+    return list.includes(title) ? list.filter(v => v !== title) : list.concat(title);
+  }
+
+  // Строчка-вариант: точка слева + название. Последняя без нижней линии,
+  // чтобы список не упирался в лишнюю черту перед краем карточки.
+  rowStyle(active, last) {
+    return 'display: flex; align-items: center; gap: 14px; width: 100%; padding: 13px 4px; background: transparent; border: none; cursor: pointer; text-align: left' +
+      '; border-bottom: ' + (last ? 'none' : '1px solid rgba(138,56,47,.14)') +
+      "; font-family: 'Cormorant Garamond', serif; font-size: 20px; line-height: 1.35" +
+      '; color: ' + (active ? '#8A382F' : '#3E342C') +
+      '; font-style: ' + (active ? 'italic' : 'normal') +
+      '; transition: color .25s';
+  }
+
+  dotStyle(active) {
+    return 'flex: none; width: 10px; height: 10px; border-radius: 999px; transition: background .25s, border-color .25s' +
+      '; border: 1px solid ' + (active ? '#8A382F' : 'rgba(138,56,47,.4)') +
+      '; background: ' + (active ? '#8A382F' : 'transparent');
+  }
+
+  // Ответы уезжают в свой сервис на сервере (deploy/answers-api.py), оттуда их
+  // читает страница /sonechka. Время проставляет сервер: на телефоне гостя часы
+  // могут быть какими угодно, а порядок ответов хочется настоящий.
+  async submit() {
+    if (this.state.sending) return;
+    this.setState({ sending: true, error: '' });
+    const payload = {
+      guest: this.guest.key,
+      name: this.guest.name,
+      place: this.state.place,
+      drink: this.state.beer
+    };
+    try {
+      const res = await fetch(this.props.answersUrl || '/api/answers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+    } catch (e) {
+      // Праздник важнее доставки: гость всё равно видит «записали», а ответ
+      // ждёт в localStorage — страница /sonechka о нём не узнает, но и вечер
+      // не начнётся с ошибки на экране. Досыл — при следующем открытии.
+      this.stash(payload);
+    }
+    this.setState({ sending: false, sent: true });
+  }
+
+  // Ключ свой, не общий с index.html: у ответа Кости другой набор полей, и
+  // подмешивать его в отложенный ответ гостьи с того же телефона незачем.
+  stash(payload) {
+    try { localStorage.setItem('sonechka:pending-kostya', JSON.stringify(payload)); } catch (e) {}
+  }
+
+  async flushStash() {
+    let raw = null;
+    try { raw = localStorage.getItem('sonechka:pending-kostya'); } catch (e) { return; }
+    if (!raw) return;
+    try {
+      const res = await fetch(this.props.answersUrl || '/api/answers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: raw
+      });
+      if (res.ok) localStorage.removeItem('sonechka:pending-kostya');
+    } catch (e) { /* сети всё ещё нет — попробуем в следующий раз */ }
+  }
+
+  renderVals() {
+    const s = this.state;
+    return {
+      guestGreeting: this.guest.name + ', привет!',
+      places: this.placeList().map((title, i, arr) => ({
+        title,
+        rowStyle: this.rowStyle(s.place.includes(title), i === arr.length - 1),
+        dotStyle: this.dotStyle(s.place.includes(title)),
+        pick: () => this.setState(p => ({ place: this.toggle(p.place, title) }))
+      })),
+      beers: this.beerList().map((title, i, arr) => ({
+        title,
+        rowStyle: this.rowStyle(s.beer.includes(title), i === arr.length - 1),
+        dotStyle: this.dotStyle(s.beer.includes(title)),
+        pick: () => this.setState(p => ({ beer: this.toggle(p.beer, title) }))
+      })),
+      helpOpen: s.helpOpen,
+      joke: this.jokes[s.jokeIndex == null ? 0 : s.jokeIndex],
+      toggleHelp: () => this.setState(p => (p.helpOpen ? { helpOpen: false } : { helpOpen: true, jokeIndex: this.pickJoke() })),
+      nextJoke: () => this.setState({ jokeIndex: this.pickJoke() }),
+      submit: () => this.submit(),
+      buttonLabel: s.sending ? 'Отправляю…' : 'Я приду',
+      error: s.error,
+      sent: s.sent,
+      notSent: !s.sent
+    };
+  }
+}
+
+</script>
+</body>
+</html>

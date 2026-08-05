@@ -66,6 +66,9 @@ def normalize(raw):
         'name': clean_text(raw.get('name')),
         'doll': clean_text(raw.get('doll')),
         'watch': clean_list(raw.get('watch')),
+        # place — только у Кости (/kostya): его зовут пить пиво, а не на день
+        # рождения, и вместо матрёшки с фильмом он выбирает, куда пойти.
+        'place': clean_list(raw.get('place')),
         'drink': clean_list(raw.get('drink')),
     }
 

@@ -72,11 +72,28 @@
 <script>
 // Список тот же, что в index.html (поле guests компонента): по нему видно не
 // только пришедшие ответы, но и от кого ещё ждём.
+// rows — какие вопросы задавали этому гостю: у Кости (site/kostya.html) своя
+// страница про пиво, матрёшки и фильмы он не выбирал, и пустых строк «не
+// выбрал» на его карточке быть не должно.
+var ROWS_DEFAULT = [
+  { label: 'Матрёшка', field: 'doll' },
+  { label: 'Смотрим',  field: 'watch' },
+  { label: 'Пьём',     field: 'drink' }
+];
+
 var GUESTS = [
   { key: 'nastia', name: 'Настя' },
   { key: 'uliya',  name: 'Уля' },
-  { key: 'ksusha', name: 'Ксюша' }
+  { key: 'ksusha', name: 'Ксюша' },
+  { key: 'kostya', name: 'Костя', empty: 'не выбрал', sentVerb: 'отправлял', rows: [
+    { label: 'Куда', field: 'place' },
+    { label: 'Пьём', field: 'drink' }
+  ] }
 ];
+
+function guestConf(key) {
+  return GUESTS.filter(function (g) { return g.key === key; })[0] || null;
+}
 
 var el = function (tag, cls, text) {
   var node = document.createElement(tag);
@@ -117,18 +134,29 @@ function latestByGuest(answers) {
 }
 
 function guestTitle(key, answer) {
-  var known = GUESTS.filter(function (g) { return g.key === key; })[0];
+  var known = guestConf(key);
   if (known) return known.name;
   if (answer && answer.name) return answer.name;
   return 'Гость без имени';
 }
 
-function renderRow(label, value) {
+// Какие строки показывать в карточке. У знакомого гостя — его набор вопросов,
+// у незнакомого адреса — стандартный плюс «Куда», если он что-то там выбрал.
+function rowsFor(key, answer) {
+  var known = guestConf(key);
+  if (known && known.rows) return known.rows;
+  var place = answer && answer.place;
+  return place && place.length
+    ? ROWS_DEFAULT.concat([{ label: 'Куда', field: 'place' }])
+    : ROWS_DEFAULT;
+}
+
+function renderRow(label, value, emptyText) {
   var row = el('div', 'row');
   row.appendChild(el('span', 'label', label));
   var filled = Array.isArray(value) ? value.length > 0 : !!value;
   row.appendChild(el('span', 'value' + (filled ? '' : ' empty'),
-    filled ? (Array.isArray(value) ? value.join(', ') : value) : 'не выбрала'));
+    filled ? (Array.isArray(value) ? value.join(', ') : value) : (emptyText || 'не выбрала')));
   return row;
 }
 
@@ -153,14 +181,15 @@ function renderGuests(byKey) {
     if (!entry) {
       card.appendChild(el('p', 'waiting', 'ответа пока нет'));
     } else {
+      var conf = guestConf(key);
       var rows = el('div', 'rows');
-      rows.appendChild(renderRow('Матрёшка', entry.last.doll));
-      rows.appendChild(renderRow('Смотрим', entry.last.watch));
-      rows.appendChild(renderRow('Пьём', entry.last.drink));
+      rowsFor(key, entry.last).forEach(function (r) {
+        rows.appendChild(renderRow(r.label, entry.last[r.field], conf && conf.empty));
+      });
       card.appendChild(rows);
       if (entry.count > 1) {
-        card.appendChild(el('p', 'note', 'отправляла ' + entry.count + ' ' +
-          plural(entry.count, 'раз', 'раза', 'раз') + ', показан последний ответ'));
+        card.appendChild(el('p', 'note', ((conf && conf.sentVerb) || 'отправляла') + ' ' +
+          entry.count + ' ' + plural(entry.count, 'раз', 'раза', 'раз') + ', показан последний ответ'));
       }
     }
     box.appendChild(card);
@@ -190,6 +219,7 @@ function renderSummary(byKey) {
   [
     { label: 'Матрёшки', field: 'doll' },
     { label: 'Фильмы', field: 'watch' },
+    { label: 'Куда идём', field: 'place' },
     { label: 'Напитки', field: 'drink' }
   ].forEach(function (group) {
     var lines = tally(entries, group.field);
