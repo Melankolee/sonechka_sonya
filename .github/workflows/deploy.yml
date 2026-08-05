@@ -1,0 +1,43 @@
+name: Deploy site
+
+# Заливает содержимое site/ в /var/www/sonechka-sonya.ru на сервере.
+# Секреты репозитория: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+# Два деплоя одновременно затирали бы друг друга; в очередь, без отмены текущего.
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Настроить SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Залить site/ на сервер
+        run: |
+          rsync -rlptz --delete --human-readable \
+            -e 'ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes' \
+            site/ \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/sonechka-sonya.ru/"
+
+      # Пока зона sonechka-sonya.ru не создана, домен не резолвится — поэтому
+      # проверка информационная и не роняет деплой.
+      - name: Проверить, что сайт отвечает
+        continue-on-error: true
+        run: curl -fsS -o /dev/null -w 'HTTP %{http_code}\n' https://sonechka-sonya.ru/

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Приглашение на День Рождения — Софья</title>
+<script>
+// Локальные копии React/ReactDOM вместо unpkg.com: support.js берёт URL
+// из этой карты (см. cdnScriptFor), поэтому сам support.js менять не нужно.
+window.__resources = {
+  "https://unpkg.com/react@18.3.1/umd/react.production.min.js": "./vendor/react.production.min.js",
+  "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js": "./vendor/react-dom.production.min.js"
+};
+</script>
+<script src="./support.js"></script>
+<link href="./fonts/fonts.css" rel="stylesheet">
+<script src="./envelope-intro.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="./fonts/fonts.css" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: #EFE9DE; color: #453C33; }
+  * { box-sizing: border-box; }
+  a { color: #8A382F; text-decoration: none; border-bottom: 1px solid rgba(138,56,47,.35); }
+  a:hover { color: #A9584A; border-bottom-color: rgba(169,88,74,.6); }
+  input, textarea, button { font: inherit; color: inherit; }
+  input:focus, textarea:focus { outline: none; }
+  ::placeholder { color: rgba(69,60,51,.35); }
+  @keyframes floatUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  @keyframes drawIn { from { opacity: 0; transform: scaleX(0); } to { opacity: .5; transform: none; } }
+  @keyframes wishDriftL { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes wishDriftR { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #EFE9DE; display: flex; justify-content: center; padding: 0 0 96px">
+  <div style="width: 100%; max-width: 620px; position: relative; background: linear-gradient(180deg, #F5F1E9 0%, #EFE9DE 38%, #EDE6DA 100%); box-shadow: 0 0 80px rgba(93,74,58,.09)">
+    <div style="position: relative; z-index: 1">
+
+    <div style="position: fixed; top: 18px; right: 18px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 10px">
+      <button type="button" onClick="{{ toggleHelp }}" aria-label="Анекдот" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(247,243,236,.92); border: 1px solid rgba(138,56,47,.28); backdrop-filter: blur(6px); font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #8A382F; cursor: pointer; transition: background .25s, color .25s" style-hover="background: #8A382F; color: #FBF8F2">?</button>
+      <sc-if value="{{ helpOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="width: min(300px, calc(100vw - 36px)); padding: 18px 20px; border-radius: 20px; background: rgba(247,243,236,.97); border: 1px solid rgba(138,56,47,.22); box-shadow: 0 12px 34px rgba(93,74,58,.16); text-align: left">
+          <p style="margin: 0 0 12px; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(138,56,47,.75)">Анекдот от Петьки</p>
+          <p style="margin: 0 0 16px; white-space: pre-line; font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.55; color: #3E342C; text-wrap: pretty">{{ joke }}</p>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+            <button type="button" onClick="{{ nextJoke }}" style="padding: 9px 16px; border-radius: 999px; background: #8A382F; border: 1px solid #8A382F; font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s" style-hover="background: #742E27">Ещё</button>
+            <button type="button" onClick="{{ toggleHelp }}" style="padding: 9px 4px; background: transparent; border: none; font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: rgba(69,60,51,.5); cursor: pointer">Закрыть</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <section style="position: relative; padding: 0 0 4px">
+      <div style="position: relative; width: 100%">
+        <div data-reveal="1" style="padding: 96px 30px 6px; text-align: center">
+          
+          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(34px, 9.6vw, 54px); line-height: 1.08; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Вы приглашены<br><em style="font-style: italic; color: #8A382F">на празднование</em><br>моего Дня Рождения!</h1>
+        </div>
+      </div>
+
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: 18px; align-items: center; padding: 26px 30px 6px; text-align: center">
+        <p style="margin: 0; max-width: 34ch; font-family: 'Cormorant Garamond', serif; font-size: 20px; line-height: 1.55; font-style: italic; color: #6A5C4F; text-wrap: pretty">Тихий вечер, смех краски и хорошее настроение! Буду очень рада видеть вас!</p>
+        <div style="width: 44px; height: 1px; background: #8A382F; opacity: .45"></div>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 14px; width: 100%; max-width: 420px; font-family: 'Manrope', sans-serif">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(138,56,47,.14)">
+            <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Когда</span>
+            <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #3E342C">суббота, 00 месяца</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(138,56,47,.14)">
+            <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Во сколько</span>
+            <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #3E342C">00:00</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px">
+            <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Где</span>
+            <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #3E342C; text-align: right">адрес, кв. 00</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <section data-reveal="1" style="padding: 74px 30px 0; text-align: center">
+      <div style="width: 1px; height: 46px; margin: 0 auto 30px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
+      <div style="font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .36em; text-transform: uppercase; color: rgba(138,56,47,.75)">что будет</div>
+      <p style="margin: 20px auto 0; max-width: 26ch; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(25px, 6.6vw, 34px); line-height: 1.34; color: #3E342C; text-wrap: pretty">Мы будем болтать и раскрашивать <em style="font-style: italic; color: #8A382F">одну из матрёшек или неваляшек</em>, которую вы оставите себе как сувенир.</p>
+      <div style="position: relative; width: 100%; aspect-ratio: 4 / 3; margin-top: 34px; overflow: hidden; border-radius: 2px">
+        <image-slot id="inv-craft" shape="rect" fit="cover" placeholder="матрёшки, краски, стол"></image-slot>
+      </div>
+      <p style="margin: 16px 0 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; letter-spacing: .04em; color: rgba(69,60,51,.5)">Всё для рисования будет — приходите просто собой.</p>
+    </section>
+
+    <section data-reveal="1" style="padding: 78px 30px 0; text-align: center">
+      <div style="width: 1px; height: 46px; margin: 0 auto 28px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
+      <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: clamp(27px, 7.4vw, 38px); color: #3E342C">Выберите, что вам<br>больше нравится</h2>
+      <p style="margin: 14px auto 0; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Три маленьких вопроса, чтобы вечер был именно вашим.</p>
+    </section>
+
+    <section data-reveal="1" style="padding: 46px 22px 0">
+      <div style="padding: 28px 24px 30px; background: rgba(255,253,248,.72); border: 1px solid rgba(138,56,47,.16); border-radius: 3px">
+        <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px">
+          <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">01</span>
+          <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Что раскрашиваем?</h3>
+        </div>
+        <p style="margin: 0 0 20px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Матрёшки будут разные — выберите ту, что приглянулась.</p>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 460px; margin: 0 auto">
+          <sc-for list="{{ dolls }}" as="doll" hint-placeholder-count="4">
+            <button type="button" onClick="{{ doll.pick }}" style="{{ doll.cardStyle }}">
+              <span style="position: relative; display: block; width: 100%; aspect-ratio: 1 / 0.85; overflow: hidden; border-radius: 18px; background: rgba(138,56,47,.05)">
+                <image-slot id="{{ doll.slotId }}" shape="rect" fit="cover" placeholder="{{ doll.slotHint }}"></image-slot>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section data-reveal="1" style="padding: 18px 22px 0">
+      <div style="padding: 28px 24px 30px; background: rgba(255,253,248,.72); border: 1px solid rgba(138,56,47,.16); border-radius: 3px">
+        <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px">
+          <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">02</span>
+          <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Что смотрим?</h3>
+        </div>
+        <p style="margin: 0 0 18px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Фильм фоном, пока красим. Что предложите?</p>
+        <textarea rows="2" value="{{ watch }}" onChange="{{ onWatch }}" placeholder="например, что-то тёплое и не страшное…" style="width: 100%; resize: none; padding: 14px 16px; background: transparent; border: none; border-bottom: 1px solid rgba(138,56,47,.28); font-family: 'Cormorant Garamond', serif; font-size: 19px; line-height: 1.5; color: #3E342C" style-focus="border-bottom-color: #8A382F"></textarea>
+      </div>
+    </section>
+
+    <section data-reveal="1" style="padding: 18px 22px 0">
+      <div style="padding: 28px 24px 30px; background: rgba(255,253,248,.72); border: 1px solid rgba(138,56,47,.16); border-radius: 3px">
+        <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px">
+          <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">03</span>
+          <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Что пьём?</h3>
+        </div>
+        <p style="margin: 0 0 18px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Что налить именно вам — от глинтвейна до какао.</p>
+        <textarea rows="2" value="{{ drink }}" onChange="{{ onDrink }}" placeholder="напишите свой напиток…" style="width: 100%; resize: none; padding: 14px 16px; background: transparent; border: none; border-bottom: 1px solid rgba(138,56,47,.28); font-family: 'Cormorant Garamond', serif; font-size: 19px; line-height: 1.5; color: #3E342C" style-focus="border-bottom-color: #8A382F"></textarea>
+      </div>
+    </section>
+
+    <section data-reveal="1" style="padding: 62px 22px 0; text-align: center">
+      <div style="width: 1px; height: 46px; margin: 0 auto 26px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
+      <h2 style="margin: 0 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: clamp(26px, 7vw, 34px); color: #3E342C">Если захочется подарка</h2>
+      <p style="margin: 0 auto; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Совсем не обязательно — но вдруг пригодится.</p>
+      <div style="margin: 24px 0 0; position: relative; overflow: hidden; border: 1px solid rgba(138,56,47,.22); border-radius: 30px; background: #E7DFD2; display: grid; grid-template-rows: 1fr 1fr 1fr; gap: 8px; padding: 8px">
+        <sc-for list="{{ wishRows }}" as="row" hint-placeholder-count="3">
+          <div style="position: relative; overflow: hidden; height: 116px; border-radius: 18px; mask-image: linear-gradient(90deg, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%); -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)">
+            <div style="position: absolute; inset: 0; display: flex; gap: 8px; width: max-content; animation: {{ row.anim }}">
+              <sc-for list="{{ row.items }}" as="wish" hint-placeholder-count="12">
+                <span style="position: relative; display: block; width: 124px; height: 116px; overflow: hidden; border-radius: 18px; background: rgba(138,56,47,.06)">
+                  <image-slot id="{{ wish.slotId }}" shape="rect" fit="cover" src="{{ wish.src }}" placeholder="{{ wish.hint }}"></image-slot>
+                </span>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div style="position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); display: flex; justify-content: center; padding: 0 16px; pointer-events: none">
+          <a href="#" style="pointer-events: auto; display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 999px; background: rgba(247,243,236,.94); border: 1px solid rgba(138,56,47,.22); font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #8A382F; transition: background .3s, color .3s, border-color .3s" style-hover="background: #8A382F; border-color: #8A382F; color: #FBF8F2">Открыть вишлист <span style="font-size: 14px; letter-spacing: 0">→</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section data-reveal="1" style="padding: 40px 22px 0">
+      <div style="padding: 30px 24px 32px; background: linear-gradient(180deg, rgba(138,56,47,.05), rgba(138,56,47,.02)); border: 1px solid rgba(138,56,47,.2); border-radius: 3px; text-align: center">
+        <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 18px 0 10px">
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 40px; color: #8A382F; line-height: 1">✦</div>
+            <h3 style="margin: 14px 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 28px; color: #3E342C">Спасибо, записала!</h3>
+            <p style="margin: 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Жду вас. Будет тихо, тепло и с красками.</p>
+          </div>
+        </sc-if>
+        <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <p style="margin: 0 0 20px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Нажмите — и я буду знать, что вы придёте.</p>
+            <button type="button" onClick="{{ submit }}" style="width: 100%; padding: 28px 20px; background: #8A382F; border: 1px solid #8A382F; border-radius: 999px; font-family: 'Manrope', sans-serif; font-size: 14px; letter-spacing: .3em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s" style-hover="background: #742E27">{{ buttonLabel }}</button>
+          </div>
+        </sc-if>
+      </div>
+    </section>
+
+    <section data-reveal="1" style="padding: 62px 30px 0; text-align: center">
+      <div style="width: 1px; height: 40px; margin: 0 auto 26px; background: linear-gradient(180deg, rgba(138,56,47,.5), rgba(138,56,47,0))"></div>
+      <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: clamp(26px, 6.4vw, 34px); line-height: 1.35; color: #5C4F44; text-wrap: pretty">До встречи, буду рада вас видеть,<br>Софья</p>
+    </section>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;sheetUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;dollOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Матрёшка первая, Матрёшка вторая, Матрёшка третья, Неваляшка&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
+class Component extends DCLogic {
+  state = { doll: null, watch: '', drink: '', name: '', sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null };
+
+  jokes = [
+    '— Петька, что такое нюанс?\n— Не знаю, Василий Иванович.\n— Ну вот смотри: и ты голый, и я голый. Но есть нюанс.',
+    '— Петька, ты чего такой довольный?\n— Так я, Василий Иванович, у Анки ночевал. Три раза!\n— Врёшь.\n— Ну два. Зато с разбегу.',
+    '— Василий Иванович, а правда, что вы всю ночь у Анки карту изучали?\n— Правда, Петька. Рельеф там сложный, без разведки не подступишься.',
+    '— Василий Иванович, а как отличить любовь от страсти?\n— Просто, Петька. Любовь — это когда до утра разговариваешь. А страсть — это когда поговорить некогда.',
+    '— Петька, ты чего в окно полез?\n— Так муж вернулся, Василий Иванович!\n— Петька, ты же холостой!\n— Я-то холостой. А вот Анка, оказывается, нет.',
+    '— Василий Иванович, Анка спрашивает: вы её уважаете?\n— Уважаю, Петька. Особенно после двух.\n— После двух чего?\n— Петька, ты не в том месте уточняешь.',
+    '— Василий Иванович, а что делать, если Анка говорит «не сегодня»?\n— Ждать, Петька.\n— А если «не сегодня» уже неделю?\n— Значит, Петька, это не Анка занята. Это ты неубедителен.',
+    '— Петька, чем занят?\n— Анку взглядом раздеваю, Василий Иванович.\n— Успехи есть?\n— Раздел. Теперь не соображу, как взглядом обратно одеть.',
+    '— Василий Иванович, а правда, что размер значения не имеет?\n— Правда, Петька. Так говорят двое: у кого его нет и кому уже всё равно.',
+    '— Василий Иванович, а что такое дуэль?\n— Это, Петька, когда двое стреляются из-за дамы.\n— А если дама не против обоих?\n— Тогда, Петька, это уже манёвры.',
+    '— Петька, ты Анке предложение делал?\n— Делал, Василий Иванович. Дважды.\n— И что?\n— В первый раз отказала. Во второй я предложение переформулировал — до сих пор детали согласовываем.',
+    '— Василий Иванович, а сколько раз в неделю — это норма?\n— Смотря чего, Петька.\n— Ну этого…\n— Тогда норма — это когда соседи стучат не по расписанию, а по вдохновению.',
+    '— Петька, что с рукой?\n— Анку из реки вытаскивал, Василий Иванович.\n— Так она плавает как рыба!\n— Плавает. Это я тонул. По-крупному и в правильном месте.',
+    '— Василий Иванович, Анка сказала, что я в дивизии лучший!\n— В чём, Петька?\n— Не уточнила. Но улыбалась так, что я до утра погоны искал.'
+  ];
+
+  pickJoke() {
+    const n = this.jokes.length;
+    const cur = this.state.jokeIndex;
+    if (n < 2) return 0;
+    if (cur == null) return Math.floor(Math.random() * n);
+    const i = Math.floor(Math.random() * (n - 1));
+    return i >= cur ? i + 1 : i; // не повторяем тот же самый
+  }
+
+  componentDidMount() {
+    // Пока играет конверт (envelope-intro.js), появления секций ждут:
+    // страница должна ожить ровно в тот момент, когда письмо развернулось.
+    if (window.__envelopeIntroActive) {
+      document.addEventListener('envelope-intro:done', () => this.scan(), { once: true });
+    }
+    this.scan();
+  }
+  componentDidUpdate() { this.scan(); }
+
+  scan() {
+    if (window.__envelopeIntroActive) return;
+    const nodes = Array.from(document.querySelectorAll('[data-reveal]'));
+    if (this.props.reveal === false) {
+      nodes.forEach(n => { n.style.opacity = ''; n.style.animation = ''; });
+      return;
+    }
+    if (!this._io) {
+      this._io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          e.target.style.animation = 'floatUp .9s cubic-bezier(.22,.7,.25,1) forwards';
+          this._io.unobserve(e.target);
+        });
+      }, { threshold: 0, rootMargin: '0px 0px -5% 0px' });
+    }
+    nodes.forEach(n => {
+      if (n.dataset.revealInit) return;
+      n.dataset.revealInit = '1';
+      const visible = n.getBoundingClientRect().top < window.innerHeight;
+      if (visible) { n.style.animation = 'floatUp .9s cubic-bezier(.22,.7,.25,1) forwards'; return; }
+      n.style.opacity = '0';
+      this._io.observe(n);
+      // подстраховка: если наблюдатель не сработал, показать через 4с
+      setTimeout(() => { if (getComputedStyle(n).opacity === '0') n.style.animation = 'floatUp .6s ease forwards'; }, 4000);
+    });
+  }
+
+  componentWillUnmount() { if (this._io) this._io.disconnect(); }
+
+  // Фото лежат рядом с сайтом (Unsplash License), а не тянутся с чужого CDN:
+  // лента подарков — первое, что видно в этом блоке, и она не должна зависеть
+  // от доступности внешнего хостинга.
+  giftList() {
+    return [
+      { file: 'giftbox',   title: 'подарок' },
+      { file: 'candle',    title: 'свеча' },
+      { file: 'paints',    title: 'краски' },
+      { file: 'mug',       title: 'кружка' },
+      { file: 'flowers',   title: 'цветы' },
+      { file: 'chocolate', title: 'шоколад' },
+      { file: 'book',      title: 'книга' },
+      { file: 'blanket',   title: 'плед' },
+      { file: 'soap',      title: 'мыло ручной работы' },
+      { file: 'plant',     title: 'растение' },
+      { file: 'notebook',  title: 'блокнот' },
+      { file: 'teapot',    title: 'чайник' },
+      { file: 'scarf',     title: 'шарф' },
+      { file: 'jam',       title: 'варенье' },
+      { file: 'frame',     title: 'картина' },
+      { file: 'yarn',      title: 'пряжа' },
+      { file: 'lamp',      title: 'лампа' },
+      { file: 'mitten',    title: 'варежки' }
+    ];
+  }
+
+  dollList() {
+    const raw = this.props.dollOptions || 'Матрёшка первая, Матрёшка вторая, Матрёшка третья, Неваляшка';
+    return raw.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  cardStyle(active) {
+    return 'cursor: pointer; background: transparent; border: none; border-radius: 20px; overflow: hidden; padding: 0; color: #5C5046' +
+      '; opacity: ' + (active ? '1' : '.72') +
+      '; transform: ' + (active ? 'scale(1)' : 'scale(.96)') +
+      '; box-shadow: ' + (active ? '0 6px 22px rgba(93,74,58,.22)' : 'none') +
+      '; transition: opacity .25s, transform .25s, box-shadow .25s';
+  }
+
+  async submit() {
+    if (this.state.sending) return;
+    this.setState({ sending: true, error: '' });
+    const url = this.props.sheetUrl || '';
+    const payload = {
+      doll: this.state.doll || '',
+      watch: this.state.watch,
+      drink: this.state.drink,
+      ts: new Date().toISOString()
+    };
+    if (url) {
+      try {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) { /* no-cors: ответ не читаем, ошибки сети игнорируем */ }
+    }
+    this.setState({ sending: false, sent: true });
+  }
+
+  renderVals() {
+    const s = this.state;
+    return {
+      dolls: this.dollList().map((name, i) => ({
+        name,
+        slotId: 'inv-doll-' + (i + 1),
+        slotHint: name.toLowerCase(),
+        cardStyle: this.cardStyle(s.doll === name),
+        pick: () => this.setState({ doll: name })
+      })),
+      wishRows: [
+        { anim: 'wishDriftL 46s linear infinite' },
+        { anim: 'wishDriftR 58s linear infinite' },
+        { anim: 'wishDriftL 52s linear infinite' }
+      ].map((r, ri) => {
+        const gifts = this.giftList();
+        const base = [1, 2, 3, 4, 5, 6].map(i => {
+          const g = gifts[(ri * 6 + i - 1) % gifts.length];
+          return {
+            slotId: 'inv-wish-' + (ri + 1) + '-' + i,
+            hint: g.title,
+            src: './img/wishes/' + g.file + '.jpg'
+          };
+        });
+        const copy = base.map(w => Object.assign({}, w, { slotId: w.slotId + '-b' }));
+        return Object.assign({}, r, { items: base.concat(copy) });
+      }),
+      helpOpen: s.helpOpen,
+      joke: this.jokes[s.jokeIndex == null ? 0 : s.jokeIndex],
+      toggleHelp: () => this.setState(p => (p.helpOpen ? { helpOpen: false } : { helpOpen: true, jokeIndex: this.pickJoke() })),
+      nextJoke: () => this.setState({ jokeIndex: this.pickJoke() }),
+      watch: s.watch,
+      drink: s.drink,
+      name: s.name,
+      onWatch: e => this.setState({ watch: e.target.value }),
+      onDrink: e => this.setState({ drink: e.target.value }),
+      onName: e => this.setState({ name: e.target.value, error: '' }),
+      submit: () => this.submit(),
+      buttonLabel: s.sending ? 'Отправляю…' : 'Я приду',
+      error: s.error,
+      sent: s.sent,
+      notSent: !s.sent
+    };
+  }
+}
+
+</script>
+</body>
+</html>
