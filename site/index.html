@@ -44,7 +44,7 @@ window.__resources = {
       <button type="button" onClick="{{ toggleHelp }}" aria-label="Анекдот" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(247,243,236,.92); border: 1px solid rgba(138,56,47,.28); backdrop-filter: blur(6px); font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #8A382F; cursor: pointer; transition: background .25s, color .25s" style-hover="background: #8A382F; color: #FBF8F2">?</button>
       <sc-if value="{{ helpOpen }}" hint-placeholder-val="{{ false }}">
         <div style="width: min(300px, calc(100vw - 36px)); padding: 18px 20px; border-radius: 20px; background: rgba(247,243,236,.97); border: 1px solid rgba(138,56,47,.22); box-shadow: 0 12px 34px rgba(93,74,58,.16); text-align: left">
-          <p style="margin: 0 0 12px; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(138,56,47,.75)">Анекдот от Петьки</p>
+          <p style="margin: 0 0 12px; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(138,56,47,.75)">Анекдот от Соньки</p>
           <p style="margin: 0 0 16px; white-space: pre-line; font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.55; color: #3E342C; text-wrap: pretty">{{ joke }}</p>
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
             <button type="button" onClick="{{ nextJoke }}" style="padding: 9px 16px; border-radius: 999px; background: #8A382F; border: 1px solid #8A382F; font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s" style-hover="background: #742E27">Ещё</button>
@@ -87,8 +87,15 @@ window.__resources = {
       <div style="width: 1px; height: 46px; margin: 0 auto 30px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
       <div style="font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .36em; text-transform: uppercase; color: rgba(138,56,47,.75)">что будет</div>
       <p style="margin: 20px auto 0; max-width: 26ch; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(25px, 6.6vw, 34px); line-height: 1.34; color: #3E342C; text-wrap: pretty">Мы будем болтать и раскрашивать <em style="font-style: italic; color: #8A382F">одну из матрёшек или неваляшек</em>, которую вы оставите себе как сувенир.</p>
-      <div style="position: relative; width: 100%; aspect-ratio: 4 / 3; margin-top: 34px; overflow: hidden; border-radius: 2px">
-        <image-slot id="inv-craft" shape="rect" fit="cover" placeholder="матрёшки, краски, стол"></image-slot>
+      <div style="position: relative; width: 100%; aspect-ratio: 3 / 2; margin-top: 34px; overflow: hidden; border-radius: 2px; background: #E7DFD2">
+        <sc-for list="{{ slides }}" as="slide" hint-placeholder-count="6">
+          <img src="{{ slide.src }}" alt="{{ slide.alt }}" loading="lazy" style="{{ slide.style }}">
+        </sc-for>
+        <div style="position: absolute; left: 0; right: 0; bottom: 14px; display: flex; justify-content: center; gap: 8px">
+          <sc-for list="{{ slides }}" as="slide" hint-placeholder-count="6">
+            <button type="button" onClick="{{ slide.pick }}" aria-label="{{ slide.alt }}" style="{{ slide.dotStyle }}"></button>
+          </sc-for>
+        </div>
       </div>
       <p style="margin: 16px 0 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; letter-spacing: .04em; color: rgba(69,60,51,.5)">Всё для рисования будет — просто приходите.</p>
     </section>
@@ -171,7 +178,7 @@ window.__resources = {
           </div>
         </sc-for>
         <div style="position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); display: flex; justify-content: center; padding: 0 16px; pointer-events: none">
-          <a href="#" style="pointer-events: auto; display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 999px; background: rgba(247,243,236,.94); border: 1px solid rgba(138,56,47,.22); font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #8A382F; transition: background .3s, color .3s, border-color .3s" style-hover="background: #8A382F; border-color: #8A382F; color: #FBF8F2">Открыть вишлист <span style="font-size: 14px; letter-spacing: 0">→</span></a>
+          <a href="https://ohmywishes.com/users/andrrrrevna" target="_blank" rel="noopener" style="pointer-events: auto; display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 999px; background: rgba(247,243,236,.94); border: 1px solid rgba(138,56,47,.22); font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #8A382F; transition: background .3s, color .3s, border-color .3s" style-hover="background: #8A382F; border-color: #8A382F; color: #FBF8F2">Открыть вишлист <span style="font-size: 14px; letter-spacing: 0">→</span></a>
         </div>
       </div>
     </section>
@@ -206,7 +213,7 @@ window.__resources = {
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;sheetUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;dollOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Матрёшка первая, Матрёшка вторая, Матрёшка третья, Неваляшка&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;filmOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Амели, Отель «Гранд Будапешт», Тайная жизнь Уолтера Митти, Шоколад, Дьявол носит Prada, Гарри Поттер и философский камень, Римские каникулы&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;drinkOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Белое вино, Красное вино, Сидр, Пиво, Коктейли на джине&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
 class Component extends DCLogic {
-  state = { doll: null, watch: '', drink: '', name: '', sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null };
+  state = { doll: null, watch: '', drink: '', name: '', sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null, slide: 0 };
 
   jokes = [
     '— Петька, что такое нюанс?\n— Не знаю, Василий Иванович.\n— Ну вот смотри: и ты голый, и я голый. Но есть нюанс.',
@@ -241,6 +248,7 @@ class Component extends DCLogic {
       document.addEventListener('envelope-intro:done', () => this.scan(), { once: true });
     }
     this.scan();
+    this.startSlides();
   }
   componentDidUpdate() { this.scan(); }
 
@@ -272,32 +280,73 @@ class Component extends DCLogic {
     });
   }
 
-  componentWillUnmount() { if (this._io) this._io.disconnect(); }
+  componentWillUnmount() {
+    if (this._io) this._io.disconnect();
+    if (this._slideTimer) clearInterval(this._slideTimer);
+  }
 
-  // Фото лежат рядом с сайтом (Unsplash License), а не тянутся с чужого CDN:
-  // лента подарков — первое, что видно в этом блоке, и она не должна зависеть
-  // от доступности внешнего хостинга.
+  // Реальный вишлист Сони с ohmywishes.com/users/andrrrrevna. Фото скачаны
+  // и лежат рядом с сайтом, а не тянутся с cdn.ohmywish.es: лента подарков —
+  // первое, что видно в этом блоке, и она не должна зависеть от доступности
+  // внешнего хостинга. Обновлять — перекачивая картинки в img/wishes.
   giftList() {
     return [
-      { file: 'giftbox',   title: 'подарок' },
-      { file: 'candle',    title: 'свеча' },
-      { file: 'paints',    title: 'краски' },
-      { file: 'mug',       title: 'кружка' },
-      { file: 'flowers',   title: 'цветы' },
-      { file: 'chocolate', title: 'шоколад' },
-      { file: 'book',      title: 'книга' },
-      { file: 'blanket',   title: 'плед' },
-      { file: 'soap',      title: 'мыло ручной работы' },
-      { file: 'plant',     title: 'растение' },
-      { file: 'notebook',  title: 'блокнот' },
-      { file: 'teapot',    title: 'чайник' },
-      { file: 'scarf',     title: 'шарф' },
-      { file: 'jam',       title: 'варенье' },
-      { file: 'frame',     title: 'картина' },
-      { file: 'yarn',      title: 'пряжа' },
-      { file: 'lamp',      title: 'лампа' },
-      { file: 'mitten',    title: 'варежки' }
+      { file: 'fen-stayler-dyson-airwrap',                   title: 'Фен-стайлер Dyson Airwrap ID Complete Long HS08, Янтарный шелк' },
+      { file: 'raskraska-po-nomeram-disney',                 title: 'Раскраска по номерам Дисней оригинал - Дебютанты 2' },
+      { file: 'raskraska-coloriages-mysteres-klassika',      title: 'Раскраска Coloriages mysteres Классика' },
+      { file: 'raskraska-coloriages-mysteres-disney',        title: 'Раскраска Coloriages mysteres Disney - принцессы' },
+      { file: 'raskraska-coloriages-mysteres-best',          title: 'Раскраска Coloriages mysteres Best of Bestiaire Животные' },
+      { file: 'podves-mops',                                 title: 'Подвес Мопс' },
+      { file: 'konstruktor-lego-disney-lilo',                title: 'Конструктор LEGO Disney Лило и Стич домик на пляже' },
+      { file: 'konstruktor-lego-botanicals-kachayuschiesya', title: 'Конструктор LEGO Botanicals Качающиеся растения 253 дет.' },
+      { file: 'konstruktor-lego-disney-stich',               title: 'Конструктор LEGO Disney Стич и Скрамп 713 дет.' },
+      { file: 'konstruktor-lego-botanicals-yaponskiy',       title: 'Конструктор LEGO Botanicals Японский красный клен' },
+      { file: 'nabor-iz-2-h',                                title: 'Набор из 2-х стаканов' },
+      { file: 'sumka-taylor-mini',                           title: 'Сумка Taylor Mini' },
+      { file: 'sumka-eva',                                   title: 'Сумка Eva' },
+      { file: 'sumka-chani',                                 title: 'Сумка Chani' },
+      { file: 'sumka-polina-mini',                           title: 'Сумка Polina Mini' },
+      { file: 'vafelnica-gril-2v1',                          title: 'Вафельница + гриль 2в1' },
+      { file: 'yandeks-stanciya-duo-maks',                   title: 'Яндекс Станция Дуо Макс с Алисой' },
+      { file: 'too',                                         title: 'Too' },
+      { file: 'alba',                                        title: 'Alba' },
+      { file: 'palmi',                                       title: 'Palmi' },
+      { file: 'cuff-ace-of-swords',                          title: 'Cuff Ace of swords' },
+      { file: 'naire',                                       title: 'Naire' },
+      { file: 'herald-percy',                                title: 'Herald Percy' },
+      { file: 'francis-kurkdjian-baccarat-rouge',            title: 'Francis Kurkdjian Baccarat Rouge 540' },
+      { file: 'vertus-narcos-is',                            title: 'Vertus Narcos\'is' },
+      { file: 'ex-nihilofleur-narcotique',                   title: 'EX NIHILOFLEUR NARCOTIQUE' },
+      { file: 'kofemashina',                                 title: 'Кофемашина' },
+      { file: 'shnekovaya-sokovyzhimalka',                   title: 'Шнековая соковыжималка' },
+      { file: 'blender-pogruzhnoy',                          title: 'Блендер погружной' },
+      { file: 'mikser-planetarnyy',                          title: 'Миксер планетарный' },
+      { file: 'mini-liana-double',                           title: 'MINI LIANA / DOUBLE' },
+      { file: 'serebryanye-sergi-pusety-s',                  title: 'Серебряные серьги-пусеты с перламутром' },
+      { file: 'gucciflora-gorgeous-gardenia',                title: 'GUCCI Flora Gorgeous Gardenia' },
+      { file: 'raw-bag-leather-black',                       title: 'Raw Bag Leather Black Medium' },
+      { file: 'vilhelm-parfumerie-dear-polly',               title: 'VILHELM PARFUMERIE dear polly' },
+      { file: 'tous-loveme',                                 title: 'Tous LoveMe' },
+      { file: 'object-2-11',                                 title: 'object 2.11' },
+      { file: 'climbers-two-of-swords',                      title: 'Climbers Two of swords' },
+      { file: 'cory',                                        title: 'CORY' },
+      { file: 'stem',                                        title: 'STEM' },
+      { file: 'object-2-10',                                 title: 'object 2.10' }
     ];
+  }
+
+  // Карусель площадки — фото лофта LeView (loft2rent.ru/loft/145854),
+  // скачаны в img/loft, чтобы не зависеть от чужого хостинга.
+  loftShots() {
+    return ['upld9b2Y1H', 'upldlu8Ryv', 'upldHdDF5t', 'upldtl2wUk', 'upldySB5ap', 'upld3x1ZMu'];
+  }
+
+  // Перезапускаем таймер после ручного переключения, иначе следующий кадр
+  // может смениться сразу же после клика по точке.
+  startSlides() {
+    if (this._slideTimer) clearInterval(this._slideTimer);
+    const n = this.loftShots().length;
+    this._slideTimer = setInterval(() => this.setState(p => ({ slide: (p.slide + 1) % n })), 2000);
   }
 
   dollList() {
@@ -366,6 +415,16 @@ class Component extends DCLogic {
   renderVals() {
     const s = this.state;
     return {
+      slides: this.loftShots().map((file, i) => ({
+        src: './img/loft/' + file + '.jpg',
+        alt: 'Фото площадки ' + (i + 1),
+        style: 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .9s ease' +
+          '; opacity: ' + (s.slide === i ? '1' : '0'),
+        dotStyle: 'width: 7px; height: 7px; padding: 0; border-radius: 999px; cursor: pointer; transition: background .3s, border-color .3s' +
+          '; border: 1px solid ' + (s.slide === i ? 'rgba(251,248,242,.95)' : 'rgba(251,248,242,.55)') +
+          '; background: ' + (s.slide === i ? 'rgba(251,248,242,.95)' : 'transparent'),
+        pick: () => { this.setState({ slide: i }); this.startSlides(); }
+      })),
       dolls: this.dollList().map((name, i) => ({
         name,
         slotId: 'inv-doll-' + (i + 1),
@@ -385,22 +444,26 @@ class Component extends DCLogic {
         dotStyle: this.dotStyle(s.drink === title),
         pick: () => this.setState(p => ({ drink: p.drink === title ? '' : title }))
       })),
+      // pace — секунды на одну плитку, а не длительность всей ленты: иначе
+      // лента разгоняется каждый раз, когда в вишлисте прибавляется подарок.
       wishRows: [
-        { anim: 'wishDriftL 46s linear infinite' },
-        { anim: 'wishDriftR 58s linear infinite' },
-        { anim: 'wishDriftL 52s linear infinite' }
+        { dir: 'wishDriftL', pace: 7.7 },
+        { dir: 'wishDriftR', pace: 9.7 },
+        { dir: 'wishDriftL', pace: 8.7 }
       ].map((r, ri) => {
         const gifts = this.giftList();
-        const base = [1, 2, 3, 4, 5, 6].map(i => {
-          const g = gifts[(ri * 6 + i - 1) % gifts.length];
-          return {
-            slotId: 'inv-wish-' + (ri + 1) + '-' + i,
-            hint: g.title,
-            src: './img/wishes/' + g.file + '.jpg'
-          };
-        });
+        // раздаём подарки по строкам по очереди, чтобы соседние плитки одной
+        // категории (четыре сумки, четыре раскраски) разъехались по лентам
+        const base = gifts.filter((g, i) => i % 3 === ri).map((g, i) => ({
+          slotId: 'inv-wish-' + (ri + 1) + '-' + (i + 1),
+          hint: g.title,
+          src: './img/wishes/' + g.file + '.webp'
+        }));
         const copy = base.map(w => Object.assign({}, w, { slotId: w.slotId + '-b' }));
-        return Object.assign({}, r, { items: base.concat(copy) });
+        return {
+          anim: r.dir + ' ' + Math.round(base.length * r.pace) + 's linear infinite',
+          items: base.concat(copy)
+        };
       }),
       helpOpen: s.helpOpen,
       joke: this.jokes[s.jokeIndex == null ? 0 : s.jokeIndex],
