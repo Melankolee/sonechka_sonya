@@ -172,7 +172,7 @@
       'position:absolute;left:0;right:0;text-align:center;pointer-events:none;opacity:0;' +
       "font-family:'Manrope', system-ui, sans-serif;font-weight:300;text-transform:uppercase;" +
       'color:rgba(138,56,47,.75);transition:opacity .5s ease', cam);
-    hintText.textContent = 'нажмите, чтобы открыть';
+    hintText.textContent = 'нажми, чтобы открыть';
 
     return root;
   }

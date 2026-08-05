@@ -21,6 +21,7 @@ window.__resources = {
 <helmet>
 <link href="./fonts/fonts.css" rel="stylesheet">
 <script src="./image-slot.js"></script>
+<script src="./photo-lightbox.js"></script>
 <style>
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; background: #EFE9DE; color: #453C33; }
@@ -34,6 +35,21 @@ window.__resources = {
   @keyframes drawIn { from { opacity: 0; transform: scaleX(0); } to { opacity: .5; transform: none; } }
   @keyframes wishDriftL { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   @keyframes wishDriftR { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+  /* Соня выезжает снизу ровно наполовину: конечное состояние — translateY(50%).
+     Тайминги сцены держим синхронно с ENVELOPE_FLIGHT в скрипте компонента:
+     0.35–2.95с подъём, 2.6–4.2с полёт конверта, 4.25с облачко,
+     7.2с (ровно через 3с после прилёта конверта) — уход вниз. */
+  @keyframes sonyaRise { from { transform: translateY(100%); } to { transform: translateY(50%); } }
+  @keyframes sonyaLeave { from { transform: translateY(50%); } to { transform: translateY(100%); } }
+  @keyframes bubblePop {
+    0% { opacity: 0; transform: scale(.3) rotate(-6deg); }
+    62% { opacity: 1; transform: scale(1.09) rotate(1.5deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-sonya] { animation: none !important; transform: translateY(50%); }
+    [data-sonya-bubble] { animation: none !important; }
+  }
 </style>
 </helmet>
 <div style="min-height: 100vh; background: #EFE9DE; display: flex; justify-content: center; padding: 0 0 96px">
@@ -57,13 +73,15 @@ window.__resources = {
     <section style="position: relative; padding: 0 0 4px">
       <div style="position: relative; width: 100%">
         <div data-reveal="1" style="padding: 96px 30px 6px; text-align: center">
-          
-          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(34px, 9.6vw, 54px); line-height: 1.08; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Вы приглашены<br><em style="font-style: italic; color: #8A382F">на празднование</em><br>моего Дня Рождения!</h1>
+          <sc-if value="{{ hasGuest }}" hint-placeholder-val="{{ true }}">
+            <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #8A382F">{{ guestGreeting }}</p>
+          </sc-if>
+          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(34px, 9.6vw, 54px); line-height: 1.08; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Приглашаю тебя<br><em style="font-style: italic; color: #8A382F">на празднование</em><br>моего Дня Рождения!</h1>
         </div>
       </div>
 
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: 18px; align-items: center; padding: 26px 30px 6px; text-align: center">
-        <p style="margin: 0; max-width: 34ch; font-family: 'Cormorant Garamond', serif; font-size: 20px; line-height: 1.55; font-style: italic; color: #6A5C4F; text-wrap: pretty">Тихий вечер, смех, краски и хорошее настроение! Буду очень рада видеть вас!</p>
+        <p style="margin: 0; max-width: 34ch; font-family: 'Cormorant Garamond', serif; font-size: 20px; line-height: 1.55; font-style: italic; color: #6A5C4F; text-wrap: pretty">Тихий вечер, смех, краски и хорошее настроение! Буду очень рада видеть тебя!</p>
         <div style="width: 44px; height: 1px; background: #8A382F; opacity: .45"></div>
         <div style="display: grid; grid-template-columns: 1fr; gap: 14px; width: 100%; max-width: 420px; font-family: 'Manrope', sans-serif">
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(138,56,47,.14)">
@@ -86,10 +104,10 @@ window.__resources = {
     <section data-reveal="1" style="padding: 74px 30px 0; text-align: center">
       <div style="width: 1px; height: 46px; margin: 0 auto 30px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
       <div style="font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .36em; text-transform: uppercase; color: rgba(138,56,47,.75)">что будет</div>
-      <p style="margin: 20px auto 0; max-width: 26ch; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(25px, 6.6vw, 34px); line-height: 1.34; color: #3E342C; text-wrap: pretty">Мы будем болтать и раскрашивать <em style="font-style: italic; color: #8A382F">одну из матрёшек или неваляшек</em>, которую вы оставите себе как сувенир.</p>
+      <p style="margin: 20px auto 0; max-width: 26ch; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(25px, 6.6vw, 34px); line-height: 1.34; color: #3E342C; text-wrap: pretty">Мы будем болтать и раскрашивать <em style="font-style: italic; color: #8A382F">одну из матрёшек или неваляшек</em>, которую ты оставишь себе как сувенир.</p>
       <div style="position: relative; width: 100%; aspect-ratio: 3 / 2; margin-top: 34px; overflow: hidden; border-radius: 2px; background: #E7DFD2">
         <sc-for list="{{ slides }}" as="slide" hint-placeholder-count="6">
-          <img src="{{ slide.src }}" alt="{{ slide.alt }}" loading="lazy" style="{{ slide.style }}">
+          <img src="{{ slide.src }}" alt="{{ slide.alt }}" loading="lazy" data-zoom="1" style="{{ slide.style }}">
         </sc-for>
         <div style="position: absolute; left: 0; right: 0; bottom: 14px; display: flex; justify-content: center; gap: 8px">
           <sc-for list="{{ slides }}" as="slide" hint-placeholder-count="6">
@@ -97,13 +115,13 @@ window.__resources = {
           </sc-for>
         </div>
       </div>
-      <p style="margin: 16px 0 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; letter-spacing: .04em; color: rgba(69,60,51,.5)">Всё для рисования будет — просто приходите.</p>
+      <p style="margin: 16px 0 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; letter-spacing: .04em; color: rgba(69,60,51,.5)">Всё для рисования будет — просто приходи.</p>
     </section>
 
     <section data-reveal="1" style="padding: 78px 30px 0; text-align: center">
       <div style="width: 1px; height: 46px; margin: 0 auto 28px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
-      <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: clamp(27px, 7.4vw, 38px); color: #3E342C">Выберите, что вам<br>больше нравится</h2>
-      <p style="margin: 14px auto 0; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Три маленьких вопроса, чтобы вечер был именно вашим.</p>
+      <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: clamp(27px, 7.4vw, 38px); color: #3E342C">Выбери, что тебе<br>больше нравится</h2>
+      <p style="margin: 14px auto 0; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Три маленьких вопроса, чтобы вечер был именно твоим.</p>
     </section>
 
     <section data-reveal="1" style="padding: 46px 22px 0">
@@ -112,7 +130,7 @@ window.__resources = {
           <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">01</span>
           <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Что раскрашиваем?</h3>
         </div>
-        <p style="margin: 0 0 20px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Матрёшки будут разные — выберите ту, что приглянулась.</p>
+        <p style="margin: 0 0 20px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Матрёшки будут разные — выбери ту, что приглянулась.</p>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 460px; margin: 0 auto">
           <sc-for list="{{ dolls }}" as="doll" hint-placeholder-count="4">
             <button type="button" onClick="{{ doll.pick }}" style="{{ doll.cardStyle }}">
@@ -131,9 +149,9 @@ window.__resources = {
           <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">02</span>
           <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Что смотрим?</h3>
         </div>
-        <p style="margin: 0 0 10px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Фильм фоном, пока красим. Что включаем?</p>
+        <p style="margin: 0 0 10px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Фильм фоном, пока красим. Что включаем? Можно отметить несколько.</p>
         <div style="max-width: 460px; margin: 0 auto">
-          <sc-for list="{{ films }}" as="film" hint-placeholder-count="7">
+          <sc-for list="{{ films }}" as="film" hint-placeholder-count="3">
             <button type="button" onClick="{{ film.pick }}" style="{{ film.rowStyle }}">
               <span style="{{ film.dotStyle }}"></span>
               <span style="flex: 1; text-align: left">{{ film.title }}</span>
@@ -149,9 +167,9 @@ window.__resources = {
           <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">03</span>
           <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Что пьём?</h3>
         </div>
-        <p style="margin: 0 0 10px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Что налить именно вам.</p>
+        <p style="margin: 0 0 10px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Что налить именно тебе. Можно отметить несколько.</p>
         <div style="max-width: 460px; margin: 0 auto">
-          <sc-for list="{{ drinks }}" as="drink" hint-placeholder-count="5">
+          <sc-for list="{{ drinks }}" as="drink" hint-placeholder-count="8">
             <button type="button" onClick="{{ drink.pick }}" style="{{ drink.rowStyle }}">
               <span style="{{ drink.dotStyle }}"></span>
               <span style="flex: 1; text-align: left">{{ drink.title }}</span>
@@ -163,15 +181,14 @@ window.__resources = {
 
     <section data-reveal="1" style="padding: 62px 22px 0; text-align: center">
       <div style="width: 1px; height: 46px; margin: 0 auto 26px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
-      <h2 style="margin: 0 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: clamp(26px, 7vw, 34px); color: #3E342C">Что вы можете подарить</h2>
-      <p style="margin: 0 auto; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Совсем не обязательно — но вдруг пригодится.</p>
+      <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: clamp(26px, 7vw, 34px); color: #3E342C">Что ты можешь подарить</h2>
       <div style="margin: 24px 0 0; position: relative; overflow: hidden; border: 1px solid rgba(138,56,47,.22); border-radius: 30px; background: #E7DFD2; display: grid; grid-template-rows: 1fr 1fr 1fr; gap: 8px; padding: 8px">
         <sc-for list="{{ wishRows }}" as="row" hint-placeholder-count="3">
           <div style="position: relative; overflow: hidden; height: 116px; border-radius: 18px; mask-image: linear-gradient(90deg, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%); -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)">
             <div style="position: absolute; inset: 0; display: flex; gap: 8px; width: max-content; animation: {{ row.anim }}">
               <sc-for list="{{ row.items }}" as="wish" hint-placeholder-count="12">
                 <span style="position: relative; display: block; width: 124px; height: 116px; overflow: hidden; border-radius: 18px; background: rgba(138,56,47,.06)">
-                  <image-slot id="{{ wish.slotId }}" shape="rect" fit="cover" src="{{ wish.src }}" placeholder="{{ wish.hint }}"></image-slot>
+                  <image-slot id="{{ wish.slotId }}" shape="rect" fit="cover" src="{{ wish.src }}" placeholder="{{ wish.hint }}" data-zoom="1" data-zoom-caption="{{ wish.hint }}" style="cursor: zoom-in"></image-slot>
                 </span>
               </sc-for>
             </div>
@@ -186,15 +203,15 @@ window.__resources = {
     <section data-reveal="1" style="padding: 40px 22px 0">
       <div style="padding: 30px 24px 32px; background: linear-gradient(180deg, rgba(138,56,47,.05), rgba(138,56,47,.02)); border: 1px solid rgba(138,56,47,.2); border-radius: 3px; text-align: center">
         <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
-          <div style="padding: 18px 0 10px">
+          <div data-sent-card="1" style="padding: 18px 0 10px">
             <div style="font-family: 'Cormorant Garamond', serif; font-size: 40px; color: #8A382F; line-height: 1">✦</div>
             <h3 style="margin: 14px 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 28px; color: #3E342C">Спасибо, записала!</h3>
-            <p style="margin: 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Жду вас. Будет тихо, тепло и с красками.</p>
+            <p style="margin: 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Жду тебя. Будет тихо, тепло и с красками.</p>
           </div>
         </sc-if>
         <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
           <div>
-            <p style="margin: 0 auto 22px; max-width: 24ch; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(20px, 5vw, 25px); line-height: 1.45; color: #5C4F44; text-wrap: pretty">Нажмите — и я буду знать, что вы придёте.</p>
+            <p style="margin: 0 auto 22px; max-width: 24ch; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(20px, 5vw, 25px); line-height: 1.45; color: #5C4F44; text-wrap: pretty">Нажми — и я буду знать, что ты придёшь.</p>
             <button type="button" onClick="{{ submit }}" style="width: 100%; padding: 28px 20px; background: #8A382F; border: 1px solid #8A382F; border-radius: 999px; font-family: 'Manrope', sans-serif; font-size: 14px; letter-spacing: .3em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s" style-hover="background: #742E27">{{ buttonLabel }}</button>
           </div>
         </sc-if>
@@ -203,17 +220,54 @@ window.__resources = {
 
     <section data-reveal="1" style="padding: 62px 30px 0; text-align: center">
       <div style="width: 1px; height: 40px; margin: 0 auto 26px; background: linear-gradient(180deg, rgba(138,56,47,.5), rgba(138,56,47,0))"></div>
-      <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: clamp(26px, 6.4vw, 34px); line-height: 1.35; color: #5C4F44; text-wrap: pretty">До встречи, буду рада вас видеть,<br>Софья</p>
+      <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: clamp(26px, 6.4vw, 34px); line-height: 1.35; color: #5C4F44; text-wrap: pretty">До встречи, буду рада тебя видеть,<br>Софья</p>
     </section>
+
+    <!-- Соня после «Я приду»: живёт вне секций с data-reveal, потому что floatUp
+         вешает на них transform, а он делает из секции контейнер для position: fixed. -->
+    <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+      <!-- Конверт-ответ. Лежит в углу экрана с opacity: 0 и ждёт flyEnvelope():
+           маршрут от карточки к Соне считается по факту, а не в CSS, — иначе он
+           поедет от вёрстки и прокрутки. Цвета те же, что у интро-конверта. -->
+      <div data-flying-envelope="1" style="position: fixed; left: 0; top: 0; z-index: 13; width: 132px; height: 86px; opacity: 0; pointer-events: none; will-change: transform, opacity">
+        <div style="position: absolute; inset: 0; border-radius: 3px; background: linear-gradient(180deg, #E8DCC8, #DCCEB8); box-shadow: 0 12px 28px rgba(96,72,48,.28)"></div>
+        <div style="position: absolute; left: 0; top: 0; width: 100%; height: 58%; background: linear-gradient(180deg, #EADFCB, #E8DCC8); clip-path: polygon(0 0, 100% 0, 50% 100%); -webkit-clip-path: polygon(0 0, 100% 0, 50% 100%); filter: drop-shadow(0 3px 4px rgba(96,72,48,.22))"></div>
+        <img src="./img/seal.png" alt="" style="position: absolute; left: 50%; top: 51%; display: block; width: 36px; height: 36px; margin: -18px 0 0 -18px">
+      </div>
+      <div style="position: fixed; left: 0; right: 0; bottom: 0; z-index: 12; display: flex; justify-content: center; pointer-events: none">
+        <div style="position: relative; width: 100%; max-width: 620px; height: 0">
+          <div data-sonya="1" style="position: absolute; right: 0; bottom: 0; height: min(76vh, 640px); will-change: transform; animation: sonyaRise 2.6s cubic-bezier(.22,.68,.24,1) .35s both, sonyaLeave 1.5s cubic-bezier(.55,.06,.68,.19) 7.2s forwards">
+            <img src="./img/sonya.png" alt="Софья в праздничном колпаке" style="display: block; height: 100%; width: auto; filter: drop-shadow(0 6px 24px rgba(93,74,58,.3))">
+            <div data-sonya-bubble="1" style="position: absolute; right: 64%; top: 2%; padding: 11px 20px 13px; background: #FBF8F2; border: 2px solid #3E342C; border-radius: 20px 20px 20px 5px; box-shadow: 3px 4px 0 rgba(62,52,44,.85); font-family: 'Cormorant Garamond', serif; font-weight: 600; font-style: italic; font-size: clamp(24px, 6.4vw, 32px); line-height: 1; color: #8A382F; white-space: nowrap; transform-origin: 92% 100%; animation: bubblePop .6s cubic-bezier(.2,1.5,.4,1) 4.25s both">Жду!<span style="position: absolute; right: -16px; bottom: 7px; width: 0; height: 0; border-style: solid; border-width: 9px 0 9px 17px; border-color: transparent transparent transparent #3E342C"></span><span style="position: absolute; right: -11px; bottom: 10px; width: 0; height: 0; border-style: solid; border-width: 6px 0 6px 12px; border-color: transparent transparent transparent #FBF8F2"></span></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
 
     </div>
   </div>
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;sheetUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;dollOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Матрёшка первая, Матрёшка вторая, Матрёшка третья, Неваляшка&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;filmOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Амели, Отель «Гранд Будапешт», Тайная жизнь Уолтера Митти, Шоколад, Дьявол носит Prada, Гарри Поттер и философский камень, Римские каникулы&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;drinkOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Белое вино, Красное вино, Сидр, Пиво, Коктейли на джине&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;sheetUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;dollOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Матрёшка первая, Матрёшка вторая, Матрёшка третья, Неваляшка&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;filmOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Красотка, Дьявол носит Prada, Привидение&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;drinkOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Белое вино, Красное вино, Игристое, Сидр, Коктейли на джине, Сок, Морс, Лимонад&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
 class Component extends DCLogic {
-  state = { doll: null, watch: '', drink: '', name: '', sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null, slide: 0 };
+  state = { doll: null, watch: [], drink: [], name: '', sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null, slide: 0 };
+
+  // Персональные страницы: /nastia, /uliya, /ksusha — те же файлы-ссылки на
+  // index.html (см. site/nastia.html), отличается только обращение в шапке.
+  // Имя берём из адреса; ?guest=nastia — та же подстановка при локальном
+  // просмотре одного index.html.
+  guests = {
+    nastia: { name: 'Настя', gen: 'Насти' },
+    uliya:  { name: 'Уля',   gen: 'Ули' },
+    ksusha: { name: 'Ксюша', gen: 'Ксюши' }
+  };
+
+  guest() {
+    const path = location.pathname.split('/').pop().replace(/\.html$/, '');
+    const key = new URLSearchParams(location.search).get('guest') || path;
+    return this.guests[key.toLowerCase()] || null;
+  }
 
   jokes = [
     '— Петька, что такое нюанс?\n— Не знаю, Василий Иванович.\n— Ну вот смотри: и ты голый, и я голый. Но есть нюанс.',
@@ -242,6 +296,8 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
+    const guest = this.guest();
+    if (guest) document.title = 'Приглашение для ' + guest.gen + ' — Софья';
     // Пока играет конверт (envelope-intro.js), появления секций ждут:
     // страница должна ожить ровно в тот момент, когда письмо развернулось.
     if (window.__envelopeIntroActive) {
@@ -249,8 +305,49 @@ class Component extends DCLogic {
     }
     this.scan();
     this.startSlides();
+    this.flyEnvelope();
+    // Пока фото открыто на весь экран (photo-lightbox.js), карусель стоит:
+    // иначе под закрытым оверлеем кадр уедет и вернёшься не к тому фото.
+    this._onZoomOpen = () => this.stopSlides();
+    this._onZoomClose = () => this.startSlides();
+    document.addEventListener('photo-lightbox:open', this._onZoomOpen);
+    document.addEventListener('photo-lightbox:close', this._onZoomClose);
   }
-  componentDidUpdate() { this.scan(); }
+  componentDidUpdate() { this.scan(); this.flyEnvelope(); }
+
+  // Конверт вылетает из карточки «Спасибо, записала!» и уменьшается к Соне.
+  // Начало и конец маршрута замеряем в момент вылета: до него пользователь мог
+  // прокрутить страницу, и заранее посчитанные координаты увели бы конверт мимо.
+  flyEnvelope() {
+    if (!this.state.sent || this._flew) return;
+    this._flew = true;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    setTimeout(() => {
+      const env = document.querySelector('[data-flying-envelope]');
+      const card = document.querySelector('[data-sent-card]');
+      const sonya = document.querySelector('[data-sonya]');
+      if (!env || !card || !sonya || !env.animate) return;
+      const w = env.offsetWidth, h = env.offsetHeight;
+      const from = card.getBoundingClientRect();
+      const to = sonya.getBoundingClientRect();
+      const x0 = from.left + from.width / 2 - w / 2;
+      const y0 = from.top + from.height / 2 - h / 2;
+      // Соня в этот момент ещё договаривает подъём, поэтому целимся не в её
+      // текущий прямоугольник, а в конечный: низ прижат к экрану + translateY(50%).
+      const height = sonya.offsetHeight;
+      const x1 = to.left + to.width * 0.5 - w / 2;
+      const y1 = window.innerHeight - height / 2 + height * 0.3 - h / 2;
+      const xm = (x0 + x1) / 2;
+      const ym = (y0 + y1) / 2 - Math.max(60, Math.abs(y1 - y0) * 0.22);
+      env.animate([
+        { transform: 'translate(' + x0 + 'px, ' + y0 + 'px) scale(.35) rotate(-8deg)', opacity: 0, offset: 0 },
+        { transform: 'translate(' + x0 + 'px, ' + y0 + 'px) scale(1) rotate(-4deg)', opacity: 1, offset: .16 },
+        { transform: 'translate(' + xm + 'px, ' + ym + 'px) scale(.58) rotate(7deg)', opacity: 1, offset: .58 },
+        { transform: 'translate(' + x1 + 'px, ' + y1 + 'px) scale(.08) rotate(16deg)', opacity: 0, offset: 1 }
+      ], { duration: 1600, easing: 'cubic-bezier(.42,.02,.4,1)', fill: 'both' });
+    }, 2600);
+  }
 
   scan() {
     if (window.__envelopeIntroActive) return;
@@ -282,7 +379,9 @@ class Component extends DCLogic {
 
   componentWillUnmount() {
     if (this._io) this._io.disconnect();
-    if (this._slideTimer) clearInterval(this._slideTimer);
+    this.stopSlides();
+    document.removeEventListener('photo-lightbox:open', this._onZoomOpen);
+    document.removeEventListener('photo-lightbox:close', this._onZoomClose);
   }
 
   // Реальный вишлист Сони с ohmywishes.com/users/andrrrrevna. Фото скачаны
@@ -338,15 +437,20 @@ class Component extends DCLogic {
   // Карусель площадки — фото лофта LeView (loft2rent.ru/loft/145854),
   // скачаны в img/loft, чтобы не зависеть от чужого хостинга.
   loftShots() {
-    return ['upld9b2Y1H', 'upldlu8Ryv', 'upldHdDF5t', 'upldtl2wUk', 'upldySB5ap', 'upld3x1ZMu'];
+    return ['upld9b2Y1H', 'upldlu8Ryv', 'upldHdDF5t', 'upldtl2wUk', 'upldySB5ap'];
   }
 
   // Перезапускаем таймер после ручного переключения, иначе следующий кадр
   // может смениться сразу же после клика по точке.
   startSlides() {
-    if (this._slideTimer) clearInterval(this._slideTimer);
+    this.stopSlides();
     const n = this.loftShots().length;
-    this._slideTimer = setInterval(() => this.setState(p => ({ slide: (p.slide + 1) % n })), 2000);
+    this._slideTimer = setInterval(() => this.setState(p => ({ slide: (p.slide + 1) % n })), 3000);
+  }
+
+  stopSlides() {
+    if (this._slideTimer) clearInterval(this._slideTimer);
+    this._slideTimer = null;
   }
 
   dollList() {
@@ -355,13 +459,18 @@ class Component extends DCLogic {
   }
 
   filmList() {
-    const raw = this.props.filmOptions || 'Амели, Отель «Гранд Будапешт», Тайная жизнь Уолтера Митти, Шоколад, Дьявол носит Prada, Гарри Поттер и философский камень, Римские каникулы';
+    const raw = this.props.filmOptions || 'Красотка, Дьявол носит Prada, Привидение';
     return raw.split(',').map(s => s.trim()).filter(Boolean);
   }
 
   drinkList() {
-    const raw = this.props.drinkOptions || 'Белое вино, Красное вино, Сидр, Пиво, Коктейли на джине';
+    const raw = this.props.drinkOptions || 'Белое вино, Красное вино, Игристое, Сидр, Коктейли на джине, Сок, Морс, Лимонад';
     return raw.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  // Фильмы и напитки — множественный выбор: повторный клик снимает отметку.
+  toggle(list, title) {
+    return list.includes(title) ? list.filter(v => v !== title) : list.concat(title);
   }
 
   // Строчка-вариант: точка слева + название. Последняя без нижней линии,
@@ -395,8 +504,8 @@ class Component extends DCLogic {
     const url = this.props.sheetUrl || '';
     const payload = {
       doll: this.state.doll || '',
-      watch: this.state.watch,
-      drink: this.state.drink,
+      watch: this.state.watch.join(', '),
+      drink: this.state.drink.join(', '),
       ts: new Date().toISOString()
     };
     if (url) {
@@ -414,12 +523,18 @@ class Component extends DCLogic {
 
   renderVals() {
     const s = this.state;
+    const guest = this.guest();
     return {
+      hasGuest: !!guest,
+      guestGreeting: guest ? guest.name + ', привет!' : '',
       slides: this.loftShots().map((file, i) => ({
         src: './img/loft/' + file + '.jpg',
         alt: 'Фото площадки ' + (i + 1),
-        style: 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .9s ease' +
-          '; opacity: ' + (s.slide === i ? '1' : '0'),
+        // Кадры лежат стопкой, и прозрачные тоже ловят тапы — иначе по фото
+        // всегда открывался бы последний в разметке, а не видимый.
+        style: 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; transition: opacity .9s ease' +
+          '; opacity: ' + (s.slide === i ? '1' : '0') +
+          '; pointer-events: ' + (s.slide === i ? 'auto' : 'none'),
         dotStyle: 'width: 7px; height: 7px; padding: 0; border-radius: 999px; cursor: pointer; transition: background .3s, border-color .3s' +
           '; border: 1px solid ' + (s.slide === i ? 'rgba(251,248,242,.95)' : 'rgba(251,248,242,.55)') +
           '; background: ' + (s.slide === i ? 'rgba(251,248,242,.95)' : 'transparent'),
@@ -434,15 +549,15 @@ class Component extends DCLogic {
       })),
       films: this.filmList().map((title, i, arr) => ({
         title,
-        rowStyle: this.rowStyle(s.watch === title, i === arr.length - 1),
-        dotStyle: this.dotStyle(s.watch === title),
-        pick: () => this.setState(p => ({ watch: p.watch === title ? '' : title }))
+        rowStyle: this.rowStyle(s.watch.includes(title), i === arr.length - 1),
+        dotStyle: this.dotStyle(s.watch.includes(title)),
+        pick: () => this.setState(p => ({ watch: this.toggle(p.watch, title) }))
       })),
       drinks: this.drinkList().map((title, i, arr) => ({
         title,
-        rowStyle: this.rowStyle(s.drink === title, i === arr.length - 1),
-        dotStyle: this.dotStyle(s.drink === title),
-        pick: () => this.setState(p => ({ drink: p.drink === title ? '' : title }))
+        rowStyle: this.rowStyle(s.drink.includes(title), i === arr.length - 1),
+        dotStyle: this.dotStyle(s.drink.includes(title)),
+        pick: () => this.setState(p => ({ drink: this.toggle(p.drink, title) }))
       })),
       // pace — секунды на одну плитку, а не длительность всей ленты: иначе
       // лента разгоняется каждый раз, когда в вишлисте прибавляется подарок.
