@@ -97,7 +97,7 @@ window.__resources = {
           </div>
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px">
             <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Где</span>
-            <a href="https://yandex.ru/maps/org/levyu/210209306693?si=sofandrrrrevna" target="_blank" rel="noopener" style="font-family: 'Cormorant Garamond', serif; font-size: 19px; text-align: right; padding-bottom: 2px; transition: color .3s, border-color .3s">«LeView», Невский проспект,<br>Казанская 7В <span style="font-family: 'Manrope', sans-serif; font-size: 12px">↗</span></a>
+            <a href="https://yandex.ru/maps/org/levyu/210209306693?si=sofandrrrrevna" target="_blank" rel="noopener" style="font-family: 'Cormorant Garamond', serif; font-size: 19px; text-align: right; padding-bottom: 2px; transition: color .3s, border-color .3s">«LeView»,<br>Казанская 7В <span style="font-family: 'Manrope', sans-serif; font-size: 12px">↗</span></a>
           </div>
         </div>
       </div>
@@ -204,7 +204,7 @@ window.__resources = {
     </section>
 
     <section data-reveal="1" style="padding: 40px 22px 0">
-      <div style="padding: 30px 24px 32px; background: linear-gradient(180deg, rgba(138,56,47,.05), rgba(138,56,47,.02)); border: 1px solid rgba(138,56,47,.2); border-radius: 3px; text-align: center">
+      <div style="padding: 34px 24px 34px; background: linear-gradient(180deg, rgba(138,56,47,.05), rgba(138,56,47,.02)); border: 1px solid rgba(138,56,47,.2); border-radius: 30px; text-align: center">
         <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
           <div data-sent-card="1" style="padding: 18px 0 10px">
             <div style="font-family: 'Cormorant Garamond', serif; font-size: 40px; color: #8A382F; line-height: 1">✦</div>
@@ -255,8 +255,9 @@ class Component extends DCLogic {
   // index.html (см. site/nastia.html), отличается только обращение в шапке.
   // Имя берём из адреса; ?guest=nastia — та же подстановка при локальном
   // просмотре одного index.html.
+  // noAlcohol — в списке напитков остаются только безалкогольные варианты.
   guests = {
-    nastia: { name: 'Настя', gen: 'Насти' },
+    nastia: { name: 'Настя', gen: 'Насти', noAlcohol: true },
     uliya:  { name: 'Уля',   gen: 'Ули' },
     ksusha: { name: 'Ксюша', gen: 'Ксюши' }
   };
@@ -467,9 +468,13 @@ class Component extends DCLogic {
     return raw.split(',').map(s => s.trim()).filter(Boolean);
   }
 
+  alcoholic = ['Белое вино', 'Красное вино', 'Игристое', 'Сидр', 'Коктейли на джине'];
+
   drinkList() {
     const raw = this.props.drinkOptions || 'Белое вино, Красное вино, Игристое, Сидр, Коктейли на джине, Сок, Морс, Лимонад';
-    return raw.split(',').map(s => s.trim()).filter(Boolean);
+    const list = raw.split(',').map(s => s.trim()).filter(Boolean);
+    const guest = this.guest();
+    return guest && guest.noAlcohol ? list.filter(t => !this.alcoholic.includes(t)) : list;
   }
 
   // Фильмы и напитки — множественный выбор: повторный клик снимает отметку.

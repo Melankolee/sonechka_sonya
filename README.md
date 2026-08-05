@@ -40,3 +40,28 @@
 сайта; root у CI намеренно нет, на сервере рядом чужой прод).
 
 Конфиг nginx — [deploy/nginx-sonechka-sonya.conf](deploy/nginx-sonechka-sonya.conf).
+
+## Ответы гостей
+
+Гостья нажимает «Я приду» → `POST /api/answers` → сервис `sonechka-answers`
+(127.0.0.1:8787, [deploy/answers-api.py](deploy/answers-api.py)) дописывает строку
+в `/var/lib/sonechka/answers.jsonl`. Читает их страница
+[sonechka-sonya.ru/sonechka](site/sonechka.html): последний ответ каждой гостьи
+плюс общий подсчёт. Если сети нет, ответ ждёт в `localStorage` и досылается при
+следующем открытии — гостья ошибки не видит.
+
+Установлено на сервере 5 августа 2026. Повторить или обновить (от root):
+
+```
+scp -r deploy root@45.146.131.218:/tmp/sonechka-deploy
+ssh root@45.146.131.218 'cd /tmp/sonechka-deploy && bash answers-setup.sh && bash answers-nginx.sh'
+```
+
+[answers-setup.sh](deploy/answers-setup.sh) ставит сервис и systemd-юнит,
+[answers-nginx.sh](deploy/answers-nginx.sh) — зону `limit_req` в `conf.d/` и
+`location /api/` в конфиг сайта, с бэкапом и откатом, если `nginx -t` не пройдёт.
+Автодеплой этого не делает: он возит только `site/`, а nginx на этом сервере
+правится осознанно — рядом чужой прод `tabletop-broadmap.pro`.
+
+Ручка `GET /api/answers` и страница `/sonechka` открыты без пароля: кто угадает
+адрес — прочитает ответы.
