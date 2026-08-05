@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Ответы гостей — Софья</title>
+<link rel="icon" href="./favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="./img/favicon-32.png">
+<link rel="apple-touch-icon" href="./img/apple-touch-icon.png">
+<link href="./fonts/fonts.css" rel="stylesheet">
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: #EFE9DE; color: #453C33; }
+  * { box-sizing: border-box; }
+  a { color: #8A382F; text-decoration: none; border-bottom: 1px solid rgba(138,56,47,.35); }
+  .wrap { min-height: 100vh; display: flex; justify-content: center; padding: 0 0 80px; }
+  .sheet { width: 100%; max-width: 620px; background: linear-gradient(180deg, #F5F1E9 0%, #EFE9DE 38%, #EDE6DA 100%); box-shadow: 0 0 80px rgba(93,74,58,.09); padding: 0 22px; }
+  .head { padding: 72px 8px 0; text-align: center; }
+  .kicker { font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .36em; text-transform: uppercase; color: rgba(138,56,47,.75); }
+  h1 { margin: 18px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(32px, 8.4vw, 46px); line-height: 1.1; color: #3E342C; }
+  h1 em { font-style: italic; color: #8A382F; }
+  .sub { margin: 14px 0 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F; }
+  .rule { width: 1px; height: 46px; margin: 30px auto 26px; background: linear-gradient(180deg, rgba(138,56,47,.5), rgba(138,56,47,0)); }
+  .card { margin-top: 14px; padding: 26px 24px 28px; background: rgba(255,253,248,.72); border: 1px solid rgba(138,56,47,.16); border-radius: 3px; }
+  .card.muted { background: transparent; border-style: dashed; border-color: rgba(138,56,47,.2); }
+  .card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+  .guest { margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C; }
+  .when { font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: rgba(69,60,51,.45); text-align: right; white-space: nowrap; }
+  .rows { margin-top: 16px; display: grid; gap: 12px; }
+  .row { display: flex; align-items: baseline; gap: 14px; padding-bottom: 11px; border-bottom: 1px solid rgba(138,56,47,.14); }
+  .row:last-child { border-bottom: none; padding-bottom: 0; }
+  .label { flex: none; width: 92px; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: rgba(69,60,51,.5); }
+  .value { flex: 1; font-family: 'Cormorant Garamond', serif; font-size: 20px; line-height: 1.4; color: #3E342C; }
+  .value.empty { font-style: italic; color: rgba(69,60,51,.4); }
+  .note { margin: 14px 0 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; color: rgba(69,60,51,.5); }
+  .waiting { margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 21px; color: rgba(69,60,51,.45); }
+  .tally { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-bottom: 11px; border-bottom: 1px solid rgba(138,56,47,.14); font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #3E342C; }
+  .tally:last-child { border-bottom: none; padding-bottom: 0; }
+  .count { font-family: 'Manrope', sans-serif; font-size: 12px; letter-spacing: .1em; color: #8A382F; white-space: nowrap; }
+  .foot { margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 16px; }
+  button { font: inherit; color: inherit; padding: 13px 26px; border-radius: 999px; background: transparent; border: 1px solid rgba(138,56,47,.35); font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #8A382F; cursor: pointer; transition: background .25s, color .25s; }
+  button:hover { background: #8A382F; border-color: #8A382F; color: #FBF8F2; }
+  .status { font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; color: rgba(69,60,51,.5); }
+  .error { color: #8A382F; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sheet">
+    <div class="head">
+      <div class="kicker">только для Сони</div>
+      <h1>Кто что<br><em>выбрал</em></h1>
+      <p class="sub" id="sub">Загружаю ответы…</p>
+    </div>
+    <div class="rule"></div>
+    <div id="guests"></div>
+    <div id="summary"></div>
+    <div class="foot">
+      <button type="button" id="refresh">Обновить</button>
+      <span class="status" id="status"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// Список тот же, что в index.html (поле guests компонента): по нему видно не
+// только пришедшие ответы, но и от кого ещё ждём.
+var GUESTS = [
+  { key: 'nastia', name: 'Настя' },
+  { key: 'uliya',  name: 'Уля' },
+  { key: 'ksusha', name: 'Ксюша' }
+];
+
+var el = function (tag, cls, text) {
+  var node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text != null) node.textContent = text; // только textContent: ответы приходят снаружи
+  return node;
+};
+
+function fmtTime(iso) {
+  var d = new Date(iso);
+  if (isNaN(d)) return '';
+  return d.toLocaleString('ru-RU', {
+    timeZone: 'Europe/Moscow', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function plural(n, one, few, many) {
+  var mod10 = n % 10, mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
+}
+
+// Ответы хранятся append-only: гость мог нажать «Я приду» несколько раз.
+// Показываем последний, число попыток оставляем подписью.
+function latestByGuest(answers) {
+  var byKey = {};
+  answers.forEach(function (a) {
+    var key = a.guest || 'other:' + (a.name || '') ;
+    var prev = byKey[key];
+    if (!prev) byKey[key] = { last: a, count: 1 };
+    else {
+      prev.count += 1;
+      if (String(a.ts) >= String(prev.last.ts)) prev.last = a; // ISO-время сравнимо как строка
+    }
+  });
+  return byKey;
+}
+
+function guestTitle(key, answer) {
+  var known = GUESTS.filter(function (g) { return g.key === key; })[0];
+  if (known) return known.name;
+  if (answer && answer.name) return answer.name;
+  return 'Гость без имени';
+}
+
+function renderRow(label, value) {
+  var row = el('div', 'row');
+  row.appendChild(el('span', 'label', label));
+  var filled = Array.isArray(value) ? value.length > 0 : !!value;
+  row.appendChild(el('span', 'value' + (filled ? '' : ' empty'),
+    filled ? (Array.isArray(value) ? value.join(', ') : value) : 'не выбрала'));
+  return row;
+}
+
+function renderGuests(byKey) {
+  var box = document.getElementById('guests');
+  box.textContent = '';
+  var seen = {};
+  var order = GUESTS.map(function (g) { return g.key; });
+  // Сначала знакомые гости — в порядке списка, потом ответы с чужих адресов.
+  Object.keys(byKey).forEach(function (k) { if (order.indexOf(k) === -1) order.push(k); });
+
+  order.forEach(function (key) {
+    if (seen[key]) return;
+    seen[key] = true;
+    var entry = byKey[key];
+    var card = el('div', 'card' + (entry ? '' : ' muted'));
+    var top = el('div', 'card-top');
+    top.appendChild(el('h2', 'guest', guestTitle(key, entry && entry.last)));
+    if (entry) top.appendChild(el('span', 'when', fmtTime(entry.last.ts)));
+    card.appendChild(top);
+
+    if (!entry) {
+      card.appendChild(el('p', 'waiting', 'ответа пока нет'));
+    } else {
+      var rows = el('div', 'rows');
+      rows.appendChild(renderRow('Матрёшка', entry.last.doll));
+      rows.appendChild(renderRow('Смотрим', entry.last.watch));
+      rows.appendChild(renderRow('Пьём', entry.last.drink));
+      card.appendChild(rows);
+      if (entry.count > 1) {
+        card.appendChild(el('p', 'note', 'отправляла ' + entry.count + ' ' +
+          plural(entry.count, 'раз', 'раза', 'раз') + ', показан последний ответ'));
+      }
+    }
+    box.appendChild(card);
+  });
+}
+
+function tally(entries, field) {
+  var counts = {};
+  entries.forEach(function (e) {
+    var value = e.last[field];
+    var list = Array.isArray(value) ? value : (value ? [value] : []);
+    list.forEach(function (v) { counts[v] = (counts[v] || 0) + 1; });
+  });
+  return Object.keys(counts)
+    .map(function (title) { return { title: title, count: counts[title] }; })
+    .sort(function (a, b) { return b.count - a.count || a.title.localeCompare(b.title, 'ru'); });
+}
+
+function renderSummary(byKey) {
+  var box = document.getElementById('summary');
+  box.textContent = '';
+  var entries = Object.keys(byKey).map(function (k) { return byKey[k]; });
+  if (!entries.length) return;
+
+  var card = el('div', 'card');
+  card.appendChild(el('h2', 'guest', 'Итого'));
+  [
+    { label: 'Матрёшки', field: 'doll' },
+    { label: 'Фильмы', field: 'watch' },
+    { label: 'Напитки', field: 'drink' }
+  ].forEach(function (group) {
+    var lines = tally(entries, group.field);
+    if (!lines.length) return;
+    var rows = el('div', 'rows');
+    rows.style.marginTop = '20px';
+    rows.appendChild(el('div', 'label', group.label));
+    lines.forEach(function (line) {
+      var row = el('div', 'tally');
+      row.appendChild(el('span', null, line.title));
+      row.appendChild(el('span', 'count', '×' + line.count));
+      rows.appendChild(row);
+    });
+    card.appendChild(rows);
+  });
+  box.appendChild(card);
+}
+
+var status = document.getElementById('status');
+
+function load() {
+  status.className = 'status';
+  status.textContent = 'обновляю…';
+  fetch('/api/answers', { cache: 'no-store' })
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function (data) {
+      var answers = (data && data.answers) || [];
+      var byKey = latestByGuest(answers);
+      var count = Object.keys(byKey).length;
+      document.getElementById('sub').textContent = count
+        ? 'Ответили: ' + count + ' из ' + Math.max(count, GUESTS.length)
+        : 'Пока никто не ответил.';
+      renderGuests(byKey);
+      renderSummary(byKey);
+      status.textContent = 'обновлено в ' + new Date().toLocaleTimeString('ru-RU',
+        { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit' });
+    })
+    .catch(function (e) {
+      status.className = 'status error';
+      status.textContent = 'не получилось загрузить: ' + e.message;
+      document.getElementById('sub').textContent = 'Ответы лежат на сервере — проверь, что сервис отвечает.';
+    });
+}
+
+document.getElementById('refresh').addEventListener('click', load);
+// Возвращаешься на вкладку — видишь свежие ответы, без ручного обновления.
+document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+load();
+</script>
+</body>
+</html>

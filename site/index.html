@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Приглашение на День Рождения — Софья</title>
+<link rel="icon" href="./favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="./img/favicon-32.png">
+<link rel="apple-touch-icon" href="./img/apple-touch-icon.png">
 <script>
 // Локальные копии React/ReactDOM вместо unpkg.com: support.js берёт URL
 // из этой карты (см. cdnScriptFor), поэтому сам support.js менять не нужно.
@@ -86,15 +89,15 @@ window.__resources = {
         <div style="display: grid; grid-template-columns: 1fr; gap: 14px; width: 100%; max-width: 420px; font-family: 'Manrope', sans-serif">
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(138,56,47,.14)">
             <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Когда</span>
-            <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #3E342C">суббота, 00 месяца</span>
+            <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #3E342C">суббота, 5 сентября</span>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(138,56,47,.14)">
             <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Во сколько</span>
-            <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #3E342C">00:00</span>
+            <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #3E342C">18:00</span>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px">
             <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Где</span>
-            <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #3E342C; text-align: right">адрес, кв. 00</span>
+            <a href="https://yandex.ru/maps/org/levyu/210209306693?si=sofandrrrrevna" target="_blank" rel="noopener" style="font-family: 'Cormorant Garamond', serif; font-size: 19px; text-align: right; padding-bottom: 2px; transition: color .3s, border-color .3s">«LeView», Невский проспект,<br>Казанская 7В <span style="font-family: 'Manrope', sans-serif; font-size: 12px">↗</span></a>
           </div>
         </div>
       </div>
@@ -121,7 +124,7 @@ window.__resources = {
     <section data-reveal="1" style="padding: 78px 30px 0; text-align: center">
       <div style="width: 1px; height: 46px; margin: 0 auto 28px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
       <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: clamp(27px, 7.4vw, 38px); color: #3E342C">Выбери, что тебе<br>больше нравится</h2>
-      <p style="margin: 14px auto 0; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Три маленьких вопроса, чтобы вечер был именно твоим.</p>
+      <p style="margin: 14px auto 0; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Три маленьких вопроса, чтобы все прошло великолепно!</p>
     </section>
 
     <section data-reveal="1" style="padding: 46px 22px 0">
@@ -218,11 +221,6 @@ window.__resources = {
       </div>
     </section>
 
-    <section data-reveal="1" style="padding: 62px 30px 0; text-align: center">
-      <div style="width: 1px; height: 40px; margin: 0 auto 26px; background: linear-gradient(180deg, rgba(138,56,47,.5), rgba(138,56,47,0))"></div>
-      <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: clamp(26px, 6.4vw, 34px); line-height: 1.35; color: #5C4F44; text-wrap: pretty">До встречи, буду рада тебя видеть,<br>Софья</p>
-    </section>
-
     <!-- Соня после «Я приду»: живёт вне секций с data-reveal, потому что floatUp
          вешает на них transform, а он делает из секции контейнер для position: fixed. -->
     <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
@@ -249,7 +247,7 @@ window.__resources = {
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;sheetUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;dollOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Матрёшка первая, Матрёшка вторая, Матрёшка третья, Неваляшка&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;filmOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Красотка, Дьявол носит Prada, Привидение&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;drinkOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Белое вино, Красное вино, Игристое, Сидр, Коктейли на джине, Сок, Морс, Лимонад&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;answersUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;/api/answers&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;dollOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Матрёшка первая, Матрёшка вторая, Матрёшка третья, Неваляшка&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;filmOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Красотка, Дьявол носит Prada, Привидение&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;drinkOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Белое вино, Красное вино, Игристое, Сидр, Коктейли на джине, Сок, Морс, Лимонад&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
 class Component extends DCLogic {
   state = { doll: null, watch: [], drink: [], name: '', sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null, slide: 0 };
 
@@ -263,10 +261,14 @@ class Component extends DCLogic {
     ksusha: { name: 'Ксюша', gen: 'Ксюши' }
   };
 
-  guest() {
+  guestKey() {
     const path = location.pathname.split('/').pop().replace(/\.html$/, '');
     const key = new URLSearchParams(location.search).get('guest') || path;
-    return this.guests[key.toLowerCase()] || null;
+    return this.guests[key.toLowerCase()] ? key.toLowerCase() : '';
+  }
+
+  guest() {
+    return this.guests[this.guestKey()] || null;
   }
 
   jokes = [
@@ -312,6 +314,8 @@ class Component extends DCLogic {
     this._onZoomClose = () => this.startSlides();
     document.addEventListener('photo-lightbox:open', this._onZoomOpen);
     document.addEventListener('photo-lightbox:close', this._onZoomClose);
+    // Ответ, не доехавший в прошлый раз (не было сети), досылаем молча.
+    this.flushStash();
   }
   componentDidUpdate() { this.scan(); this.flyEnvelope(); }
 
@@ -498,27 +502,54 @@ class Component extends DCLogic {
       '; transition: opacity .25s, transform .25s, box-shadow .25s';
   }
 
+  // Ответы уезжают в свой сервис на сервере (deploy/answers-api.py), оттуда их
+  // читает страница /sonechka. Время проставляет сервер: на телефоне гостя часы
+  // могут быть какими угодно, а порядок ответов хочется настоящий.
   async submit() {
     if (this.state.sending) return;
     this.setState({ sending: true, error: '' });
-    const url = this.props.sheetUrl || '';
+    const guest = this.guest();
     const payload = {
+      guest: this.guestKey() || '',
+      name: guest ? guest.name : this.state.name,
       doll: this.state.doll || '',
-      watch: this.state.watch.join(', '),
-      drink: this.state.drink.join(', '),
-      ts: new Date().toISOString()
+      watch: this.state.watch,
+      drink: this.state.drink
     };
-    if (url) {
-      try {
-        await fetch(url, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        });
-      } catch (e) { /* no-cors: ответ не читаем, ошибки сети игнорируем */ }
+    try {
+      const res = await fetch(this.props.answersUrl || '/api/answers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+    } catch (e) {
+      // Праздник важнее доставки: гость всё равно видит «записала», а ответ
+      // ждёт в localStorage — страница /sonechka о нём не узнает, но и вечер
+      // не начнётся с ошибки на экране. Досыл — при следующем открытии.
+      this.stash(payload);
     }
     this.setState({ sending: false, sent: true });
+  }
+
+  // Отложенный ответ: кладём один, последний, — переизбирать матрёшку можно
+  // сколько угодно, а до сервера должен доехать финальный выбор.
+  stash(payload) {
+    try { localStorage.setItem('sonechka:pending', JSON.stringify(payload)); } catch (e) {}
+  }
+
+  async flushStash() {
+    let raw = null;
+    try { raw = localStorage.getItem('sonechka:pending'); } catch (e) { return; }
+    if (!raw) return;
+    try {
+      const res = await fetch(this.props.answersUrl || '/api/answers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: raw
+      });
+      if (res.ok) localStorage.removeItem('sonechka:pending');
+    } catch (e) { /* сети всё ещё нет — попробуем в следующий раз */ }
   }
 
   renderVals() {
