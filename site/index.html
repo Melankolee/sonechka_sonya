@@ -63,7 +63,7 @@ window.__resources = {
       </div>
 
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: 18px; align-items: center; padding: 26px 30px 6px; text-align: center">
-        <p style="margin: 0; max-width: 34ch; font-family: 'Cormorant Garamond', serif; font-size: 20px; line-height: 1.55; font-style: italic; color: #6A5C4F; text-wrap: pretty">Тихий вечер, смех краски и хорошее настроение! Буду очень рада видеть вас!</p>
+        <p style="margin: 0; max-width: 34ch; font-family: 'Cormorant Garamond', serif; font-size: 20px; line-height: 1.55; font-style: italic; color: #6A5C4F; text-wrap: pretty">Тихий вечер, смех, краски и хорошее настроение! Буду очень рада видеть вас!</p>
         <div style="width: 44px; height: 1px; background: #8A382F; opacity: .45"></div>
         <div style="display: grid; grid-template-columns: 1fr; gap: 14px; width: 100%; max-width: 420px; font-family: 'Manrope', sans-serif">
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(138,56,47,.14)">
@@ -90,7 +90,7 @@ window.__resources = {
       <div style="position: relative; width: 100%; aspect-ratio: 4 / 3; margin-top: 34px; overflow: hidden; border-radius: 2px">
         <image-slot id="inv-craft" shape="rect" fit="cover" placeholder="матрёшки, краски, стол"></image-slot>
       </div>
-      <p style="margin: 16px 0 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; letter-spacing: .04em; color: rgba(69,60,51,.5)">Всё для рисования будет — приходите просто собой.</p>
+      <p style="margin: 16px 0 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; letter-spacing: .04em; color: rgba(69,60,51,.5)">Всё для рисования будет — просто приходите.</p>
     </section>
 
     <section data-reveal="1" style="padding: 78px 30px 0; text-align: center">
@@ -124,8 +124,15 @@ window.__resources = {
           <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">02</span>
           <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Что смотрим?</h3>
         </div>
-        <p style="margin: 0 0 18px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Фильм фоном, пока красим. Что предложите?</p>
-        <textarea rows="2" value="{{ watch }}" onChange="{{ onWatch }}" placeholder="например, что-то тёплое и не страшное…" style="width: 100%; resize: none; padding: 14px 16px; background: transparent; border: none; border-bottom: 1px solid rgba(138,56,47,.28); font-family: 'Cormorant Garamond', serif; font-size: 19px; line-height: 1.5; color: #3E342C" style-focus="border-bottom-color: #8A382F"></textarea>
+        <p style="margin: 0 0 10px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Фильм фоном, пока красим. Что включаем?</p>
+        <div style="max-width: 460px; margin: 0 auto">
+          <sc-for list="{{ films }}" as="film" hint-placeholder-count="7">
+            <button type="button" onClick="{{ film.pick }}" style="{{ film.rowStyle }}">
+              <span style="{{ film.dotStyle }}"></span>
+              <span style="flex: 1; text-align: left">{{ film.title }}</span>
+            </button>
+          </sc-for>
+        </div>
       </div>
     </section>
 
@@ -135,14 +142,21 @@ window.__resources = {
           <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">03</span>
           <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Что пьём?</h3>
         </div>
-        <p style="margin: 0 0 18px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Что налить именно вам — от глинтвейна до какао.</p>
-        <textarea rows="2" value="{{ drink }}" onChange="{{ onDrink }}" placeholder="напишите свой напиток…" style="width: 100%; resize: none; padding: 14px 16px; background: transparent; border: none; border-bottom: 1px solid rgba(138,56,47,.28); font-family: 'Cormorant Garamond', serif; font-size: 19px; line-height: 1.5; color: #3E342C" style-focus="border-bottom-color: #8A382F"></textarea>
+        <p style="margin: 0 0 10px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Что налить именно вам.</p>
+        <div style="max-width: 460px; margin: 0 auto">
+          <sc-for list="{{ drinks }}" as="drink" hint-placeholder-count="5">
+            <button type="button" onClick="{{ drink.pick }}" style="{{ drink.rowStyle }}">
+              <span style="{{ drink.dotStyle }}"></span>
+              <span style="flex: 1; text-align: left">{{ drink.title }}</span>
+            </button>
+          </sc-for>
+        </div>
       </div>
     </section>
 
     <section data-reveal="1" style="padding: 62px 22px 0; text-align: center">
       <div style="width: 1px; height: 46px; margin: 0 auto 26px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
-      <h2 style="margin: 0 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: clamp(26px, 7vw, 34px); color: #3E342C">Если захочется подарка</h2>
+      <h2 style="margin: 0 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: clamp(26px, 7vw, 34px); color: #3E342C">Что вы можете подарить</h2>
       <p style="margin: 0 auto; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Совсем не обязательно — но вдруг пригодится.</p>
       <div style="margin: 24px 0 0; position: relative; overflow: hidden; border: 1px solid rgba(138,56,47,.22); border-radius: 30px; background: #E7DFD2; display: grid; grid-template-rows: 1fr 1fr 1fr; gap: 8px; padding: 8px">
         <sc-for list="{{ wishRows }}" as="row" hint-placeholder-count="3">
@@ -173,7 +187,7 @@ window.__resources = {
         </sc-if>
         <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
           <div>
-            <p style="margin: 0 0 20px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Нажмите — и я буду знать, что вы придёте.</p>
+            <p style="margin: 0 auto 22px; max-width: 24ch; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(20px, 5vw, 25px); line-height: 1.45; color: #5C4F44; text-wrap: pretty">Нажмите — и я буду знать, что вы придёте.</p>
             <button type="button" onClick="{{ submit }}" style="width: 100%; padding: 28px 20px; background: #8A382F; border: 1px solid #8A382F; border-radius: 999px; font-family: 'Manrope', sans-serif; font-size: 14px; letter-spacing: .3em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s" style-hover="background: #742E27">{{ buttonLabel }}</button>
           </div>
         </sc-if>
@@ -190,7 +204,7 @@ window.__resources = {
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;sheetUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;dollOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Матрёшка первая, Матрёшка вторая, Матрёшка третья, Неваляшка&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;sheetUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;dollOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Матрёшка первая, Матрёшка вторая, Матрёшка третья, Неваляшка&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;filmOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Амели, Отель «Гранд Будапешт», Тайная жизнь Уолтера Митти, Шоколад, Дьявол носит Prada, Гарри Поттер и философский камень, Римские каникулы&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;drinkOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Белое вино, Красное вино, Сидр, Пиво, Коктейли на джине&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
 class Component extends DCLogic {
   state = { doll: null, watch: '', drink: '', name: '', sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null };
 
@@ -291,6 +305,33 @@ class Component extends DCLogic {
     return raw.split(',').map(s => s.trim()).filter(Boolean);
   }
 
+  filmList() {
+    const raw = this.props.filmOptions || 'Амели, Отель «Гранд Будапешт», Тайная жизнь Уолтера Митти, Шоколад, Дьявол носит Prada, Гарри Поттер и философский камень, Римские каникулы';
+    return raw.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  drinkList() {
+    const raw = this.props.drinkOptions || 'Белое вино, Красное вино, Сидр, Пиво, Коктейли на джине';
+    return raw.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  // Строчка-вариант: точка слева + название. Последняя без нижней линии,
+  // чтобы список не упирался в лишнюю черту перед краем карточки.
+  rowStyle(active, last) {
+    return 'display: flex; align-items: center; gap: 14px; width: 100%; padding: 13px 4px; background: transparent; border: none; cursor: pointer; text-align: left' +
+      '; border-bottom: ' + (last ? 'none' : '1px solid rgba(138,56,47,.14)') +
+      "; font-family: 'Cormorant Garamond', serif; font-size: 20px; line-height: 1.35" +
+      '; color: ' + (active ? '#8A382F' : '#3E342C') +
+      '; font-style: ' + (active ? 'italic' : 'normal') +
+      '; transition: color .25s';
+  }
+
+  dotStyle(active) {
+    return 'flex: none; width: 10px; height: 10px; border-radius: 999px; transition: background .25s, border-color .25s' +
+      '; border: 1px solid ' + (active ? '#8A382F' : 'rgba(138,56,47,.4)') +
+      '; background: ' + (active ? '#8A382F' : 'transparent');
+  }
+
   cardStyle(active) {
     return 'cursor: pointer; background: transparent; border: none; border-radius: 20px; overflow: hidden; padding: 0; color: #5C5046' +
       '; opacity: ' + (active ? '1' : '.72') +
@@ -332,6 +373,18 @@ class Component extends DCLogic {
         cardStyle: this.cardStyle(s.doll === name),
         pick: () => this.setState({ doll: name })
       })),
+      films: this.filmList().map((title, i, arr) => ({
+        title,
+        rowStyle: this.rowStyle(s.watch === title, i === arr.length - 1),
+        dotStyle: this.dotStyle(s.watch === title),
+        pick: () => this.setState(p => ({ watch: p.watch === title ? '' : title }))
+      })),
+      drinks: this.drinkList().map((title, i, arr) => ({
+        title,
+        rowStyle: this.rowStyle(s.drink === title, i === arr.length - 1),
+        dotStyle: this.dotStyle(s.drink === title),
+        pick: () => this.setState(p => ({ drink: p.drink === title ? '' : title }))
+      })),
       wishRows: [
         { anim: 'wishDriftL 46s linear infinite' },
         { anim: 'wishDriftR 58s linear infinite' },
@@ -353,11 +406,7 @@ class Component extends DCLogic {
       joke: this.jokes[s.jokeIndex == null ? 0 : s.jokeIndex],
       toggleHelp: () => this.setState(p => (p.helpOpen ? { helpOpen: false } : { helpOpen: true, jokeIndex: this.pickJoke() })),
       nextJoke: () => this.setState({ jokeIndex: this.pickJoke() }),
-      watch: s.watch,
-      drink: s.drink,
       name: s.name,
-      onWatch: e => this.setState({ watch: e.target.value }),
-      onDrink: e => this.setState({ drink: e.target.value }),
       onName: e => this.setState({ name: e.target.value, error: '' }),
       submit: () => this.submit(),
       buttonLabel: s.sending ? 'Отправляю…' : 'Я приду',
