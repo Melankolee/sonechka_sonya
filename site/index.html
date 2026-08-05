@@ -55,7 +55,9 @@ window.__resources = {
   }
 </style>
 </helmet>
-<div style="min-height: 100vh; background: #EFE9DE; display: flex; justify-content: center; padding: 0 0 96px">
+<!-- Без нижнего отступа: карточка заканчивается ровно кромкой накрытого стола из
+     фона, а лишняя полоса бумаги под рисунком выглядит как пустой хвост страницы. -->
+<div style="min-height: 100vh; background: #EFE9DE; display: flex; justify-content: center">
   <div style="width: 100%; max-width: 620px; position: relative; background: #EFE9DE; box-shadow: 0 0 80px rgba(93,74,58,.09)">
     <!-- Фон карточки: три слоя тиснёной бумаги. Середина — паттерн, он повторяется
          по вертикали; картинка склеена из оригинала и его зеркального отражения,
@@ -98,7 +100,7 @@ window.__resources = {
       </div>
 
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: 18px; align-items: center; padding: 26px 30px 6px; text-align: center">
-        <p style="margin: 0; max-width: 34ch; font-family: 'Cormorant Garamond', serif; font-size: 20px; line-height: 1.55; font-style: italic; color: #6A5C4F; text-wrap: pretty">Тихий вечер, смех, краски и хорошее настроение! Буду очень рада видеть тебя!</p>
+        <p style="margin: 0; max-width: 34ch; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 20px; line-height: 1.55; font-style: italic; color: #6A5C4F; text-wrap: pretty">Тихий вечер, смех, краски и хорошее настроение! Буду очень рада видеть тебя!</p>
         <div style="width: 44px; height: 1px; background: #8A382F; opacity: .45"></div>
         <div style="display: grid; grid-template-columns: 1fr; gap: 14px; width: 100%; max-width: 420px; font-family: 'Manrope', sans-serif">
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(138,56,47,.14)">
@@ -132,14 +134,14 @@ window.__resources = {
           </sc-for>
         </div>
       </div>
-      <p style="margin: 22px auto 0; max-width: 30ch; font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 20px; line-height: 1.45; font-style: italic; color: #8A382F; text-wrap: pretty">Тебя ждут напитки, закуски и вкусный торт!</p>
-      <p style="margin: 12px 0 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; letter-spacing: .04em; color: rgba(69,60,51,.5)">Всё для рисования будет — просто приходи.</p>
+      <p style="margin: 22px auto 0; max-width: 18ch; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 40px; line-height: 1.25; font-style: italic; color: #8A382F; text-wrap: pretty">Тебя ждут напитки, закуски и вкусный торт!</p>
+      <p style="margin: 12px 0 0; font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: .04em; color: rgba(69,60,51,.5)">Всё для рисования будет — просто приходи.</p>
     </section>
 
     <section data-reveal="1" style="padding: 78px 30px 0; text-align: center">
       <div style="width: 1px; height: 46px; margin: 0 auto 28px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
-      <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: clamp(27px, 7.4vw, 38px); color: #3E342C">Выбери, что тебе<br>больше нравится</h2>
-      <p style="margin: 14px auto 0; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 500; font-size: 14px; line-height: 1.7; color: #3E342C">Три маленьких вопроса, чтобы все прошло великолепно!</p>
+      <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-style: italic; font-size: clamp(27px, 7.4vw, 38px); color: #3E342C">Выбери, что тебе<br>больше нравится</h2>
+      <p style="margin: 14px auto 0; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 14px; line-height: 1.7; color: #3E342C">Три маленьких вопроса, чтобы все прошло великолепно!</p>
     </section>
 
     <section data-reveal="1" style="padding: 46px 22px 0">
@@ -199,7 +201,7 @@ window.__resources = {
 
     <section data-reveal="1" style="padding: 62px 22px 0; text-align: center">
       <div style="width: 1px; height: 46px; margin: 0 auto 26px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
-      <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: clamp(26px, 7vw, 34px); color: #3E342C">Что ты можешь подарить</h2>
+      <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-style: italic; font-size: clamp(26px, 7vw, 34px); color: #3E342C">Что ты можешь подарить</h2>
       <div style="margin: 24px 0 0; position: relative; overflow: hidden; border: 1px solid rgba(138,56,47,.22); border-radius: 30px; background: #E7DFD2; display: grid; grid-template-rows: 1fr 1fr 1fr; gap: 8px; padding: 8px">
         <sc-for list="{{ wishRows }}" as="row" hint-placeholder-count="3">
           <div style="position: relative; overflow: hidden; height: 116px; border-radius: 18px; mask-image: linear-gradient(90deg, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%); -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)">
