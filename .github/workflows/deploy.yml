@@ -1,12 +1,14 @@
 name: Deploy site
 
-# Заливает содержимое site/ в /var/www/sonechka-sonya.ru на сервере.
+# Заливает содержимое site/ в /var/www/sonechka-sonya.ru и, если менялся
+# deploy/answers-api.py, обновляет сервис ответов.
 # Секреты репозитория: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS.
 on:
   push:
     branches: [main]
     paths:
       - 'site/**'
+      - 'deploy/answers-api.py'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
@@ -35,6 +37,20 @@ jobs:
             -e 'ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes' \
             site/ \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/sonechka-sonya.ru/"
+
+      # Сервис ответов. Пользователь deploy не root: он кладёт файл в свой
+      # staging и зовёт один разрешённый ему скрипт (deploy/ci-api-access.sh
+      # ставит и скрипт, и правило sudoers). Обновлятор сам сверяет файл с
+      # текущим и молча выходит, если правок не было, — лишних перезапусков
+      # сервиса на каждый деплой картинок не будет.
+      - name: Обновить сервис ответов
+        run: |
+          rsync -ptz -e 'ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes' \
+            deploy/answers-api.py \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:api-staging/answers-api.py"
+          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            'sudo /usr/local/sbin/sonechka-update-api'
 
       # Пока зона sonechka-sonya.ru не создана, домен не резолвится — поэтому
       # проверка информационная и не роняет деплой.

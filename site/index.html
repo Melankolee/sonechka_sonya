@@ -56,7 +56,17 @@ window.__resources = {
 </style>
 </helmet>
 <div style="min-height: 100vh; background: #EFE9DE; display: flex; justify-content: center; padding: 0 0 96px">
-  <div style="width: 100%; max-width: 620px; position: relative; background: linear-gradient(180deg, #F5F1E9 0%, #EFE9DE 38%, #EDE6DA 100%); box-shadow: 0 0 80px rgba(93,74,58,.09)">
+  <div style="width: 100%; max-width: 620px; position: relative; background: #EFE9DE; box-shadow: 0 0 80px rgba(93,74,58,.09)">
+    <!-- Фон карточки: три слоя тиснёной бумаги. Середина — паттерн, он повторяется
+         по вертикали; картинка склеена из оригинала и его зеркального отражения,
+         поэтому стык при repeat-y не виден. Роза сверху и накрытый стол снизу лежат
+         поверх паттерна и растворяются в нём градиентной маской, чтобы не было
+         границы между разными кадрами одной и той же бумаги. -->
+    <div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none">
+      <div style="position: absolute; inset: 0; background: url('./img/bg/pattern.jpg') top center / 100% auto repeat-y"></div>
+      <div style="position: absolute; left: 0; right: 0; top: 0; aspect-ratio: 941 / 1672; background: url('./img/bg/top.jpg') top center / 100% auto no-repeat; -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%); mask-image: linear-gradient(180deg, #000 58%, transparent 100%)"></div>
+      <div style="position: absolute; left: 0; right: 0; bottom: 0; aspect-ratio: 941 / 1672; background: url('./img/bg/bottom.jpg') bottom center / 100% auto no-repeat; -webkit-mask-image: linear-gradient(0deg, #000 58%, transparent 100%); mask-image: linear-gradient(0deg, #000 58%, transparent 100%)"></div>
+    </div>
     <div style="position: relative; z-index: 1">
 
     <div style="position: fixed; top: 18px; right: 18px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 10px">
@@ -75,7 +85,11 @@ window.__resources = {
 
     <section style="position: relative; padding: 0 0 4px">
       <div style="position: relative; width: 100%">
-        <div data-reveal="1" style="padding: 96px 30px 6px; text-align: center">
+        <!-- Верхний отступ отдан розе из фона: она занимает примерно 24% высоты
+             своей картинки, а та выводится во всю ширину карточки (соотношение
+             941:1672). Отсюда .45 от ширины — заголовок начинается под розой на
+             любом экране, а не только на телефоне. -->
+        <div data-reveal="1" style="padding: calc(min(100vw, 620px) * .45) 30px 6px; text-align: center">
           <sc-if value="{{ hasGuest }}" hint-placeholder-val="{{ true }}">
             <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #8A382F">{{ guestGreeting }}</p>
           </sc-if>
@@ -97,7 +111,7 @@ window.__resources = {
           </div>
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px">
             <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Где</span>
-            <a href="https://yandex.ru/maps/org/levyu/210209306693?si=sofandrrrrevna" target="_blank" rel="noopener" style="font-family: 'Cormorant Garamond', serif; font-size: 19px; text-align: right; white-space: nowrap; padding-bottom: 2px; transition: color .3s, border-color .3s">«LeView», Казанская 7В <span style="font-family: 'Manrope', sans-serif; font-size: 12px">↗</span></a>
+            <a href="https://yandex.ru/maps/org/levyu/210209306693?si=sofandrrrrevna" target="_blank" rel="noopener" style="font-family: 'Cormorant Garamond', serif; font-size: 19px; text-align: right; white-space: nowrap; padding-bottom: 2px; transition: color .3s, border-color .3s">«LeView», Казанская 7В</a>
           </div>
         </div>
       </div>

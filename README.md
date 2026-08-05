@@ -56,18 +56,32 @@
 Так решено потому, что страница открыта без пароля и кнопка стоит рядом с
 «Обновить»: нажатие сгоряча не должно быть необратимым.
 
-Установлено на сервере 5 августа 2026. Повторить или обновить (от root):
+Установлено на сервере 5 августа 2026. Первая установка (от root):
 
 ```
 scp -r deploy root@45.146.131.218:/tmp/sonechka-deploy
-ssh root@45.146.131.218 'cd /tmp/sonechka-deploy && bash answers-setup.sh && bash answers-nginx.sh'
+ssh root@45.146.131.218 'cd /tmp/sonechka-deploy && bash answers-setup.sh && bash answers-nginx.sh && bash ci-api-access.sh'
 ```
 
 [answers-setup.sh](deploy/answers-setup.sh) ставит сервис и systemd-юнит,
 [answers-nginx.sh](deploy/answers-nginx.sh) — зону `limit_req` в `conf.d/` и
 `location /api/` в конфиг сайта, с бэкапом и откатом, если `nginx -t` не пройдёт.
-Автодеплой этого не делает: он возит только `site/`, а nginx на этом сервере
-правится осознанно — рядом чужой прод `tabletop-broadmap.pro`.
+Nginx на этом сервере правится осознанно — рядом чужой прод
+`tabletop-broadmap.pro`, автодеплой его не касается.
+
+### Дальнейшие правки API — обычным `git push`
+
+[ci-api-access.sh](deploy/ci-api-access.sh) запускается один раз и снимает
+необходимость ходить на сервер руками: после него правки
+[answers-api.py](deploy/answers-api.py) уезжают тем же деплоем, что и сайт.
+
+Root пользователю `deploy` при этом не достаётся. Он кладёт файл в свой
+`~/api-staging/` и выполняет единственную разрешённую ему команду —
+`sudo /usr/local/sbin/sonechka-update-api`. Обновлятор принадлежит root, для
+`deploy` не перезаписываем, проверяет файл `py_compile`, сверяет с текущим
+(не изменился — сервис не перезапускается), а если после рестарта
+`/api/health` молчит пять секунд — возвращает предыдущую версию. Вечер важнее
+свежей правки.
 
 Ручка `GET /api/answers` и страница `/sonechka` открыты без пароля: кто угадает
 адрес — прочитает ответы.
