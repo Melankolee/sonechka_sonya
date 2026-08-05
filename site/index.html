@@ -97,7 +97,7 @@ window.__resources = {
           </div>
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px">
             <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Где</span>
-            <a href="https://yandex.ru/maps/org/levyu/210209306693?si=sofandrrrrevna" target="_blank" rel="noopener" style="font-family: 'Cormorant Garamond', serif; font-size: 19px; text-align: right; padding-bottom: 2px; transition: color .3s, border-color .3s">«LeView»,<br>Казанская 7В <span style="font-family: 'Manrope', sans-serif; font-size: 12px">↗</span></a>
+            <a href="https://yandex.ru/maps/org/levyu/210209306693?si=sofandrrrrevna" target="_blank" rel="noopener" style="font-family: 'Cormorant Garamond', serif; font-size: 19px; text-align: right; white-space: nowrap; padding-bottom: 2px; transition: color .3s, border-color .3s">«LeView», Казанская 7В <span style="font-family: 'Manrope', sans-serif; font-size: 12px">↗</span></a>
           </div>
         </div>
       </div>
@@ -203,8 +203,18 @@ window.__resources = {
       </div>
     </section>
 
-    <section data-reveal="1" style="padding: 40px 22px 0">
-      <div style="padding: 34px 24px 34px; background: linear-gradient(180deg, rgba(138,56,47,.05), rgba(138,56,47,.02)); border: 1px solid rgba(138,56,47,.2); border-radius: 30px; text-align: center">
+    <section data-reveal="1" style="padding: 56px 22px 0">
+      <div style="position: relative; padding: 46px 24px 34px; background: linear-gradient(180deg, rgba(138,56,47,.05), rgba(138,56,47,.02)); border: 1px solid rgba(138,56,47,.2); border-radius: 30px; text-align: center">
+        <!-- Печать та же, что закрывает интро-конверт и летит к Соне в финале:
+             один предмет проходит через всю страницу. Висит на верхней границе,
+             поэтому overflow у карточки должен остаться видимым. -->
+        <img src="./img/seal.png" alt="" style="position: absolute; left: 50%; top: -26px; width: 56px; height: 56px; margin-left: -28px; transform: rotate(-8deg); filter: drop-shadow(0 4px 10px rgba(96,72,48,.24)); pointer-events: none">
+        <!-- Уголковые засечки: приём из типографской вёрстки приглашений. Отступ
+             14px выводит их из зоны скругления, радиус 6px рифмуется с ним. -->
+        <div style="position: absolute; left: 14px; top: 14px; width: 16px; height: 16px; border-left: 1px solid rgba(138,56,47,.32); border-top: 1px solid rgba(138,56,47,.32); border-top-left-radius: 6px; pointer-events: none"></div>
+        <div style="position: absolute; right: 14px; top: 14px; width: 16px; height: 16px; border-right: 1px solid rgba(138,56,47,.32); border-top: 1px solid rgba(138,56,47,.32); border-top-right-radius: 6px; pointer-events: none"></div>
+        <div style="position: absolute; left: 14px; bottom: 14px; width: 16px; height: 16px; border-left: 1px solid rgba(138,56,47,.32); border-bottom: 1px solid rgba(138,56,47,.32); border-bottom-left-radius: 6px; pointer-events: none"></div>
+        <div style="position: absolute; right: 14px; bottom: 14px; width: 16px; height: 16px; border-right: 1px solid rgba(138,56,47,.32); border-bottom: 1px solid rgba(138,56,47,.32); border-bottom-right-radius: 6px; pointer-events: none"></div>
         <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
           <div data-sent-card="1" style="padding: 18px 0 10px">
             <div style="font-family: 'Cormorant Garamond', serif; font-size: 40px; color: #8A382F; line-height: 1">✦</div>
@@ -215,7 +225,7 @@ window.__resources = {
         <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
           <div>
             <p style="margin: 0 auto 22px; max-width: 24ch; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(20px, 5vw, 25px); line-height: 1.45; color: #5C4F44; text-wrap: pretty">Нажми — и я буду знать, что ты придёшь.</p>
-            <button type="button" onClick="{{ submit }}" style="width: 100%; padding: 28px 20px; background: #8A382F; border: 1px solid #8A382F; border-radius: 999px; font-family: 'Manrope', sans-serif; font-size: 14px; letter-spacing: .3em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s" style-hover="background: #742E27">{{ buttonLabel }}</button>
+            <button type="button" onClick="{{ submit }}" style="width: 100%; padding: 28px 20px; background: #8A382F; border: 1px solid #8A382F; border-radius: 999px; font-family: 'Manrope', sans-serif; font-size: 14px; letter-spacing: .3em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s, letter-spacing .25s, transform .12s" style-hover="background: #742E27; letter-spacing: .34em" style-active="transform: scale(.985)">{{ buttonLabel }}</button>
           </div>
         </sc-if>
       </div>

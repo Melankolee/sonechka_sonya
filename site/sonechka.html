@@ -38,10 +38,15 @@
   .tally { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-bottom: 11px; border-bottom: 1px solid rgba(138,56,47,.14); font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #3E342C; }
   .tally:last-child { border-bottom: none; padding-bottom: 0; }
   .count { font-family: 'Manrope', sans-serif; font-size: 12px; letter-spacing: .1em; color: #8A382F; white-space: nowrap; }
-  .foot { margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 16px; }
-  button { font: inherit; color: inherit; padding: 13px 26px; border-radius: 999px; background: transparent; border: 1px solid rgba(138,56,47,.35); font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #8A382F; cursor: pointer; transition: background .25s, color .25s; }
-  button:hover { background: #8A382F; border-color: #8A382F; color: #FBF8F2; }
-  .status { font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; color: rgba(69,60,51,.5); }
+  .foot { margin-top: 30px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px 16px; }
+  button { font: inherit; color: inherit; padding: 13px 26px; border-radius: 999px; background: transparent; border: 1px solid rgba(138,56,47,.35); font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #8A382F; cursor: pointer; transition: background .25s, color .25s, opacity .25s; }
+  button:hover:not(:disabled) { background: #8A382F; border-color: #8A382F; color: #FBF8F2; }
+  button:disabled { opacity: .35; cursor: default; }
+  /* Очистка — не то, что нажимают часто: тише рамка, никакой заливки до наведения. */
+  .danger { border-color: rgba(69,60,51,.22); color: rgba(69,60,51,.55); }
+  .danger:hover:not(:disabled) { background: transparent; border-color: #8A382F; color: #8A382F; }
+  /* Статус — на своей строке, чтобы длинная ошибка не растаскивала кнопки. */
+  .status { flex-basis: 100%; text-align: center; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; color: rgba(69,60,51,.5); }
   .error { color: #8A382F; }
 </style>
 </head>
@@ -58,6 +63,7 @@
     <div id="summary"></div>
     <div class="foot">
       <button type="button" id="refresh">Обновить</button>
+      <button type="button" id="clear" class="danger" disabled>Очистить</button>
       <span class="status" id="status"></span>
     </div>
   </div>
@@ -203,17 +209,28 @@ function renderSummary(byKey) {
 }
 
 var status = document.getElementById('status');
+var clearBtn = document.getElementById('clear');
+var total = 0; // строк в хранилище, не гостей: очищаем именно строки
 
+function now() {
+  return new Date().toLocaleTimeString('ru-RU',
+    { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit' });
+}
+
+// Возвращает промис: очистка дописывает свой статус уже после перерисовки,
+// иначе «обновлено в …» затирает «очищено в …».
 function load() {
   status.className = 'status';
   status.textContent = 'обновляю…';
-  fetch('/api/answers', { cache: 'no-store' })
+  return fetch('/api/answers', { cache: 'no-store' })
     .then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     })
     .then(function (data) {
       var answers = (data && data.answers) || [];
+      total = answers.length;
+      clearBtn.disabled = total === 0;
       var byKey = latestByGuest(answers);
       var count = Object.keys(byKey).length;
       document.getElementById('sub').textContent = count
@@ -221,17 +238,45 @@ function load() {
         : 'Пока никто не ответил.';
       renderGuests(byKey);
       renderSummary(byKey);
-      status.textContent = 'обновлено в ' + new Date().toLocaleTimeString('ru-RU',
-        { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit' });
+      status.textContent = 'обновлено в ' + now();
     })
     .catch(function (e) {
       status.className = 'status error';
       status.textContent = 'не получилось загрузить: ' + e.message;
       document.getElementById('sub').textContent = 'Ответы лежат на сервере — проверь, что сервис отвечает.';
+      clearBtn.disabled = true; // не предлагаем стирать то, чего не видели
+    });
+}
+
+// Очистка уносит ответы в архив на сервере, так что нажатие сгоряча не смертельно.
+// Но спрашиваем всё равно: страница открыта, а кнопка стоит рядом с «Обновить».
+function clearAll() {
+  if (clearBtn.disabled) return;
+  var what = total + ' ' + plural(total, 'ответ', 'ответа', 'ответов');
+  if (!confirm('Удалить ' + what + '? Страница станет пустой.')) return;
+  clearBtn.disabled = true;
+  status.className = 'status';
+  status.textContent = 'очищаю…';
+  fetch('/api/answers', { method: 'DELETE', cache: 'no-store' })
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function (data) {
+      var n = (data && data.cleared) || 0;
+      load();
+      status.textContent = 'очищено в ' + now() + ' — ' + n + ' ' +
+        plural(n, 'ответ', 'ответа', 'ответов');
+    })
+    .catch(function (e) {
+      status.className = 'status error';
+      status.textContent = 'не получилось очистить: ' + e.message;
+      clearBtn.disabled = total === 0;
     });
 }
 
 document.getElementById('refresh').addEventListener('click', load);
+clearBtn.addEventListener('click', clearAll);
 // Возвращаешься на вкладку — видишь свежие ответы, без ручного обновления.
 document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
 load();

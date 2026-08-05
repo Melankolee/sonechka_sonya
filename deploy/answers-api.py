@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Мини-сервис ответов гостей: POST /api/answers пишет, GET /api/answers отдаёт.
+"""Мини-сервис ответов гостей: POST /api/answers пишет, GET отдаёт, DELETE чистит.
 
 Только стандартная библиотека — на сервере рядом чужой прод, ставить туда pip-
 окружение ради двух ручек не хочется. Слушает 127.0.0.1, наружу его выставляет
@@ -8,6 +8,10 @@ nginx (см. deploy/nginx-sonechka-sonya.conf).
 Хранилище — append-only JSONL: строка на отправку. Гость может нажать «Я приду»
 несколько раз, страница /sonechka показывает последний ответ каждой; история
 остаётся на случай «а что она выбирала сначала».
+
+Кнопка «Очистить» на /sonechka шлёт DELETE. Он не стирает ответы совсем, а
+уносит их в archive/: страница удаления не переживёт, а вот случайное нажатие
+или чужой любопытный запрос — переживут, ручка ведь открыта миру.
 """
 
 import fcntl
@@ -22,6 +26,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 HOST = os.environ.get('SONECHKA_HOST', '127.0.0.1')
 PORT = int(os.environ.get('SONECHKA_PORT', '8787'))
 STORE = os.environ.get('SONECHKA_STORE', '/var/lib/sonechka/answers.jsonl')
+ARCHIVE = os.path.join(os.path.dirname(STORE), 'archive')
 
 # Ручка открыта миру без ключа, поэтому пределы жёсткие: тело запроса, длина
 # каждого поля, число вариантов и общее число записей в файле.
@@ -99,6 +104,44 @@ def append_record(record):
     return True
 
 
+def archive_records():
+    """Переносит ответы в archive/ и оставляет пустой файл. Возвращает (сколько, куда).
+
+    Не rename, а копия с последующим truncate: файл остаётся тем же inode, и
+    ответ, который прямо сейчас пишется параллельным запросом, попадёт в живой
+    файл, а не в архив, который уже никто не читает.
+    """
+    try:
+        f = open(STORE, 'r+', encoding='utf-8')
+    except FileNotFoundError:
+        return 0, ''
+    with f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        body = f.read()
+        lines = [line for line in body.splitlines() if line.strip()]
+        if not lines:
+            return 0, ''
+        os.makedirs(ARCHIVE, exist_ok=True)
+        stamp = datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')
+        path = os.path.join(ARCHIVE, 'answers-%s.jsonl' % stamp)
+        # 'x' — если за ту же секунду прилетело два DELETE, второй не затрёт первый
+        mode = 'x'
+        while True:
+            try:
+                with open(path, mode, encoding='utf-8') as out:
+                    out.write(body if body.endswith('\n') else body + '\n')
+                    out.flush()
+                    os.fsync(out.fileno())
+                break
+            except FileExistsError:
+                mode = 'a'
+        f.seek(0)
+        f.truncate()
+        f.flush()
+        os.fsync(f.fileno())
+    return len(lines), path
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = 'sonechka'
     sys_version = ''
@@ -126,6 +169,14 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(200, {'ok': True})
         else:
             self.send_json(404, {'error': 'not found'})
+
+    def do_DELETE(self):
+        if not self.path_is('/api/answers'):
+            self.send_json(404, {'error': 'not found'})
+            return
+        cleared, path = archive_records()
+        sys.stderr.write('cleared %d answers -> %s\n' % (cleared, path or '(нечего)'))
+        self.send_json(200, {'ok': True, 'cleared': cleared})
 
     def do_POST(self):
         if not self.path_is('/api/answers'):
