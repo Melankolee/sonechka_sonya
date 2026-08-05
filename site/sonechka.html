@@ -264,9 +264,12 @@ function clearAll() {
     })
     .then(function (data) {
       var n = (data && data.cleared) || 0;
-      load();
-      status.textContent = 'очищено в ' + now() + ' — ' + n + ' ' +
-        plural(n, 'ответ', 'ответа', 'ответов');
+      return load().then(function () {
+        // Если перечитать не вышло, оставляем на виду ошибку загрузки — она важнее.
+        if (status.className.indexOf('error') !== -1) return;
+        status.textContent = 'очищено в ' + now() + ' — ' + n + ' ' +
+          plural(n, 'ответ', 'ответа', 'ответов');
+      });
     })
     .catch(function (e) {
       status.className = 'status error';
