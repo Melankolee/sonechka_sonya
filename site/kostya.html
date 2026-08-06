@@ -18,6 +18,7 @@ window.__resources = {
 <script src="./support.js"></script>
 <link href="./fonts/fonts.css" rel="stylesheet">
 <script src="./envelope-intro.js"></script>
+<script src="./beer-mug.js"></script>
 </head>
 <body>
 <x-dc>
@@ -55,13 +56,10 @@ window.__resources = {
      вишлиста, вопросов два — куда пойдём и что пьём. -->
 <div style="min-height: 100vh; background: #EFE9DE; display: flex; justify-content: center">
   <div style="width: 100%; max-width: 620px; position: relative; background: #EFE9DE; box-shadow: 0 0 80px rgba(93,74,58,.09)">
-    <!-- Фон карточки: одна картинка — бокал пива во всю ширину сверху. Роза,
-         паттерн тиснёной бумаги и накрытый стол снизу (img/bg/*.jpg со страницы
-         Сони) тут убраны: у Кости не день рождения, а пиво. Пена растворяется в
-         кремовом фоне градиентной маской, чтобы не было жёсткой границы кадра. -->
-    <div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none">
-      <div style="position: absolute; left: 0; right: 0; top: 0; height: calc(min(100vw, 620px) * .7); background: url('./img/bg/beer.jpg') top center / cover no-repeat; -webkit-mask-image: linear-gradient(180deg, #000 46%, transparent 100%); mask-image: linear-gradient(180deg, #000 46%, transparent 100%)"></div>
-    </div>
+    <!-- Фона у карточки нет: роза, паттерн тиснёной бумаги и накрытый стол снизу
+         (img/bg/*.jpg со страницы Сони) тут убраны — у Кости не день рождения, а
+         пиво. Фотографию пива в шапке заменила нарисованная кружка (beer-mug.js):
+         жидкость в ней отдельный слой и умеет наклоняться по гироскопу. -->
     <div style="position: relative; z-index: 1">
 
     <div style="position: fixed; top: 18px; right: 18px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 10px">
@@ -80,11 +78,15 @@ window.__resources = {
 
     <section style="position: relative; padding: 0 0 4px">
       <div style="position: relative; width: 100%">
-        <!-- Верхний отступ отдан пиву из фона: полоса высотой .7 от ширины
-             карточки, маска гасит её к низу начиная с 46%. Отсюда .6 от ширины —
-             приветствие начинается там, где кадр уже почти растворился, на любом
-             экране, а не только на телефоне. -->
-        <div data-reveal="1" style="padding: calc(min(100vw, 620px) * .6) 30px 6px; text-align: center">
+        <!-- Кружку рисует и оживляет beer-mug.js: сюда он кладёт SVG. Тёплое
+             пятно под ней — вместо фотографического фона, чтобы шапка не была
+             голой. Подсказка появляется только там, где гироскоп реально
+             отозвался, и гаснет, как только гость наклонил телефон. -->
+        <div data-reveal="1" style="padding: 26px 22px 0">
+          <div data-beer-mug="1" style="width: 100%; max-width: 400px; margin: 0 auto; background: radial-gradient(58% 52% at 50% 46%, rgba(203,140,52,.16), rgba(239,233,222,0) 70%)"></div>
+          <p data-beer-hint="1" style="margin: 6px 0 0; text-align: center; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.45); opacity: 0; transition: opacity .7s ease">наклони телефон</p>
+        </div>
+        <div data-reveal="1" style="padding: 4px 30px 6px; text-align: center">
           <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #8A382F">{{ guestGreeting }}</p>
           <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(32px, 8.8vw, 50px); line-height: 1.08; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Соня <em style="font-style: italic; color: #8A382F">не</em> приглашает тебя<br>на день рождения,<br><em style="font-style: italic; color: #8A382F">зато я приглашаю<br>пить пиво!</em></h1>
         </div>
