@@ -18,7 +18,7 @@ window.__resources = {
 <script src="./support.js"></script>
 <link href="./fonts/fonts.css" rel="stylesheet">
 <script src="./envelope-intro.js"></script>
-<script src="./beer-mug.js"></script>
+<script src="./beer-header.js"></script>
 </head>
 <body>
 <x-dc>
@@ -78,13 +78,13 @@ window.__resources = {
 
     <section style="position: relative; padding: 0 0 4px">
       <div style="position: relative; width: 100%">
-        <!-- Кружку рисует и оживляет beer-mug.js: сюда он кладёт SVG. Тёплое
-             пятно под ней — вместо фотографического фона, чтобы шапка не была
-             голой. Подсказка появляется только там, где гироскоп реально
-             отозвался, и гаснет, как только гость наклонил телефон. -->
-        <div data-reveal="1" style="padding: 26px 22px 0">
-          <div data-beer-mug="1" style="width: 100%; max-width: 400px; margin: 0 auto; background: radial-gradient(58% 52% at 50% 46%, rgba(203,140,52,.16), rgba(239,233,222,0) 70%)"></div>
-          <p data-beer-hint="1" style="margin: 6px 0 0; text-align: center; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.45); opacity: 0; transition: opacity .7s ease">наклони телефон</p>
+        <!-- Пиво во всю ширину: beer-header.js рисует его на canvas и наклоняет
+             по гироскопу. Низ кадра гасится маской — иначе полоса упиралась бы в
+             бумагу бланка ровным обрезом. Подсказка появляется только там, где
+             гироскоп реально отозвался, и гаснет, как только гость наклонил. -->
+        <div data-reveal="1">
+          <div data-beer-header="1" style="width: 100%; height: calc(min(100vw, 620px) * .82); -webkit-mask-image: linear-gradient(180deg, #000 66%, transparent 100%); mask-image: linear-gradient(180deg, #000 66%, transparent 100%)"></div>
+          <p data-beer-hint="1" style="margin: -8px 0 0; text-align: center; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.45); opacity: 0; transition: opacity .7s ease">наклони телефон</p>
         </div>
         <div data-reveal="1" style="padding: 4px 30px 6px; text-align: center">
           <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #8A382F">{{ guestGreeting }}</p>
