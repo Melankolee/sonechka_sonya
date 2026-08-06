@@ -152,6 +152,37 @@ window.__resources = {
       </div>
     </section>
 
+    <!-- Листки для идей — тот же блок, что у гостей Сони (index.html). Текст
+         живёт в самом textarea, а не в state: перерисовывать страницу на каждую
+         букву незачем, да и отрыв листа — работа с живым узлом (см. tearOff).
+         Улетает верхний лист, стопка под ним остаётся. -->
+    <section data-reveal="1" style="padding: 62px 22px 0; text-align: center">
+      <div style="width: 1px; height: 46px; margin: 0 auto 26px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
+      <h2 style="margin: 0 auto; max-width: 20ch; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-style: italic; font-size: clamp(26px, 7vw, 34px); line-height: 1.25; color: #3E342C; text-wrap: pretty">Напиши свои пожелания для комфортного вечера!</h2>
+      <p style="margin: 14px auto 0; max-width: 32ch; font-family: 'Manrope', sans-serif; font-weight: 400; font-size: 14px; line-height: 1.7; color: #3E342C">Листок оторвётся и улетит ко мне.</p>
+
+      <div style="position: relative; max-width: 430px; margin: 30px auto 0">
+        <!-- Стопка под верхним листом: следующая мысль пишется на следующем листке.
+             Небольшой разворот у каждого — чтобы читалось как стопка бумаги. -->
+        <div aria-hidden="true" style="position: absolute; left: 6px; right: 6px; top: 5px; bottom: -9px; border-radius: 2px; background: #F2EADA; transform: rotate(1.2deg); box-shadow: 0 6px 14px rgba(93,74,58,.12)"></div>
+        <div aria-hidden="true" style="position: absolute; left: 4px; right: 4px; top: 2px; bottom: -5px; border-radius: 2px; background: #F9F4E9; transform: rotate(-.8deg); box-shadow: 0 5px 12px rgba(93,74,58,.1)"></div>
+
+        <div data-note-sheet="1" style="position: relative; z-index: 1; padding: 16px 18px 20px; border-radius: 2px; background: #FFFDF8; box-shadow: 0 8px 18px rgba(93,74,58,.14)">
+          <!-- Линейка и поля тетрадного листа. Линии — отдельным слоем, а не фоном
+               самого листа: они должны кончаться, не доходя до края бумаги.
+               Шаг 30px равен line-height у textarea, поэтому строки ложатся на них. -->
+          <div aria-hidden="true" style="position: absolute; left: 14px; right: 18px; top: 16px; bottom: 20px; background-image: repeating-linear-gradient(180deg, rgba(138,56,47,.13) 0 1px, transparent 1px 30px); background-position: 0 29px"></div>
+          <div aria-hidden="true" style="position: absolute; left: 44px; top: 8px; bottom: 12px; width: 1px; background: rgba(169,88,74,.32)"></div>
+          <textarea data-note-field="1" rows="6" maxLength="500" aria-label="Пожелания для комфортного вечера" style="position: relative; display: block; width: 100%; height: 180px; padding: 0 0 0 44px; background: transparent; border: none; resize: none; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; line-height: 30px; color: #3E342C"></textarea>
+        </div>
+      </div>
+
+      <button type="button" onClick="{{ tearOff }}" style="margin-top: 28px; display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 999px; background: rgba(247,243,236,.94); border: 1px solid rgba(138,56,47,.22); font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #8A382F; cursor: pointer; transition: background .3s, color .3s, border-color .3s" style-hover="background: #8A382F; border-color: #8A382F; color: #FBF8F2">Отправить</button>
+      <sc-if value="{{ hasNotes }}" hint-placeholder-val="{{ false }}">
+        <p style="margin: 14px 0 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: rgba(69,60,51,.55)">{{ notesLabel }}</p>
+      </sc-if>
+    </section>
+
     <!-- Внизу картинки больше нет (накрытый стол убран вместе с остальным фоном),
          поэтому отступ обычный — только чтобы кнопка не липла к краю экрана. -->
     <section data-reveal="1" style="padding: 62px 22px 90px">
@@ -211,7 +242,7 @@ window.__resources = {
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;answersUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;/api/answers&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;placeOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Spontan, Пивная диета, К тебе, На улице&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;beerOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Lager, IPA, Любое побольше, Weissbier&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
 class Component extends DCLogic {
-  state = { place: [], beer: [], sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null };
+  state = { place: [], beer: [], sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null, notes: 0 };
 
   // Ответы уезжают в тот же сервис, что и у гостей Сони (deploy/answers-api.py),
   // и читаются на /sonechka. Гость здесь один, поэтому ключ и имя — константы.
@@ -251,8 +282,9 @@ class Component extends DCLogic {
     }
     this.scan();
     this.flyEnvelope();
-    // Ответ, не доехавший в прошлый раз (не было сети), досылаем молча.
+    // Ответ и мысли, не доехавшие в прошлый раз (не было сети), досылаем молча.
     this.flushStash();
+    this.flushNotes();
   }
   componentDidUpdate() { this.scan(); this.flyEnvelope(); }
 
@@ -262,8 +294,7 @@ class Component extends DCLogic {
   flyEnvelope() {
     if (!this.state.sent || this._flew) return;
     this._flew = true;
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) return;
+    if (this.reduceMotion()) return;
     setTimeout(() => {
       const env = document.querySelector('[data-flying-envelope]');
       const card = document.querySelector('[data-sent-card]');
@@ -402,6 +433,139 @@ class Component extends DCLogic {
     } catch (e) { /* сети всё ещё нет — попробуем в следующий раз */ }
   }
 
+  reduceMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  // Отрыв листа: текст уходит на сервер, копия листа улетает за верх экрана,
+  // а сам лист очищается и «подаётся» следующим. Копия — потому что настоящий
+  // лист остаётся в вёрстке: улетать должна бумага, а не блок страницы.
+  tearOff() {
+    const sheet = document.querySelector('[data-note-sheet]');
+    const field = document.querySelector('[data-note-field]');
+    if (!sheet || !field) return;
+    const text = (field.value || '').trim();
+    if (!text) { this.nudgeSheet(sheet); field.focus(); return; }
+    this.sendNote(text);
+    field.value = '';
+    field.blur(); // на телефоне иначе клавиатура закрывает весь полёт
+    this.setState(p => ({ notes: p.notes + 1 }));
+    this.flyAway(sheet, text);
+  }
+
+  // Пустой лист отрывать нечего — стопка отмахивается.
+  nudgeSheet(sheet) {
+    if (!sheet.animate || this.reduceMotion()) return;
+    sheet.animate([
+      { transform: 'translateX(0)' }, { transform: 'translateX(-5px)' },
+      { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }
+    ], { duration: 260, easing: 'ease-in-out' });
+  }
+
+  flyAway(sheet, text) {
+    if (!sheet.animate || this.reduceMotion()) return;
+    const r = sheet.getBoundingClientRect();
+    const clone = sheet.cloneNode(true);
+    // cloneNode копирует только исходный текст textarea, а набранный — нет.
+    const field = clone.querySelector('[data-note-field]');
+    if (field) { field.value = text; field.readOnly = true; field.tabIndex = -1; }
+    clone.removeAttribute('data-note-sheet');
+    clone.setAttribute('aria-hidden', 'true'); // копия живёт полторы секунды, читалке она ни к чему
+    clone.style.cssText += ';position: fixed; margin: 0; z-index: 14; pointer-events: none; will-change: transform, opacity' +
+      '; left: ' + r.left + 'px; top: ' + r.top + 'px; width: ' + r.width + 'px; height: ' + r.height + 'px';
+    const torn = this.tornEdge();
+    clone.style.clipPath = torn;
+    clone.style.webkitClipPath = torn;
+    // Фиксированный элемент не растягивает страницу, поэтому полёт за край не
+    // добавляет полос прокрутки — тот же приём, что у конверта в финале.
+    document.body.appendChild(clone);
+    const drift = Math.max(90, r.width * 0.45);
+    const away = r.top + r.height + 160;
+    const anim = clone.animate([
+      { transform: 'translate(0, 0) rotate(0deg)', opacity: 1, offset: 0 },
+      { transform: 'translate(4px, -6px) rotate(-1.6deg)', opacity: 1, offset: .12 },
+      { transform: 'translate(' + drift * .3 + 'px, ' + (-away * .32) + 'px) rotate(10deg) scale(.97)', opacity: 1, offset: .5 },
+      { transform: 'translate(' + drift + 'px, ' + (-away) + 'px) rotate(-24deg) scale(.82)', opacity: .35, offset: 1 }
+    ], { duration: 1500, easing: 'cubic-bezier(.32,.02,.5,1)', fill: 'forwards' });
+    anim.onfinish = () => clone.remove();
+    sheet.animate([
+      { opacity: 0, transform: 'translateY(7px)' },
+      { opacity: 1, transform: 'none' }
+    ], { duration: 520, delay: 120, easing: 'cubic-bezier(.22,.7,.25,1)', fill: 'backwards' });
+  }
+
+  // Рваный верхний край копии: лист будто выдрали из стопки. Высота зубцов случайная —
+  // ровная пила читалась бы как обрезка ножницами, а не как отрыв.
+  tornEdge() {
+    const steps = 30;
+    const points = [];
+    for (let i = 0; i <= steps; i++) {
+      const x = (i / steps) * 100;
+      const y = (i % 2 ? 0 : 5) + Math.random() * 3;
+      points.push(x.toFixed(2) + '% ' + y.toFixed(1) + 'px');
+    }
+    return 'polygon(' + points.join(', ') + ', 100% 100%, 0 100%)';
+  }
+
+  // Мысль уезжает отдельной записью (поле idea): Костя может оторвать хоть пять
+  // листов — до «Я приду», после и вообще без этого. Страница /sonechka отличает
+  // такие записи от ответов именно по непустому idea.
+  async sendNote(text) {
+    const payload = { guest: this.guest.key, name: this.guest.name, idea: text };
+    try {
+      const res = await fetch(this.props.answersUrl || '/api/answers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+    } catch (e) {
+      // Лист уже улетел на экране — про сеть Костя узнавать не должен.
+      this.stashNote(payload);
+    }
+  }
+
+  // В отличие от ответа мысли копятся очередью: их может быть несколько, и
+  // затирать предыдущую нельзя — это разные листы. Ключ свой, не общий с
+  // index.html: очередь гостьи с того же телефона трогать незачем.
+  stashNote(payload) {
+    try {
+      const list = JSON.parse(localStorage.getItem('sonechka:notes-kostya') || '[]');
+      const queue = (Array.isArray(list) ? list : []).concat([payload]).slice(-20);
+      localStorage.setItem('sonechka:notes-kostya', JSON.stringify(queue));
+    } catch (e) {}
+  }
+
+  async flushNotes() {
+    let list = null;
+    try { list = JSON.parse(localStorage.getItem('sonechka:notes-kostya') || '[]'); } catch (e) { return; }
+    if (!Array.isArray(list) || !list.length) return;
+    const left = [];
+    for (const payload of list) {
+      try {
+        const res = await fetch(this.props.answersUrl || '/api/answers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+      } catch (e) {
+        left.push(payload);
+      }
+    }
+    try {
+      if (left.length) localStorage.setItem('sonechka:notes-kostya', JSON.stringify(left));
+      else localStorage.removeItem('sonechka:notes-kostya');
+    } catch (e) {}
+  }
+
+  plural(n, one, few, many) {
+    const mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+    return many;
+  }
+
   renderVals() {
     const s = this.state;
     return {
@@ -422,6 +586,9 @@ class Component extends DCLogic {
       joke: this.jokes[s.jokeIndex == null ? 0 : s.jokeIndex],
       toggleHelp: () => this.setState(p => (p.helpOpen ? { helpOpen: false } : { helpOpen: true, jokeIndex: this.pickJoke() })),
       nextJoke: () => this.setState({ jokeIndex: this.pickJoke() }),
+      tearOff: () => this.tearOff(),
+      hasNotes: s.notes > 0,
+      notesLabel: 'Улетело: ' + s.notes + ' ' + this.plural(s.notes, 'мысль', 'мысли', 'мыслей'),
       submit: () => this.submit(),
       buttonLabel: s.sending ? 'Отправляю…' : 'Я приду',
       error: s.error,
