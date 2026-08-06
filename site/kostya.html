@@ -29,34 +29,37 @@ window.__resources = {
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; background: #EFE9DE; color: #453C33; }
   * { box-sizing: border-box; }
-  a { color: #8A382F; text-decoration: none; border-bottom: 1px solid rgba(138,56,47,.35); }
-  a:hover { color: #A9584A; border-bottom-color: rgba(169,88,74,.6); }
+  a { color: #4A2E1E; text-decoration: none; border-bottom: 1px solid rgba(74,46,30,.35); }
+  a:hover { color: #6B4630; border-bottom-color: rgba(107,70,48,.6); }
   input, textarea, button { font: inherit; color: inherit; }
   input:focus, textarea:focus { outline: none; }
   ::placeholder { color: rgba(69,60,51,.35); }
   @keyframes floatUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
   /* Соня выезжает снизу ровно наполовину: конечное состояние — translateY(50%).
      Тайминги сцены держим синхронно с ENVELOPE_FLIGHT в скрипте компонента:
-     0.35–2.95с подъём, 2.6–4.2с полёт конверта, 4.25с облачко «Не жду!»,
-     5.5–6.55с падение Артёма (удар на 5.98с), тогда же Соню и сплющивает,
-     6.2с — его «А я жду!», 9.8с — сцена уезжает вниз. */
+     0.35–2.95с подъём, 2.2–3.1с полёт конверта, 3.15с облачко «Не жду!»,
+     4.4–5.75с падение Артёма: 4.88с — удар ей по колпаку, 4.88–5.13с он везёт
+     её в пол (тогда же sonyaSquash), 5.35с — его «А я жду!»,
+     8.7с — сцена уезжает вниз. */
   @keyframes sonyaRise { from { transform: translateY(100%); } to { transform: translateY(50%); } }
-  /* Соню не уводит вниз, как на страницах гостей: её прибивает Артёмом. Уходит
-     не постепенно, а за четверть секунды — сплющило и нет. */
+  /* Соню не уводит вниз, как на страницах гостей: её прибивает Артёмом. Сжатие
+     идёт от центра — у Сони это ровно нижний край экрана, так что её складывает
+     в пол, а не утаскивает под него. Четверть секунды — и нет её. */
   @keyframes sonyaSquash {
     0% { opacity: 1; transform: translateY(50%) scale(1, 1); }
-    40% { opacity: 1; transform: translateY(50%) scale(1.07, .52); }
-    100% { opacity: 0; transform: translateY(50%) scale(1.12, .26); }
+    45% { opacity: 1; transform: translateY(50%) scale(1.06, .5); }
+    100% { opacity: 0; transform: translateY(50%) scale(1.12, .1); }
   }
-  /* Артём валится из-за верхнего края: до удара разгон, после — отскок пузом.
-     Внутри keyframes своя кривая на каждый участок, потому что одним общим
-     easing падение и приземление не разделить. */
+  /* Артём валится из-за верхнего края: разгон, удар по её макушке (это
+     чуть ниже min(38vh, 320px) — половины роста Сони, её видимой макушки), потом
+     вместе с ней вниз до пола и отскок пузом. Внутри keyframes своя кривая на
+     каждый участок: одним общим easing падение и приземление не разделить. */
   @keyframes artemDrop {
     0% { transform: translate3d(0, -130vh, 0) rotate(-7deg); animation-timing-function: cubic-bezier(.55,.05,.9,.45); }
-    46% { transform: translate3d(0, 0, 0) rotate(0deg); animation-timing-function: cubic-bezier(.18,.9,.32,1); }
-    56% { transform: translate3d(0, 2%, 0) scale(1.09, .8); }
-    72% { transform: translate3d(0, -5%, 0) scale(.98, 1.04); }
-    88% { transform: translate3d(0, 0, 0) scale(1.01, .98); }
+    36% { transform: translate3d(0, calc(min(32vh, 268px) * -1), 0) rotate(0deg); animation-timing-function: cubic-bezier(.45,0,.75,.85); }
+    54% { transform: translate3d(0, 0, 0) scale(1.07, .84); animation-timing-function: cubic-bezier(.18,.9,.32,1); }
+    68% { transform: translate3d(0, -6%, 0) scale(.98, 1.05); }
+    84% { transform: translate3d(0, 0, 0) scale(1.01, .98); }
     100% { transform: translate3d(0, 0, 0) scale(1, 1); }
   }
   /* Уход вниз висит на обёртке: на самом Артёме уже сидит artemDrop, а две
@@ -91,13 +94,13 @@ window.__resources = {
     <div style="position: relative; z-index: 1; padding: 0 calc(min(100vw, 620px) * .04)">
 
     <div style="position: fixed; top: 18px; right: 18px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 10px">
-      <button type="button" onClick="{{ toggleHelp }}" aria-label="Анекдот" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(247,243,236,.92); border: 1px solid rgba(138,56,47,.28); backdrop-filter: blur(6px); font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #8A382F; cursor: pointer; transition: background .25s, color .25s" style-hover="background: #8A382F; color: #FBF8F2">?</button>
+      <button type="button" onClick="{{ toggleHelp }}" aria-label="Анекдот" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(247,243,236,.92); border: 1px solid rgba(74,46,30,.28); backdrop-filter: blur(6px); font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #4A2E1E; cursor: pointer; transition: background .25s, color .25s" style-hover="background: #4A2E1E; color: #FBF8F2">?</button>
       <sc-if value="{{ helpOpen }}" hint-placeholder-val="{{ false }}">
-        <div style="width: min(300px, calc(100vw - 36px)); padding: 18px 20px; border-radius: 20px; background: rgba(247,243,236,.97); border: 1px solid rgba(138,56,47,.22); box-shadow: 0 12px 34px rgba(93,74,58,.16); text-align: left">
-          <p style="margin: 0 0 12px; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(138,56,47,.75)">Анекдот от Тёмки</p>
+        <div style="width: min(300px, calc(100vw - 36px)); padding: 18px 20px; border-radius: 20px; background: rgba(247,243,236,.97); border: 1px solid rgba(74,46,30,.22); box-shadow: 0 12px 34px rgba(93,74,58,.16); text-align: left">
+          <p style="margin: 0 0 12px; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(74,46,30,.75)">Анекдот от Тёмки</p>
           <p style="margin: 0 0 16px; white-space: pre-line; font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.55; color: #3E342C; text-wrap: pretty">{{ joke }}</p>
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
-            <button type="button" onClick="{{ nextJoke }}" style="padding: 9px 16px; border-radius: 999px; background: #8A382F; border: 1px solid #8A382F; font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s" style-hover="background: #742E27">Ещё</button>
+            <button type="button" onClick="{{ nextJoke }}" style="padding: 9px 16px; border-radius: 999px; background: #4A2E1E; border: 1px solid #4A2E1E; font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s" style-hover="background: #33200F">Ещё</button>
             <button type="button" onClick="{{ toggleHelp }}" style="padding: 9px 4px; background: transparent; border: none; font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: rgba(69,60,51,.5); cursor: pointer">Закрыть</button>
           </div>
         </div>
@@ -110,17 +113,16 @@ window.__resources = {
              где пена кончается. Подсказка появляется только там, где гироскоп
              реально отозвался, и гаснет, как только гость наклонил телефон. -->
         <div data-reveal="1" style="padding: calc(min(100vw, 620px) * .46) 30px 6px; text-align: center">
-          <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #8A382F">{{ guestGreeting }}</p>
-          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(30px, 7.7vw, 46px); line-height: 1.1; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Соня <em style="font-style: italic; color: #8A382F">не</em> приглашает тебя<br>на день рождения,<br><em style="font-style: italic; color: #8A382F">зато я приглашаю<br>пить пиво!</em></h1>
+          <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #4A2E1E">{{ guestGreeting }}</p>
+          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(30px, 7.7vw, 46px); line-height: 1.1; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Соня <em style="font-style: italic; color: #4A2E1E">не</em> приглашает тебя<br>на день рождения,<br><em style="font-style: italic; color: #4A2E1E">зато я приглашаю<br>пить пиво!</em></h1>
           <p data-beer-hint="1" style="margin: 18px 0 0; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.45); opacity: 0; transition: opacity .7s ease">наклони телефон</p>
         </div>
       </div>
 
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: 18px; align-items: center; padding: 26px 30px 6px; text-align: center">
-        <p style="margin: 0; max-width: 34ch; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 20px; line-height: 1.55; font-style: italic; color: #6A5C4F; text-wrap: pretty">Ни красок, ни матрёшек, ни торта. Пиво, а остальное пошло в пизду!</p>
-        <div style="width: 44px; height: 1px; background: #8A382F; opacity: .45"></div>
+        <div style="width: 44px; height: 1px; background: #4A2E1E; opacity: .45"></div>
         <div style="display: grid; grid-template-columns: 1fr; gap: 14px; width: 100%; max-width: 420px; font-family: 'Manrope', sans-serif">
-          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(138,56,47,.14)">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(74,46,30,.14)">
             <span style="font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.5)">Когда</span>
             <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #3E342C">суббота, 5 сентября</span>
           </div>
@@ -135,25 +137,25 @@ window.__resources = {
     </section>
 
     <section data-reveal="1" style="padding: 78px 30px 0; text-align: center">
-      <div style="width: 1px; height: 46px; margin: 0 auto 28px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
-      <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-style: italic; font-size: clamp(26px, 7vw, 34px); color: #3E342C">Выбери, что тебе<br>больше нравится</h2>
+      <div style="width: 1px; height: 46px; margin: 0 auto 28px; background: linear-gradient(180deg, rgba(74,46,30,0), rgba(74,46,30,.5))"></div>
+      <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-style: italic; font-size: clamp(26px, 7vw, 34px); color: #3E342C">Че куда пойдем?</h2>
       <p style="margin: 14px auto 0; max-width: 30ch; font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 14px; line-height: 1.7; color: #3E342C">Два маленьких вопроса, чтобы все прошло великолепно!</p>
     </section>
 
     <section data-reveal="1" style="padding: 46px 22px 0">
-      <div style="padding: 28px 24px 30px; background: rgba(255,253,248,.72); border: 1px solid rgba(138,56,47,.16); border-radius: 3px">
+      <div style="padding: 28px 24px 30px; background: rgba(255,253,248,.72); border: 1px solid rgba(74,46,30,.16); border-radius: 3px">
         <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px">
-          <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">01</span>
+          <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(74,46,30,.7)">01</span>
           <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Куда пойдем?</h3>
         </div>
-        <p style="margin: 0 0 20px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Бары разные — ткни в те, куда пойдёшь. Можно отметить несколько.</p>
+        <p style="margin: 0 0 20px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Бары разные — ткни какие по кайфу. Можно отметить несколько.</p>
         <!-- Карточками с фото, как матрёшки у гостей Сони (index.html): бар
              выбирают глазами, а не по названию. Кадр 4:3 обрезается по месту —
              снимки с разных сторон, и общий формат держит сетку ровной. -->
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 460px; margin: 0 auto">
           <sc-for list="{{ places }}" as="place" hint-placeholder-count="4">
             <button type="button" onClick="{{ place.pick }}" style="{{ place.cardStyle }}">
-              <span style="position: relative; display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 18px; background: rgba(138,56,47,.06)">
+              <span style="position: relative; display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 18px; background: rgba(74,46,30,.06)">
                 <image-slot id="{{ place.slotId }}" shape="rect" fit="cover" src="{{ place.src }}" placeholder="{{ place.slotHint }}"></image-slot>
               </span>
               <span style="{{ place.titleStyle }}">{{ place.title }}</span>
@@ -164,9 +166,9 @@ window.__resources = {
     </section>
 
     <section data-reveal="1" style="padding: 18px 22px 0">
-      <div style="padding: 28px 24px 30px; background: rgba(255,253,248,.72); border: 1px solid rgba(138,56,47,.16); border-radius: 3px">
+      <div style="padding: 28px 24px 30px; background: rgba(255,253,248,.72); border: 1px solid rgba(74,46,30,.16); border-radius: 3px">
         <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px">
-          <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">02</span>
+          <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(74,46,30,.7)">02</span>
           <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Что пьём?</h3>
         </div>
         <p style="margin: 0 0 10px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Что брать именно тебе. Можно отметить несколько.</p>
@@ -186,8 +188,8 @@ window.__resources = {
          букву незачем, да и отрыв листа — работа с живым узлом (см. tearOff).
          Улетает верхний лист, стопка под ним остаётся. -->
     <section data-reveal="1" style="padding: 62px 22px 0; text-align: center">
-      <div style="width: 1px; height: 46px; margin: 0 auto 26px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
-      <h2 style="margin: 0 auto; max-width: 20ch; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-style: italic; font-size: clamp(26px, 7vw, 34px); line-height: 1.25; color: #3E342C; text-wrap: pretty">Напиши свои пожелания для комфортного вечера!</h2>
+      <div style="width: 1px; height: 46px; margin: 0 auto 26px; background: linear-gradient(180deg, rgba(74,46,30,0), rgba(74,46,30,.5))"></div>
+      <h2 style="margin: 0 auto; max-width: 20ch; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-style: italic; font-size: clamp(26px, 7vw, 34px); line-height: 1.25; color: #3E342C; text-wrap: pretty">Ну и пиздани что-нибудь по желанию</h2>
       <p style="margin: 14px auto 0; max-width: 32ch; font-family: 'Manrope', sans-serif; font-weight: 400; font-size: 14px; line-height: 1.7; color: #3E342C">Листок оторвётся и улетит ко мне.</p>
 
       <div style="position: relative; max-width: 430px; margin: 30px auto 0">
@@ -200,13 +202,13 @@ window.__resources = {
           <!-- Линейка и поля тетрадного листа. Линии — отдельным слоем, а не фоном
                самого листа: они должны кончаться, не доходя до края бумаги.
                Шаг 30px равен line-height у textarea, поэтому строки ложатся на них. -->
-          <div aria-hidden="true" style="position: absolute; left: 14px; right: 18px; top: 16px; bottom: 20px; background-image: repeating-linear-gradient(180deg, rgba(138,56,47,.13) 0 1px, transparent 1px 30px); background-position: 0 29px"></div>
-          <div aria-hidden="true" style="position: absolute; left: 44px; top: 8px; bottom: 12px; width: 1px; background: rgba(169,88,74,.32)"></div>
+          <div aria-hidden="true" style="position: absolute; left: 14px; right: 18px; top: 16px; bottom: 20px; background-image: repeating-linear-gradient(180deg, rgba(74,46,30,.13) 0 1px, transparent 1px 30px); background-position: 0 29px"></div>
+          <div aria-hidden="true" style="position: absolute; left: 44px; top: 8px; bottom: 12px; width: 1px; background: rgba(107,70,48,.32)"></div>
           <textarea data-note-field="1" rows="6" maxLength="500" aria-label="Пожелания для комфортного вечера" style="position: relative; display: block; width: 100%; height: 180px; padding: 0 0 0 44px; background: transparent; border: none; resize: none; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; line-height: 30px; color: #3E342C"></textarea>
         </div>
       </div>
 
-      <button type="button" onClick="{{ tearOff }}" style="margin-top: 28px; display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 999px; background: rgba(247,243,236,.94); border: 1px solid rgba(138,56,47,.22); font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #8A382F; cursor: pointer; transition: background .3s, color .3s, border-color .3s" style-hover="background: #8A382F; border-color: #8A382F; color: #FBF8F2">Отправить</button>
+      <button type="button" onClick="{{ tearOff }}" style="margin-top: 28px; display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 999px; background: rgba(247,243,236,.94); border: 1px solid rgba(74,46,30,.22); font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #4A2E1E; cursor: pointer; transition: background .3s, color .3s, border-color .3s" style-hover="background: #4A2E1E; border-color: #4A2E1E; color: #FBF8F2">Отправить</button>
       <sc-if value="{{ hasNotes }}" hint-placeholder-val="{{ false }}">
         <p style="margin: 14px 0 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: rgba(69,60,51,.55)">{{ notesLabel }}</p>
       </sc-if>
@@ -214,17 +216,20 @@ window.__resources = {
 
     <!-- Отступ снизу отдан донышку бокала: под кнопкой начинается толстое стекло. -->
     <section data-reveal="1" style="padding: 62px 22px calc(min(100vw, 620px) * .42)">
-      <div style="position: relative; padding: 46px 24px 34px; background: linear-gradient(180deg, rgba(138,56,47,.05), rgba(138,56,47,.02)); border: 1px solid rgba(138,56,47,.2); border-radius: 30px; text-align: center">
+      <!-- Блок сделан бумажной этикеткой, наклеенной на бокал: плотный кремовый
+           картон, крапчатое волокно, потемневшие от клея края и лёгкий перекос —
+           клеили руками. Слои фона сверху вниз: блик от стекла, крап, волокно,
+           затемнение к краю, сама бумага. -->
+      <div style="position: relative; padding: 46px 26px 36px; text-align: center; transform: rotate(-.55deg); border: 1px solid rgba(74,46,30,.34); border-radius: 16px; background: radial-gradient(120% 70% at 50% -10%, rgba(255,255,255,.6), rgba(255,255,255,0) 62%), radial-gradient(circle, rgba(120,90,60,.07) .6px, rgba(120,90,60,0) 1.1px) 0 0/5px 5px, repeating-linear-gradient(112deg, rgba(120,90,60,.035) 0 1px, rgba(120,90,60,0) 1px 4px), radial-gradient(135% 115% at 50% 50%, rgba(74,46,30,0) 52%, rgba(74,46,30,.14) 100%), linear-gradient(168deg, #FBF5E5 0%, #F3E8CE 52%, #EEDFC0 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.8), inset 0 -14px 26px -18px rgba(93,74,58,.55), 0 1px 0 rgba(255,255,255,.4), 0 16px 28px -16px rgba(93,74,58,.5)">
         <!-- Крышка та же, что закрывает интро-конверт и летит к Соне в финале:
              один предмет проходит через всю страницу. Висит на верхней границе,
              поэтому overflow у карточки должен остаться видимым. -->
         <img src="./img/beer-cap.png" alt="" style="position: absolute; left: 50%; top: -26px; width: 56px; height: 56px; margin-left: -28px; transform: rotate(-8deg); filter: drop-shadow(0 4px 10px rgba(96,72,48,.24)); pointer-events: none">
-        <!-- Уголковые засечки: приём из типографской вёрстки приглашений. Отступ
-             14px выводит их из зоны скругления, радиус 6px рифмуется с ним. -->
-        <div style="position: absolute; left: 14px; top: 14px; width: 16px; height: 16px; border-left: 1px solid rgba(138,56,47,.32); border-top: 1px solid rgba(138,56,47,.32); border-top-left-radius: 6px; pointer-events: none"></div>
-        <div style="position: absolute; right: 14px; top: 14px; width: 16px; height: 16px; border-right: 1px solid rgba(138,56,47,.32); border-top: 1px solid rgba(138,56,47,.32); border-top-right-radius: 6px; pointer-events: none"></div>
-        <div style="position: absolute; left: 14px; bottom: 14px; width: 16px; height: 16px; border-left: 1px solid rgba(138,56,47,.32); border-bottom: 1px solid rgba(138,56,47,.32); border-bottom-left-radius: 6px; pointer-events: none"></div>
-        <div style="position: absolute; right: 14px; bottom: 14px; width: 16px; height: 16px; border-right: 1px solid rgba(138,56,47,.32); border-bottom: 1px solid rgba(138,56,47,.32); border-bottom-right-radius: 6px; pointer-events: none"></div>
+        <!-- Вместо уголковых засечек — двойная типографская рамка «толстая-тонкая»,
+             как печатают по кругу этикетки. Отступ выводит её из зоны скругления и
+             оставляет поля до текста. -->
+        <div aria-hidden="true" style="position: absolute; inset: 9px; border: 2px solid rgba(74,46,30,.26); border-radius: 10px; pointer-events: none"></div>
+        <div aria-hidden="true" style="position: absolute; inset: 14px; border: 1px solid rgba(74,46,30,.18); border-radius: 7px; pointer-events: none"></div>
         <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
           <div data-sent-card="1" style="padding: 18px 0 10px">
             <h3 style="margin: 0 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Спасибо, записал!</h3>
@@ -233,8 +238,8 @@ window.__resources = {
         </sc-if>
         <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
           <div>
-            <p style="margin: 0 auto 22px; max-width: 24ch; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(26px, 7vw, 34px); line-height: 1.45; color: #5C4F44; text-wrap: pretty">Нажми — и я буду знать, что ты придёшь.</p>
-            <button type="button" onClick="{{ submit }}" style="width: 100%; padding: 28px 20px; background: #8A382F; border: 1px solid #8A382F; border-radius: 999px; font-family: 'Manrope', sans-serif; font-size: 14px; letter-spacing: .3em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s, letter-spacing .25s, transform .12s" style-hover="background: #742E27; letter-spacing: .34em" style-active="transform: scale(.985)">{{ buttonLabel }}</button>
+            <p style="margin: 0 auto 22px; max-width: 24ch; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(26px, 7vw, 34px); line-height: 1.45; color: #5C4F44; text-wrap: pretty">Нажми, чтоб я знал, что ты в деле.</p>
+            <button type="button" onClick="{{ submit }}" style="width: 100%; padding: 28px 20px; background: #4A2E1E; border: 1px solid #4A2E1E; border-radius: 999px; font-family: 'Manrope', sans-serif; font-size: 14px; letter-spacing: .3em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s, letter-spacing .25s, transform .12s" style-hover="background: #33200F; letter-spacing: .34em" style-active="transform: scale(.985)">{{ buttonLabel }}</button>
           </div>
         </sc-if>
       </div>
@@ -255,17 +260,17 @@ window.__resources = {
       </div>
       <div style="position: fixed; left: 0; right: 0; bottom: 0; z-index: 12; display: flex; justify-content: center; pointer-events: none">
         <div style="position: relative; width: 100%; max-width: 620px; height: 0">
-          <div data-sonya="1" style="position: absolute; right: 0; bottom: 0; height: min(76vh, 640px); transform-origin: 50% 100%; will-change: transform; animation: sonyaRise 2.6s cubic-bezier(.22,.68,.24,1) .35s both, sonyaSquash .25s cubic-bezier(.5,0,.7,.4) 5.98s forwards">
+          <div data-sonya="1" style="position: absolute; right: 0; bottom: 0; height: min(76vh, 640px); transform-origin: 50% 50%; will-change: transform; animation: sonyaRise 2.6s cubic-bezier(.22,.68,.24,1) .35s both, sonyaSquash .25s cubic-bezier(.4,0,.7,.5) 4.88s forwards">
             <img src="./img/sonya.png" alt="Софья в праздничном колпаке" style="display: block; height: 100%; width: auto; filter: drop-shadow(0 6px 24px rgba(93,74,58,.3))">
-            <div data-sonya-bubble="1" style="position: absolute; right: 64%; top: 2%; padding: 11px 20px 13px; background: #FBF8F2; border: 2px solid #3E342C; border-radius: 20px 20px 20px 5px; box-shadow: 3px 4px 0 rgba(62,52,44,.85); font-family: 'Cormorant Garamond', serif; font-weight: 600; font-style: italic; font-size: clamp(24px, 6.4vw, 32px); line-height: 1; color: #8A382F; white-space: nowrap; transform-origin: 92% 100%; animation: bubblePop .6s cubic-bezier(.2,1.5,.4,1) 4.25s both">Не жду!<span style="position: absolute; right: -16px; bottom: 7px; width: 0; height: 0; border-style: solid; border-width: 9px 0 9px 17px; border-color: transparent transparent transparent #3E342C"></span><span style="position: absolute; right: -11px; bottom: 10px; width: 0; height: 0; border-style: solid; border-width: 6px 0 6px 12px; border-color: transparent transparent transparent #FBF8F2"></span></div>
+            <div data-sonya-bubble="1" style="position: absolute; right: 64%; top: 2%; padding: 11px 20px 13px; background: #FBF8F2; border: 2px solid #3E342C; border-radius: 20px 20px 20px 5px; box-shadow: 3px 4px 0 rgba(62,52,44,.85); font-family: 'Cormorant Garamond', serif; font-weight: 600; font-style: italic; font-size: clamp(24px, 6.4vw, 32px); line-height: 1; color: #4A2E1E; white-space: nowrap; transform-origin: 92% 100%; animation: bubblePop .6s cubic-bezier(.2,1.5,.4,1) 3.15s both">Не жду!<span style="position: absolute; right: -16px; bottom: 7px; width: 0; height: 0; border-style: solid; border-width: 9px 0 9px 17px; border-color: transparent transparent transparent #3E342C"></span><span style="position: absolute; right: -11px; bottom: 10px; width: 0; height: 0; border-style: solid; border-width: 6px 0 6px 12px; border-color: transparent transparent transparent #FBF8F2"></span></div>
           </div>
           <!-- Артём падает сверху ровно на Соню и прибивает её: она сплющивается
                и пропадает, а последнее слово остаётся за ним. Лежит выше Сони по
                порядку в потоке — значит, и рисуется поверх. -->
-          <div data-artem-wrap="1" style="position: absolute; right: 0; bottom: 0; width: min(94vw, 580px); animation: artemLeave 1.5s cubic-bezier(.55,.06,.68,.19) 9.8s forwards">
-            <div data-artem="1" style="transform-origin: 50% 100%; will-change: transform; animation: artemDrop 1.05s linear 5.5s both">
+          <div data-artem-wrap="1" style="position: absolute; right: 0; bottom: 0; width: min(94vw, 580px); animation: artemLeave 1.5s cubic-bezier(.55,.06,.68,.19) 8.7s forwards">
+            <div data-artem="1" style="transform-origin: 50% 100%; will-change: transform; animation: artemDrop 1.35s linear 4.4s both">
               <img src="./img/artem.png" alt="Артём лежит с бутылкой" style="display: block; width: 100%; height: auto; filter: drop-shadow(0 -4px 22px rgba(93,74,58,.32))">
-              <div data-artem-bubble="1" style="position: absolute; right: 6px; bottom: 88%; padding: 11px 20px 13px; background: #FBF8F2; border: 2px solid #3E342C; border-radius: 20px 20px 5px 20px; box-shadow: 3px 4px 0 rgba(62,52,44,.85); font-family: 'Cormorant Garamond', serif; font-weight: 600; font-style: italic; font-size: clamp(24px, 6.4vw, 32px); line-height: 1; color: #8A382F; white-space: nowrap; transform-origin: 88% 100%; animation: bubblePop .6s cubic-bezier(.2,1.5,.4,1) 6.2s both">А я жду!<span style="position: absolute; right: 20px; bottom: -17px; width: 0; height: 0; border-style: solid; border-width: 17px 9px 0 9px; border-color: #3E342C transparent transparent transparent"></span><span style="position: absolute; right: 23px; bottom: -11px; width: 0; height: 0; border-style: solid; border-width: 12px 6px 0 6px; border-color: #FBF8F2 transparent transparent transparent"></span></div>
+              <div data-artem-bubble="1" style="position: absolute; right: 6px; bottom: 88%; padding: 11px 20px 13px; background: #FBF8F2; border: 2px solid #3E342C; border-radius: 20px 20px 5px 20px; box-shadow: 3px 4px 0 rgba(62,52,44,.85); font-family: 'Cormorant Garamond', serif; font-weight: 600; font-style: italic; font-size: clamp(24px, 6.4vw, 32px); line-height: 1; color: #4A2E1E; white-space: nowrap; transform-origin: 88% 100%; animation: bubblePop .6s cubic-bezier(.2,1.5,.4,1) 5.35s both">А я жду!<span style="position: absolute; right: 20px; bottom: -17px; width: 0; height: 0; border-style: solid; border-width: 17px 9px 0 9px; border-color: #3E342C transparent transparent transparent"></span><span style="position: absolute; right: 23px; bottom: -11px; width: 0; height: 0; border-style: solid; border-width: 12px 6px 0 6px; border-color: #FBF8F2 transparent transparent transparent"></span></div>
             </div>
           </div>
         </div>
@@ -354,8 +359,8 @@ class Component extends DCLogic {
         { transform: 'translate(' + x0 + 'px, ' + y0 + 'px) scale(1) rotate(-4deg)', opacity: 1, offset: .16 },
         { transform: 'translate(' + xm + 'px, ' + ym + 'px) scale(.58) rotate(7deg)', opacity: 1, offset: .58 },
         { transform: 'translate(' + x1 + 'px, ' + y1 + 'px) scale(.08) rotate(16deg)', opacity: 0, offset: 1 }
-      ], { duration: 1600, easing: 'cubic-bezier(.42,.02,.4,1)', fill: 'both' });
-    }, 2600);
+      ], { duration: 900, easing: 'cubic-bezier(.36,.02,.36,1)', fill: 'both' });
+    }, 2200);
   }
 
   scan() {
@@ -417,17 +422,17 @@ class Component extends DCLogic {
   // чтобы список не упирался в лишнюю черту перед краем карточки.
   rowStyle(active, last) {
     return 'display: flex; align-items: center; gap: 14px; width: 100%; padding: 13px 4px; background: transparent; border: none; cursor: pointer; text-align: left' +
-      '; border-bottom: ' + (last ? 'none' : '1px solid rgba(138,56,47,.14)') +
+      '; border-bottom: ' + (last ? 'none' : '1px solid rgba(74,46,30,.14)') +
       "; font-family: 'Cormorant Garamond', serif; font-size: 20px; line-height: 1.35" +
-      '; color: ' + (active ? '#8A382F' : '#3E342C') +
+      '; color: ' + (active ? '#4A2E1E' : '#3E342C') +
       '; font-style: ' + (active ? 'italic' : 'normal') +
       '; transition: color .25s';
   }
 
   dotStyle(active) {
     return 'flex: none; width: 10px; height: 10px; border-radius: 999px; transition: background .25s, border-color .25s' +
-      '; border: 1px solid ' + (active ? '#8A382F' : 'rgba(138,56,47,.4)') +
-      '; background: ' + (active ? '#8A382F' : 'transparent');
+      '; border: 1px solid ' + (active ? '#4A2E1E' : 'rgba(74,46,30,.4)') +
+      '; background: ' + (active ? '#4A2E1E' : 'transparent');
   }
 
   // Карточка бара: невыбранная отходит назад и гаснет, выбранная выходит
@@ -442,7 +447,7 @@ class Component extends DCLogic {
 
   cardTitleStyle(active) {
     return "display: block; margin-top: 9px; font-family: 'Cormorant Garamond', serif; font-size: 18px; line-height: 1.3; text-align: center; transition: color .25s" +
-      '; color: ' + (active ? '#8A382F' : '#3E342C') +
+      '; color: ' + (active ? '#4A2E1E' : '#3E342C') +
       '; font-style: ' + (active ? 'italic' : 'normal');
   }
 
