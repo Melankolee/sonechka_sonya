@@ -202,21 +202,20 @@ window.__resources = {
       </div>
     </section>
 
-    <!-- Блокнот для идей. Текст живёт в самом textarea, а не в state: на каждую
+    <!-- Листки для идей. Текст живёт в самом textarea, а не в state: на каждую
          букву перерисовывать страницу с каруселью и лентой подарков незачем, да и
-         отрыв листа — работа с живым узлом (см. tearOff). Планка с пружиной
-         остаётся на месте, улетает только лист. -->
+         отрыв листа — работа с живым узлом (см. tearOff). Улетает верхний лист,
+         стопка под ним остаётся. -->
     <section data-reveal="1" style="padding: 62px 22px 0; text-align: center">
       <div style="width: 1px; height: 46px; margin: 0 auto 26px; background: linear-gradient(180deg, rgba(138,56,47,0), rgba(138,56,47,.5))"></div>
       <h2 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-style: italic; font-size: clamp(26px, 7vw, 34px); color: #3E342C">А есть идея?</h2>
       <p style="margin: 14px auto 0; max-width: 32ch; font-family: 'Manrope', sans-serif; font-weight: 400; font-size: 14px; line-height: 1.7; color: #3E342C">Игра, тост, песня, что угодно про этот вечер — напиши на листке, он оторвётся и улетит ко мне.</p>
 
-      <div style="position: relative; max-width: 430px; margin: 34px auto 0; padding-top: 34px">
-        <!-- Картонная подложка и кромки нижних листов: без них блокнот выглядит
-             одним листом бумаги, и отрывать в нём как будто нечего. -->
-        <div aria-hidden="true" style="position: absolute; left: -8px; right: -8px; top: -8px; bottom: -14px; border-radius: 6px; background: linear-gradient(180deg, #DFD2BA, #CBBA9C); box-shadow: 0 16px 34px rgba(93,74,58,.2)"></div>
-        <div aria-hidden="true" style="position: absolute; left: 3px; right: 3px; top: 40px; bottom: -8px; border-radius: 2px; background: #EFE6D4"></div>
-        <div aria-hidden="true" style="position: absolute; left: 1px; right: 1px; top: 37px; bottom: -4px; border-radius: 2px; background: #F7F1E3"></div>
+      <div style="position: relative; max-width: 430px; margin: 30px auto 0">
+        <!-- Стопка под верхним листом: следующая мысль пишется на следующем листке.
+             Небольшой разворот у каждого — чтобы читалось как стопка бумаги. -->
+        <div aria-hidden="true" style="position: absolute; left: 6px; right: 6px; top: 5px; bottom: -9px; border-radius: 2px; background: #F2EADA; transform: rotate(1.2deg); box-shadow: 0 6px 14px rgba(93,74,58,.12)"></div>
+        <div aria-hidden="true" style="position: absolute; left: 4px; right: 4px; top: 2px; bottom: -5px; border-radius: 2px; background: #F9F4E9; transform: rotate(-.8deg); box-shadow: 0 5px 12px rgba(93,74,58,.1)"></div>
 
         <div data-note-sheet="1" style="position: relative; z-index: 1; padding: 16px 18px 20px; border-radius: 2px; background: #FFFDF8; box-shadow: 0 8px 18px rgba(93,74,58,.14)">
           <!-- Линейка и поля тетрадного листа. Линии — отдельным слоем, а не фоном
@@ -225,15 +224,6 @@ window.__resources = {
           <div aria-hidden="true" style="position: absolute; left: 14px; right: 18px; top: 16px; bottom: 20px; background-image: repeating-linear-gradient(180deg, rgba(138,56,47,.13) 0 1px, transparent 1px 30px); background-position: 0 29px"></div>
           <div aria-hidden="true" style="position: absolute; left: 44px; top: 8px; bottom: 12px; width: 1px; background: rgba(169,88,74,.32)"></div>
           <textarea data-note-field="1" rows="6" maxLength="500" placeholder="Например: давай устроим конкурс на самую кривую матрёшку" style="position: relative; display: block; width: 100%; height: 180px; padding: 0 0 0 44px; background: transparent; border: none; resize: none; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; line-height: 30px; color: #3E342C"></textarea>
-        </div>
-
-        <!-- Планка с пружиной. Перфорация — пунктир по её нижнему краю: ровно по
-             нему лист и рвётся, а clip-path у улетающей копии делает край рваным. -->
-        <div aria-hidden="true" style="position: absolute; left: -4px; right: -4px; top: 0; height: 46px; z-index: 2; border-radius: 5px 5px 2px 2px; background: linear-gradient(180deg, #EDE3CE, #DCCFB2); border-bottom: 1px dashed rgba(138,56,47,.45); box-shadow: 0 2px 6px rgba(93,74,58,.14)"></div>
-        <div aria-hidden="true" style="position: absolute; left: 22px; right: 22px; top: -10px; z-index: 3; display: flex; justify-content: space-between">
-          <sc-for list="{{ rings }}" as="ring" hint-placeholder-count="9">
-            <span style="{{ ring.style }}"></span>
-          </sc-for>
         </div>
       </div>
 
@@ -489,7 +479,7 @@ class Component extends DCLogic {
     ], { duration: 520, delay: 120, easing: 'cubic-bezier(.22,.7,.25,1)', fill: 'backwards' });
   }
 
-  // Рваный верхний край копии: ломаная по перфорации. Высота зубцов случайная —
+  // Рваный верхний край копии: лист будто выдрали из стопки. Высота зубцов случайная —
   // ровная пила читалась бы как обрезка ножницами, а не как отрыв.
   tornEdge() {
     const steps = 30;
@@ -833,10 +823,6 @@ class Component extends DCLogic {
           items: base.concat(copy)
         };
       }),
-      // Пружина блокнота: девять одинаковых колец, разложенных flex-ом по планке.
-      rings: Array.from({ length: 9 }, (_, i) => ({
-        style: 'width: 10px; height: 30px; border-radius: 999px; border: 2px solid rgba(122,100,70,.65); background: linear-gradient(90deg, rgba(255,255,255,.9), rgba(160,140,110,.5)); box-shadow: 0 1px 2px rgba(93,74,58,.25)'
-      })),
       tearOff: () => this.tearOff(),
       hasNotes: s.notes > 0,
       notesLabel: 'Улетело: ' + s.notes + ' ' + this.plural(s.notes, 'мысль', 'мысли', 'мыслей'),
