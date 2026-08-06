@@ -132,13 +132,14 @@
       return W / 2 * profile(clamp((y - m.top) / m.height, 0, 1));
     }
 
-    /* Ломаная вдоль стенки: шаг 12px, силуэт всё равно почти прямой */
-    function wallPath(m, side, shift, from, to, back) {
+    /* Ломаная вдоль стенки: шаг 12px, силуэт всё равно почти прямой. Пишет в
+       любой приёмник с lineTo — и в контекст, и в Path2D. */
+    function wallPath(p, m, side, shift, from, to, back) {
       var y, step = back ? -12 : 12;
       for (y = from; back ? y > to : y < to; y += step) {
-        ctx.lineTo(W / 2 + side * (wall(y, m) - shift), y);
+        p.lineTo(W / 2 + side * (wall(y, m) - shift), y);
       }
-      ctx.lineTo(W / 2 + side * (wall(to, m) - shift), to);
+      p.lineTo(W / 2 + side * (wall(to, m) - shift), to);
     }
 
     /* Пузырьки в пиве: на фото их сотни, поэтому считаем от площади поля.
@@ -341,7 +342,7 @@
         edge = side < 0 ? -2 : W + 2;
         ctx.beginPath();
         ctx.moveTo(edge, -2);
-        wallPath(m, side, 0, -2, H + 2, false);
+        wallPath(ctx, m, side, 0, -2, H + 2, false);
         ctx.lineTo(edge, H + 2);
         ctx.closePath();
         ctx.fill();
@@ -367,6 +368,10 @@
     function walls(m) {
       var band = W * 0.17;
       var mid = wall(H / 2, m);
+      var top = Math.max(m.rim, -2);            // выше венчика стекла нет
+      var full = clamp(Math.max(top, m.surface), top, H + 2);
+      var steps = 18, i, y0, y1;
+
       for (var side = -1; side <= 1; side += 2) {
         var x0 = W / 2 + side * mid;
         var g = ctx.createLinearGradient(x0, 0, x0 - side * band, 0);
@@ -374,14 +379,37 @@
         g.addColorStop(0.22, 'rgba(126,68,10,.12)');
         g.addColorStop(0.44, 'rgba(255,255,255,.24)');
         g.addColorStop(0.72, 'rgba(255,255,255,0)');
-        var from = Math.max(-2, Math.min(m.rim, H + 2));
-        ctx.beginPath();
-        ctx.moveTo(W / 2 + side * wall(from, m), from);
-        wallPath(m, side, 0, from, H + 2, false);
-        wallPath(m, side, band, H + 2, from, true);
-        ctx.closePath();
+
+        var p = new Path2D();
+        p.moveTo(W / 2 + side * wall(top, m), top);
+        wallPath(p, m, side, 0, top, H + 2, false);
+        wallPath(p, m, side, band, H + 2, top, true);
+        p.closePath();
+
         ctx.fillStyle = g;
-        ctx.fill();
+        /* Тень у борта — это толща пива, а над его поверхностью её нет: за
+           стеклом там пена. Поэтому от венчика к линии пива плотность
+           набирается полосами, иначе тень начиналась бы ступенькой. */
+        for (i = 0; i < steps && full > top; i++) {
+          /* границы округляем: полосы должны стыковаться пиксель в пиксель,
+             иначе на нахлёсте видна тёмная линия, а в зазоре — светлая */
+          y0 = Math.round(top + (full - top) * i / steps);
+          y1 = Math.round(top + (full - top) * (i + 1) / steps);
+          if (y1 <= y0) continue;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(0, y0, W, y1 - y0);
+          ctx.clip();
+          ctx.globalAlpha = (i + 0.5) / steps;
+          ctx.fill(p);
+          ctx.restore();
+        }
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, Math.round(full), W, H + 4 - Math.round(full));
+        ctx.clip();
+        ctx.fill(p);
+        ctx.restore();
       }
     }
 
@@ -395,10 +423,8 @@
       ctx.lineWidth = Math.max(1.5, 3 * u);
       /* Кромку по белой пене одним белым не увидеть, поэтому ближняя идёт
          светлой линией с тёплой тенью под ней, а дальняя — только тенью. */
-      ctx.beginPath();
-      ctx.ellipse(W / 2, y, half, ry, 0, Math.PI, 0);          // дальняя кромка
-      ctx.strokeStyle = 'rgba(186,156,104,.32)';
-      ctx.stroke();
+      /* Дальней кромки не рисуем вовсе: за ней непрозрачная пена, сквозь неё
+         край бокала не просвечивает. */
       ctx.beginPath();
       ctx.ellipse(W / 2, y + ry * 0.12, half, ry, 0, 0, Math.PI);
       ctx.strokeStyle = 'rgba(176,144,92,.34)';
