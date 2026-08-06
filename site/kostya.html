@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Артём зовёт пить пиво — Костя</title>
+<title>Зову пить пиво — Костя</title>
 <link rel="icon" href="./favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="./img/favicon-32.png">
 <link rel="apple-touch-icon" href="./img/apple-touch-icon.png">
@@ -92,7 +92,7 @@ window.__resources = {
              любом экране, а не только на телефоне. -->
         <div data-reveal="1" style="padding: calc(min(100vw, 620px) * .45) 30px 6px; text-align: center">
           <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #8A382F">{{ guestGreeting }}</p>
-          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(32px, 8.8vw, 50px); line-height: 1.08; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Я <em style="font-style: italic; color: #8A382F">не</em> приглашаю тебя<br>на день рождения,<br><em style="font-style: italic; color: #8A382F">но Артём приглашает<br>тебя пить пиво!</em></h1>
+          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(32px, 8.8vw, 50px); line-height: 1.08; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Соня <em style="font-style: italic; color: #8A382F">не</em> приглашает тебя<br>на день рождения,<br><em style="font-style: italic; color: #8A382F">зато я приглашаю<br>пить пиво!</em></h1>
         </div>
       </div>
 
@@ -173,13 +173,13 @@ window.__resources = {
         <div style="position: absolute; right: 14px; bottom: 14px; width: 16px; height: 16px; border-right: 1px solid rgba(138,56,47,.32); border-bottom: 1px solid rgba(138,56,47,.32); border-bottom-right-radius: 6px; pointer-events: none"></div>
         <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
           <div data-sent-card="1" style="padding: 18px 0 10px">
-            <h3 style="margin: 0 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Спасибо, записали!</h3>
-            <p style="margin: 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Артём в курсе. Пиво за ним.</p>
+            <h3 style="margin: 0 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Спасибо, записал!</h3>
+            <p style="margin: 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Я в курсе. Пиво за мной.</p>
           </div>
         </sc-if>
         <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
           <div>
-            <p style="margin: 0 auto 22px; max-width: 24ch; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(26px, 7vw, 34px); line-height: 1.45; color: #5C4F44; text-wrap: pretty">Нажми — и Артём будет знать, что ты придёшь.</p>
+            <p style="margin: 0 auto 22px; max-width: 24ch; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(26px, 7vw, 34px); line-height: 1.45; color: #5C4F44; text-wrap: pretty">Нажми — и я буду знать, что ты придёшь.</p>
             <button type="button" onClick="{{ submit }}" style="width: 100%; padding: 28px 20px; background: #8A382F; border: 1px solid #8A382F; border-radius: 999px; font-family: 'Manrope', sans-serif; font-size: 14px; letter-spacing: .3em; text-transform: uppercase; color: #FBF8F2; cursor: pointer; transition: background .25s, letter-spacing .25s, transform .12s" style-hover="background: #742E27; letter-spacing: .34em" style-active="transform: scale(.985)">{{ buttonLabel }}</button>
           </div>
         </sc-if>
@@ -214,7 +214,7 @@ window.__resources = {
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;answersUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;/api/answers&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;placeOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Spontan, Пивная диета, К тебе, На улице&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;beerOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Lager, IPA, Stout, Weissbier&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;answersUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;/api/answers&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;placeOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Spontan, Пивная диета, К тебе, На улице&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;beerOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Lager, IPA, Любое побольше, Weissbier&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
 class Component extends DCLogic {
   state = { place: [], beer: [], sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null };
 
@@ -333,7 +333,7 @@ class Component extends DCLogic {
   }
 
   beerList() {
-    const raw = this.props.beerOptions || 'Lager, IPA, Stout, Weissbier';
+    const raw = this.props.beerOptions || 'Lager, IPA, Любое побольше, Weissbier';
     return raw.split(',').map(s => s.trim()).filter(Boolean);
   }
 
