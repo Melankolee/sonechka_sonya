@@ -264,15 +264,14 @@ window.__resources = {
              далёкая — с близкой приподнятый угол раздувается и вылезает за края
              этикетки отдельным листом. -->
         <div style="{{ peelBoxStyle }}">
-          <div aria-hidden="true" style="position: absolute; inset: 0; clip-path: polygon(0 0, 100% 0, 100% 100%); -webkit-clip-path: polygon(0 0, 100% 0, 100% 100%); background: linear-gradient(214deg, #E8D9B9 0%, #DCCBA5 55%, #CDBB92 100%); box-shadow: inset 0 0 22px rgba(74,46,30,.3)">
+          <div aria-hidden="true" style="position: absolute; inset: 0; clip-path: polygon(0 0, 100% 0, 100% 100%); -webkit-clip-path: polygon(0 0, 100% 0, 100% 100%); border-radius: 0 16px 0 0; background: linear-gradient(214deg, #E8D9B9 0%, #DCCBA5 55%, #CDBB92 100%); box-shadow: inset 0 0 22px rgba(74,46,30,.3)">
             <span style="position: absolute; left: 73%; top: 27%; transform: translate(-50%, -50%) rotate(-45deg); font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 700; font-size: clamp(16px, 4.4vw, 22px); line-height: 1; color: rgba(74,46,30,.82); white-space: nowrap">уебок</span>
           </div>
           <button type="button" aria-label="Отклеить уголок" onClick="{{ peel }}" style="{{ peelStyle }}"></button>
         </div>
         <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
           <div data-sent-card="1" style="padding: 18px 0 10px">
-            <h3 style="margin: 0 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Спасибо, записал!</h3>
-            <p style="margin: 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 14px; line-height: 1.7; color: #6A5C4F">Я в курсе. Пиво за мной.</p>
+            <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Забились!</h3>
           </div>
         </sc-if>
         <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
@@ -369,7 +368,7 @@ class Component extends DCLogic {
   }
   componentDidUpdate() { this.scan(); this.flyEnvelope(); }
 
-  // Конверт вылетает из карточки «Спасибо, записали!» и уменьшается к Соне.
+  // Конверт вылетает из карточки «Забились!» и уменьшается к Соне.
   // Начало и конец маршрута замеряем в момент вылета: до него пользователь мог
   // прокрутить страницу, и заранее посчитанные координаты увели бы конверт мимо.
   flyEnvelope() {
@@ -499,13 +498,16 @@ class Component extends DCLogic {
   // Сам угол. Приподнят он всегда — иначе никто не поймёт, что за него можно
   // взяться; поворот вокруг диагонали на 180° укладывает его внутрь карточки.
   // Тень уходит влево-вниз, туда же, куда падает свет у самой этикетки.
+  // Скругление и подъём нарочно скромные: пока угол не тронут, он должен читаться
+  // тем же углом этикетки, что и три остальных, — острый и задранный он выдаёт
+  // себя раньше, чем на него нажали.
   peelStyle(on) {
     return 'position: absolute; inset: 0; padding: 0; cursor: pointer' +
       '; clip-path: polygon(0 0, 100% 0, 100% 100%); -webkit-clip-path: polygon(0 0, 100% 0, 100% 100%)' +
-      '; border: none; border-top: 1px solid rgba(74,46,30,.34); border-right: 1px solid rgba(74,46,30,.34)' +
+      '; border: none; border-top: 1px solid rgba(74,46,30,.34); border-right: 1px solid rgba(74,46,30,.34); border-radius: 0 16px 0 0' +
       '; background: linear-gradient(214deg, #FBF5E5 0%, #F3E8CE 52%, #EEDFC0 100%)' +
-      '; transform-origin: 50% 50%; transform: rotate3d(1, 1, 0, ' + (on ? 180 : 26) + 'deg)' +
-      '; filter: drop-shadow(-4px 4px 6px rgba(93,74,58,' + (on ? '.45' : '.34') + '))' +
+      '; transform-origin: 50% 50%; transform: rotate3d(1, 1, 0, ' + (on ? 180 : 9) + 'deg)' +
+      '; filter: drop-shadow(' + (on ? '-4px 4px 6px rgba(93,74,58,.45)' : '-1px 1px 2px rgba(93,74,58,.16)') + ')' +
       '; transition: transform .75s cubic-bezier(.3,.85,.3,1), filter .75s';
   }
 
@@ -535,7 +537,7 @@ class Component extends DCLogic {
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
     } catch (e) {
-      // Праздник важнее доставки: гость всё равно видит «записали», а ответ
+      // Праздник важнее доставки: гость всё равно видит «Забились!», а ответ
       // ждёт в localStorage — страница /sonechka о нём не узнает, но и вечер
       // не начнётся с ошибки на экране. Досыл — при следующем открытии.
       this.stash(payload);
