@@ -21,6 +21,12 @@
    странице (обычно это тап по интро-конверту). Требуется https, он есть.
    Где датчика нет вовсе (десктоп) — ведём наклон мышью плюс лёгкое покачивание.
 
+   Из бокала можно пить. Тап по пене или по пиву под ней — глоток: шапка вместе
+   с поверхностью уходит вниз, а на освободившемся стекле остаётся кольцо там,
+   где пена стояла. Пять глотков — и дальше уровень не идёт, следующий тап
+   наливает заново. Выпитые бокалы считаются в localStorage и переживают
+   закрытие страницы; счёт ведёт вслух строчка-подсказка под заголовком.
+
    При prefers-reduced-motion рисуем один статичный кадр и не заводим цикл. */
 (function () {
   'use strict';
@@ -30,6 +36,12 @@
   var FOAM_AT = 0.30;     // от верха карточки до границы пены и пива
   var BASE_AT = 0.17;     // от низа карточки до дуги донышка
   var MAX_TILT = 16;      // предел наклона поверхности, градусы
+  var SIP = 0.16;         // насколько уходит уровень за один глоток
+  var SIPS = 5;           // столько глотков — и бокал допит
+  var GLASSES_KEY = 'sonechka:beers-kostya';
+
+  /* Счёт бокалов вслух. Дальше пятого Тёмка считать отказывается. */
+  var COUNT = ['один есть', 'второй пошёл', 'третий. не гони', 'четвёртый, ты как?', 'пятый'];
   var BEND = 1.55;        // во сколько раз стягивается картинка у самого борта
   var BEND_P = 3;         // как резко нарастает стягивание к краю
   var VEIL = 0.66;        // забеливающая вуаль над пивом под текстом
@@ -50,6 +62,16 @@
 
   function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
   function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+
+  /* Выпитое помнится между открытиями страницы: приватный режим и запрет
+     хранилища не должны ронять бокал, поэтому обе стороны в try. */
+  function readGlasses() {
+    try { return clamp(parseInt(localStorage.getItem(GLASSES_KEY), 10) || 0, 0, 99); }
+    catch (e) { return 0; }
+  }
+  function saveGlasses(n) {
+    try { localStorage.setItem(GLASSES_KEY, String(n)); } catch (e) {}
+  }
 
   function mount(host) {
     var card = host.parentNode;
@@ -73,8 +95,17 @@
     var angle = 0, vel = 0, target = 0;   // градусы наклона поверхности
     var phase = 0;
 
+    /* Выпитое. drop — насколько уровень ушёл вниз от полного бокала, px;
+       ведём его пружиной, как наклон, поэтому глоток проваливается с перелётом,
+       а долив поднимается медленно. rings — следы пены на стекле: off меряется
+       от верха карточки, чтобы кольца ехали вместе с ней при прокрутке. */
+    var drop = 0, dropVel = 0, dropTarget = 0;
+    var sips = 0, rings = [];
+    var glasses = readGlasses();
+
     /* ------------------------------------------------------------- геометрия */
     function resize() {
+      var wasCW = CW;
       W = host.clientWidth || 1;
       H = host.clientHeight || 1;
       CW = Math.min(W, 620);          // ширина карточки задаёт масштаб бокала
@@ -90,12 +121,23 @@
       u = CW / 430;
       var pad = Math.max(W, H) * 0.24;
       X0 = -pad; X1 = W + pad; YTOP = -pad; YBOT = H + pad;
+      /* Выпитое отмерено в долях ширины карточки — при её смене тянем за собой и
+         уровень, и кольца. Высота сюда не входит: на телефоне она скачет от
+         адресной строки, и на каждый такой скачок уровень бы дёргался. */
+      if (wasCW && CW !== wasCW) {
+        var k = CW / wasCW;
+        drop *= k; dropTarget *= k; dropVel = 0;
+        for (var r = 0; r < rings.length; r++) rings[r].off *= k;
+      }
       makeBubbles();
       buildFoam();
     }
 
-    /* Где сейчас на экране венчик, граница пены и дно. Считаем от карточки, а не
-       от холста: холст висит sticky и в конце страницы отлипает. */
+    /* Где сейчас на экране венчик, шапка пены, граница пены и дно. Считаем от
+       карточки, а не от холста: холст висит sticky и в конце страницы отлипает.
+       rim — устье бокала, оно приклеено к стеклу и стоит на месте; cap — верх
+       пены, он вместе с surface уезжает вниз на выпитое. Пока не пили, это одно
+       и то же место. */
     function marks() {
       var c = card.getBoundingClientRect();
       var h = host.getBoundingClientRect();
@@ -104,7 +146,8 @@
         top: top,
         height: c.height || 1,
         rim: top - CW * 0.05,
-        surface: top + CW * FOAM_AT,
+        cap: top - CW * 0.05 + drop,
+        surface: top + CW * FOAM_AT + drop,
         base: top + (c.height || 1) - CW * BASE_AT
       };
     }
@@ -345,9 +388,11 @@
 
       bottomGlass(m);
       silhouette(m);
+      emptyGlass(m);   // то, что осталось выше пены после глотков
       domeEdge(m);
       veil(m);
       walls(m);
+      lacing(m);   // кольца лежат на стекле, значит поверх его бликов
       topRim(m);
     }
 
@@ -368,8 +413,10 @@
         ctx.closePath();
         ctx.fill();
       }
-      if (m.rim > -CW && m.rim < H + CW) {
-        var half = wall(m.rim, m), x;
+      /* Верхней границы у проверки нет: если шапку отпили ниже экрана, стереть
+         надо всё видимое — там уже пустое стекло, а не пена. */
+      if (m.cap > -CW) {
+        var half = wall(m.cap, m), x;
         ctx.beginPath();
         ctx.moveTo(-2, -CW * 2);
         ctx.lineTo(W + 2, -CW * 2);
@@ -393,13 +440,13 @@
       var lean = Math.tan(angle * Math.PI / 180) * 0.45 * (x - W / 2);
       var noise = (Math.sin(x / (37 * u) + phase * 0.6) +
                    Math.sin(x / (71 * u) - phase * 0.4)) * CW * 0.007;
-      return m.rim + lean - CW * 0.15 * bump + noise;
+      return m.cap + lean - CW * 0.15 * bump + noise;
     }
 
     /* Пузыри по краю шапки: без них купол выглядит вырезанным ножницами. */
     function domeEdge(m) {
-      if (m.rim < -CW || m.rim > H + CW) return;
-      var half = wall(m.rim, m), seed = 7, x;
+      if (m.cap < -CW || m.cap > H + CW) return;
+      var half = wall(m.cap, m), seed = 7, x;
       for (x = W / 2 - half; x <= W / 2 + half; x += 9 * u) {
         seed = (seed * 9301 + 49297) % 233280;
         var rnd = seed / 233280;
@@ -411,6 +458,103 @@
         ctx.fill();
       }
       ctx.globalAlpha = 1;
+    }
+
+    /* Опустевшая часть бокала. Пока не пили, её нет вовсе. Как отпил — между
+       устьем и шапкой пены открывается стекло, и одной бумагой бланка его не
+       показать: пустой бокал всё равно светлее фона, ловит вдоль себя длинный
+       блик и темнеет у бортов. Без этого белые кольца от пены не на чем читать. */
+    function emptyGlass(m) {
+      if (drop < 1) return;
+      var yTop = m.rim, half = wall(yTop, m), ry = half * 0.14;
+      var capHalf = wall(m.cap, m), x, g;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - half, yTop);
+      ctx.ellipse(W / 2, yTop, half, ry, 0, Math.PI, 6.2832);   // дальняя кромка устья
+      wallPath(ctx, m, 1, 0, yTop, m.cap, false);               // правая стенка вниз
+      for (x = W / 2 + capHalf; x > W / 2 - capHalf; x -= 10) {
+        ctx.lineTo(x, domeY(x, m, capHalf) + 3);                // по куполу пены обратно
+      }
+      wallPath(ctx, m, -1, 0, m.cap, yTop, true);               // левая стенка вверх
+      ctx.closePath();
+      ctx.clip();
+
+      ctx.fillStyle = 'rgba(255,252,243,.62)';
+      ctx.fillRect(0, yTop - ry - 2, W, m.cap - yTop + ry + 6);
+
+      /* блик и потемнение у бортов — те же, что на полной части бокала */
+      g = ctx.createLinearGradient(W / 2 - half, 0, W / 2 + half, 0);
+      g.addColorStop(0, 'rgba(120,92,56,.16)');
+      g.addColorStop(0.14, 'rgba(255,255,255,.5)');
+      g.addColorStop(0.34, 'rgba(255,255,255,.06)');
+      g.addColorStop(0.86, 'rgba(255,255,255,.22)');
+      g.addColorStop(1, 'rgba(120,92,56,.2)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, yTop - ry - 2, W, m.cap - yTop + ry + 6);
+
+      /* у самой пены стекло подтемняется её массой */
+      g = ctx.createLinearGradient(0, m.cap - CW * 0.18, 0, m.cap);
+      g.addColorStop(0, 'rgba(186,152,96,0)');
+      g.addColorStop(1, 'rgba(186,152,96,.22)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, m.cap - CW * 0.18, W, CW * 0.18 + 4);
+      ctx.restore();
+    }
+
+    /* Следы пены на стекле. После глотка шапка уходит вниз, а на стенке в том
+       месте, где она стояла, остаётся кольцо: сверху ровная дуга, снизу осевшие
+       пузыри — пена сползает, а не стирается по линейке. Кольцо приклеено к
+       карточке, поэтому при прокрутке уезжает вместе с бокалом, а не с пивом. */
+    function lacing(m) {
+      var STEPS = 130;
+      var i, k, seed, rnd, y, half, ry, ang, cos, px, py;
+      for (i = 0; i < rings.length; i++) {
+        y = m.top + rings[i].off;
+        if (y < m.rim - 2 || y > m.cap - 2 || y < -30 || y > H + 30) continue;
+        half = wall(y, m);
+        ry = half * 0.14;
+        ctx.save();
+
+        /* Сплошная линия — только намёком: ровное кольцо во всю силу читается
+           обручем, надетым на бокал. Она держит форму, а видно поверх неё в
+           основном крупу. Тёплая тень под белым — иначе пену на светлом бланке
+           не разглядеть, тот же приём, что у ближней кромки венчика. */
+        ctx.globalAlpha = rings[i].a * 0.3;
+        ctx.lineWidth = Math.max(1, 1.6 * u);
+        ctx.strokeStyle = 'rgba(150,116,64,.5)';
+        ctx.beginPath();
+        ctx.ellipse(W / 2, y + Math.max(1.2, 2 * u), half, ry, 0, 0, 6.2832);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,253,247,.95)';
+        ctx.beginPath();
+        ctx.ellipse(W / 2, y, half, ry, 0, 0, 6.2832);
+        ctx.stroke();
+
+        /* Сама пена: крупа по всему кольцу с прорехами там, где не удержалась.
+           У бортов ячейки крупнее — туда смотришь вдоль стекла, сквозь всю его
+           толщу. seed берём от места кольца: рисунок у каждого свой, но от кадра
+           к кадру один и тот же, иначе пена по стеклу кипела бы. */
+        seed = Math.abs(Math.round(rings[i].off)) % 233280 + 11;
+        for (k = 0; k < STEPS; k++) {
+          seed = (seed * 9301 + 49297) % 233280;
+          rnd = seed / 233280;
+          if (rnd < 0.42) continue;
+          ang = k / STEPS * 6.2832;
+          cos = Math.cos(ang);
+          var r = (0.6 + rnd * rnd * 2.3) * (0.8 + 0.3 * Math.abs(cos)) * u;
+          /* внутрь на свой радиус: ячейка сидит на стенке, а не торчит наружу */
+          px = W / 2 + (half - r) * cos;
+          py = y + ry * Math.sin(ang) + (rnd - 0.5) * 3.4 * u;
+          ctx.globalAlpha = rings[i].a * (0.4 + rnd * 0.6);
+          ctx.fillStyle = rnd < 0.24 ? '#E7D4AE' : '#FFFDF7';
+          ctx.beginPath();
+          ctx.arc(px, py, r, 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
     }
 
     /* Стекло стенки: у самого борта смотришь сквозь всю толщу пива — там оно
@@ -484,6 +628,20 @@
       ctx.ellipse(W / 2, y, half, ry, 0, 0, Math.PI);          // ближняя
       ctx.strokeStyle = 'rgba(255,255,255,.85)';
       ctx.stroke();
+      /* Пока бокал полный, дальнего края и правда не видно. Но стоит отпить —
+         в устье видно стекло насквозь, и он проступает: сначала еле-еле, к
+         первому же глотку полностью. */
+      var see = clamp(drop / (CW * SIP * 0.7), 0, 1);
+      if (see > 0.02) {
+        ctx.beginPath();
+        ctx.ellipse(W / 2, y, half, ry, 0, Math.PI, 6.2832);
+        ctx.strokeStyle = 'rgba(255,255,255,' + (0.5 * see).toFixed(3) + ')';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(W / 2, y + ry * 0.16, half, ry, 0, Math.PI, 6.2832);
+        ctx.strokeStyle = 'rgba(150,116,64,' + (0.3 * see).toFixed(3) + ')';
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
@@ -580,6 +738,83 @@
     if (window.ResizeObserver) new ResizeObserver(resize).observe(host);
     else window.addEventListener('resize', resize);
 
+    /* ---------------------------------------------------------- строчка снизу */
+    /* Один и тот же абзац под заголовком: сначала «наклони телефон», потом им же
+       Тёмка считает выпитое. Как только заговорил счёт, подсказка про наклон
+       больше не всплывает — hintHidden поднят навсегда. */
+    var hintShown = false, hintHidden = false, hintTimer = 0, born = now();
+
+    function say(text, ms) {
+      if (!hint) return;
+      hintShown = hintHidden = true;
+      hint.textContent = text;
+      hint.style.opacity = '1';
+      clearTimeout(hintTimer);
+      hintTimer = ms ? setTimeout(function () { hint.style.opacity = '0'; }, ms) : 0;
+    }
+    function showHint() {
+      if (!hint || hintShown || hintHidden) return;
+      hintShown = true;
+      hint.style.opacity = '1';
+    }
+    function hideHint() {
+      if (!hint || hintHidden) return;
+      hintHidden = true;
+      hint.style.opacity = '0';
+    }
+
+    /* ---------------------------------------------------------------- глотки */
+    /* Глоток: шапка вместе с поверхностью проваливается вниз, а на стекле там,
+       где пена стояла, остаётся кольцо. Ниже пятого уровень не идёт — бокал
+       считается допитым, и следующий тап наливает заново. */
+    function sip() {
+      if (sips >= SIPS) { refill(); return; }
+      var m = marks();
+      rings.push({ off: m.cap - m.top, a: 0.62 });
+      sips++;
+      /* Глотки не под линейку: разброс в полтора раза не даёт кольцам встать
+         ровной лесенкой, по которой видно, что уровень считает машина. */
+      dropTarget += CW * SIP * (0.8 + Math.random() * 0.4);
+      vel += 1.1;                                       // от глотка пиво качнулось
+      if (sips >= SIPS) say('ещё по одной?', 0);
+      else if (sips === 1 && !glasses) say('пей, я угощаю', 2600);
+      if (reduce) { drop = dropTarget; dropVel = 0; paint(0); }
+    }
+
+    function refill() {
+      glasses++;
+      saveGlasses(glasses);
+      sips = 0;
+      dropTarget = 0;
+      for (var i = 0; i < rings.length; i++) rings[i].fade = true;
+      vel -= 1.4;                                       // свежее налили — плеснуло
+      say(glasses > COUNT.length ? 'я сбился со счёта' : COUNT[glasses - 1], 3400);
+      if (reduce) { drop = 0; dropVel = 0; rings.length = 0; paint(0); }
+    }
+
+    /* Тап ловим на документе, а не на холсте: холст лежит pointer-events: none,
+       чтобы не отбирать прокрутку. По той же причине глотком считается только
+       тап без протяжки — палец, уехавший дальше 10px, листал страницу. */
+    var press = null;
+    document.addEventListener('pointerdown', function (e) {
+      press = e.button ? null : { x: e.clientX, y: e.clientY, t: now() };
+    }, { passive: true });
+    document.addEventListener('pointerup', function (e) {
+      var p = press;
+      press = null;
+      if (!p || window.__envelopeIntroActive) return;
+      if (now() - p.t > 700) return;
+      if (Math.abs(e.clientX - p.x) > 10 || Math.abs(e.clientY - p.y) > 10) return;
+      if (e.target && e.target.closest &&
+          e.target.closest('a, button, input, textarea, select, [data-note-sheet], [data-help]')) return;
+      var h = host.getBoundingClientRect();
+      var m = marks();
+      var x = e.clientX - h.left, y = e.clientY - h.top;
+      if (Math.abs(x - W / 2) > wall(y, m)) return;                    // мимо стекла
+      if (y < m.cap - CW * 0.14 || y > m.surface + CW * 0.3) return;   // ни по пене, ни по пиву под ней
+      sip();
+    }, { passive: true });
+
     /* ------------------------------------------------------- статичный режим */
     if (reduce) {
       paint(0);
@@ -590,7 +825,6 @@
     /* ------------------------------------------------------------ источники */
     var sensor = false;          // пришло хоть одно событие датчика
     var pointerTilt = 0;         // запасной наклон мышью
-    var hintShown = false, hintHidden = false, born = now();
 
     function onOrientation(e) {
       if (e.beta == null && e.gamma == null) return;
@@ -645,17 +879,6 @@
       pointerTilt = clamp(-((e.clientX / (window.innerWidth || 1)) - 0.5) * 2 * 11, -11, 11);
     });
 
-    function showHint() {
-      if (!hint || hintShown || hintHidden) return;
-      hintShown = true;
-      hint.style.opacity = '1';
-    }
-    function hideHint() {
-      if (!hint || hintHidden) return;
-      hintHidden = true;
-      hint.style.opacity = '0';
-    }
-
     /* ----------------------------------------------------------------- цикл */
     var running = true, last = now();
 
@@ -673,6 +896,26 @@
         vel *= 0.88;
         angle += vel;
         phase += 0.05 + Math.min(0.06, Math.abs(vel) * 0.02);
+        /* Уровень — та же пружина, но несимметричная: глоток проваливается
+           быстро и с перелётом, а долив поднимается вязко, как настоящая
+           струя из бутылки. */
+        var down = dropTarget > drop;
+        dropVel += (dropTarget - drop) * (down ? 0.16 : 0.05);
+        dropVel *= down ? 0.72 : 0.86;
+        drop += dropVel;
+        /* Пружина к цели только стремится. Долив должен доходить до конца:
+           недобранный пиксель оставил бы над пеной полоску пустого стекла. */
+        if (Math.abs(dropTarget - drop) < 0.4 && Math.abs(dropVel) < 0.06) {
+          drop = dropTarget;
+          dropVel = 0;
+        }
+      }
+
+      /* Кольца гаснут только после долива: свежая пена смывает следы прошлого. */
+      for (k = rings.length - 1; k >= 0; k--) {
+        if (!rings[k].fade) continue;
+        rings[k].a -= 0.011 * steps;
+        if (rings[k].a <= 0) rings.splice(k, 1);
       }
 
       var amp = Math.min(11 * u, (3.2 + Math.abs(vel) * 2.6) * u);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Зову пить пиво — Костя</title>
+<title>По пиву</title>
 <link rel="icon" href="./favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="./img/favicon-32.png">
 <link rel="apple-touch-icon" href="./img/apple-touch-icon.png">
@@ -93,7 +93,9 @@ window.__resources = {
          стенки уходят внутрь, и без него карточки вопросов лезли бы в стекло. -->
     <div style="position: relative; z-index: 1; padding: 0 calc(min(100vw, 620px) * .04)">
 
-    <div style="position: fixed; top: 18px; right: 18px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 10px">
+    <!-- data-help — чтобы beer-glass.js не считал глотком тап по раскрытому
+         анекдоту: карточка висит поверх пены, и читать её, отпивая, незачем. -->
+    <div data-help="1" style="position: fixed; top: 18px; right: 18px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 10px">
       <button type="button" onClick="{{ toggleHelp }}" aria-label="Анекдот" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(247,243,236,.92); border: 1px solid rgba(74,46,30,.28); backdrop-filter: blur(6px); font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #4A2E1E; cursor: pointer; transition: background .25s, color .25s" style-hover="background: #4A2E1E; color: #FBF8F2">?</button>
       <sc-if value="{{ helpOpen }}" hint-placeholder-val="{{ false }}">
         <div style="width: min(300px, calc(100vw - 36px)); padding: 18px 20px; border-radius: 20px; background: rgba(247,243,236,.97); border: 1px solid rgba(74,46,30,.22); box-shadow: 0 12px 34px rgba(93,74,58,.16); text-align: left">
@@ -114,7 +116,7 @@ window.__resources = {
              реально отозвался, и гаснет, как только гость наклонил телефон. -->
         <div data-reveal="1" style="padding: calc(min(100vw, 620px) * .46) 30px 6px; text-align: center">
           <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #4A2E1E">{{ guestGreeting }}</p>
-          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(30px, 7.7vw, 46px); line-height: 1.1; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Соня <em style="font-style: italic; color: #4A2E1E">не</em> приглашает тебя<br>на день рождения,<br><em style="font-style: italic; color: #4A2E1E">зато я приглашаю<br>пить пиво!</em></h1>
+          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(30px, 7.7vw, 46px); line-height: 1.1; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">У Сони день рождения,<br>мы оба <em style="font-style: italic; color: #4A2E1E">не приглашены</em>.<br><em style="font-style: italic; color: #4A2E1E">Но я приглашаю тебя<br>пить пиво.</em></h1>
           <p data-beer-hint="1" style="margin: 18px 0 0; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.45); opacity: 0; transition: opacity .7s ease">наклони телефон</p>
         </div>
       </div>
@@ -201,21 +203,36 @@ window.__resources = {
 
       <div style="position: relative; max-width: 430px; margin: 30px auto 0">
         <!-- Стопка под верхним листом: следующая мысль пишется на следующем листке.
-             Небольшой разворот у каждого — чтобы читалось как стопка бумаги. -->
-        <div aria-hidden="true" style="position: absolute; left: 6px; right: 6px; top: 5px; bottom: -9px; border-radius: 2px; background: #F2EADA; transform: rotate(1.2deg); box-shadow: 0 6px 14px rgba(93,74,58,.12)"></div>
-        <div aria-hidden="true" style="position: absolute; left: 4px; right: 4px; top: 2px; bottom: -5px; border-radius: 2px; background: #F9F4E9; transform: rotate(-.8deg); box-shadow: 0 5px 12px rgba(93,74,58,.1)"></div>
+             Небольшой разворот у каждого — чтобы читалось как стопка бумаги. С
+             каждым оторванным листом стопка тает, а под последним — обложка. -->
+        <sc-for list="{{ underSheets }}" as="under" hint-placeholder-count="2">
+          <div aria-hidden="true" style="{{ under.style }}"></div>
+        </sc-for>
 
-        <div data-note-sheet="1" style="position: relative; z-index: 1; padding: 16px 18px 20px; border-radius: 2px; background: #FFFDF8; box-shadow: 0 8px 18px rgba(93,74,58,.14)">
-          <!-- Линейка и поля тетрадного листа. Линии — отдельным слоем, а не фоном
-               самого листа: они должны кончаться, не доходя до края бумаги.
-               Шаг 30px равен line-height у textarea, поэтому строки ложатся на них. -->
-          <div aria-hidden="true" style="position: absolute; left: 14px; right: 18px; top: 16px; bottom: 20px; background-image: repeating-linear-gradient(180deg, rgba(74,46,30,.13) 0 1px, transparent 1px 30px); background-position: 0 29px"></div>
-          <div aria-hidden="true" style="position: absolute; left: 44px; top: 8px; bottom: 12px; width: 1px; background: rgba(107,70,48,.32)"></div>
-          <textarea data-note-field="1" rows="6" maxLength="500" aria-label="Пожелания для комфортного вечера" style="position: relative; display: block; width: 100%; height: 180px; padding: 0 0 0 44px; background: transparent; border: none; resize: none; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; line-height: 30px; color: #3E342C"></textarea>
-        </div>
+        <sc-if value="{{ hasSheets }}" hint-placeholder-val="{{ true }}">
+          <div data-note-sheet="1" style="position: relative; z-index: 1; padding: 16px 18px 20px; border-radius: 2px; background: #FFFDF8; box-shadow: 0 8px 18px rgba(93,74,58,.14)">
+            <!-- Линейка и поля тетрадного листа. Линии — отдельным слоем, а не фоном
+                 самого листа: они должны кончаться, не доходя до края бумаги.
+                 Шаг 30px равен line-height у textarea, поэтому строки ложатся на них. -->
+            <div aria-hidden="true" style="position: absolute; left: 14px; right: 18px; top: 16px; bottom: 20px; background-image: repeating-linear-gradient(180deg, rgba(74,46,30,.13) 0 1px, transparent 1px 30px); background-position: 0 29px"></div>
+            <div aria-hidden="true" style="position: absolute; left: 44px; top: 8px; bottom: 12px; width: 1px; background: rgba(107,70,48,.32)"></div>
+            <textarea data-note-field="1" rows="6" maxLength="500" aria-label="Пожелания для комфортного вечера" style="position: relative; display: block; width: 100%; height: 180px; padding: 0 0 0 44px; background: transparent; border: none; resize: none; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; line-height: 30px; color: #3E342C"></textarea>
+          </div>
+        </sc-if>
+        <!-- Листы кончились — остался картон задней обложки. Высота ровно та же,
+             что у листа (16 + 180 + 20), чтобы страница не дёрнулась. Наклейка на
+             ней школьная: печатная шапка и вписанное от руки, чей блокнот. -->
+        <sc-if value="{{ noSheets }}" hint-placeholder-val="{{ false }}">
+          <div data-note-cover="1" style="position: relative; z-index: 1; height: 216px; display: flex; align-items: center; justify-content: center; border-radius: 2px; background: radial-gradient(circle, rgba(255,244,225,.06) .6px, rgba(255,244,225,0) 1.1px) 0 0/5px 5px, repeating-linear-gradient(112deg, rgba(255,240,215,.035) 0 1px, rgba(255,240,215,0) 1px 4px), linear-gradient(158deg, #6E4A2E 0%, #59371F 55%, #472B16 100%); box-shadow: 0 8px 18px rgba(93,74,58,.3), inset 0 1px 0 rgba(255,255,255,.14)">
+            <div style="width: min(76%, 280px); padding: 15px 18px 17px; transform: rotate(-1.4deg); border-radius: 2px; background: linear-gradient(168deg, #FBF5E5 0%, #F1E4C8 100%); box-shadow: 0 3px 9px rgba(40,22,8,.4); text-align: center">
+              <span style="display: block; font-family: 'Manrope', sans-serif; font-size: 9px; letter-spacing: .3em; text-transform: uppercase; color: rgba(74,46,30,.55)">Блокнот</span>
+              <span style="display: block; margin: 7px 10px 0; padding-bottom: 3px; border-bottom: 1px solid rgba(74,46,30,.32); font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 700; font-size: 30px; line-height: 1.15; color: #4A2E1E">Гомик</span>
+            </div>
+          </div>
+        </sc-if>
       </div>
 
-      <button type="button" onClick="{{ tearOff }}" style="margin-top: 28px; display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 999px; background: rgba(247,243,236,.94); border: 1px solid rgba(74,46,30,.22); font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #4A2E1E; cursor: pointer; transition: background .3s, color .3s, border-color .3s" style-hover="background: #4A2E1E; border-color: #4A2E1E; color: #FBF8F2">Отправить</button>
+      <button type="button" onClick="{{ tearOff }}" style="margin-top: 28px; display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 999px; background: rgba(247,243,236,.94); border: 1px solid rgba(74,46,30,.22); font-family: 'Manrope', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #4A2E1E; cursor: pointer; transition: background .3s, color .3s, border-color .3s" style-hover="background: #4A2E1E; border-color: #4A2E1E; color: #FBF8F2">{{ tearLabel }}</button>
       <sc-if value="{{ hasNotes }}" hint-placeholder-val="{{ false }}">
         <p style="margin: 14px 0 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: rgba(69,60,51,.55)">{{ notesLabel }}</p>
       </sc-if>
@@ -237,6 +254,21 @@ window.__resources = {
              оставляет поля до текста. -->
         <div aria-hidden="true" style="position: absolute; inset: 9px; border: 2px solid rgba(74,46,30,.26); border-radius: 10px; pointer-events: none"></div>
         <div aria-hidden="true" style="position: absolute; inset: 14px; border: 1px solid rgba(74,46,30,.18); border-radius: 7px; pointer-events: none"></div>
+        <!-- Верхний угол этикетки заломлен и приподнят: клеили руками, край
+             отошёл. Потянуть — угол складывается по диагонали внутрь карточки, а
+             под ним у Тёмки для Кости отдельное слово; второе нажатие приклеивает
+             обратно. Складка — поворот треугольника вокруг оси самой диагонали
+             (rotate3d(1,1,0)), поэтому угол уходит туда же, куда ушёл бы настоящий
+             залом бумаги. Пока не тронули, залом маленький и живёт в полях
+             этикетки: большой перекрыл бы строчку под собой. Перспектива нарочно
+             далёкая — с близкой приподнятый угол раздувается и вылезает за края
+             этикетки отдельным листом. -->
+        <div style="{{ peelBoxStyle }}">
+          <div aria-hidden="true" style="position: absolute; inset: 0; clip-path: polygon(0 0, 100% 0, 100% 100%); -webkit-clip-path: polygon(0 0, 100% 0, 100% 100%); background: linear-gradient(214deg, #E8D9B9 0%, #DCCBA5 55%, #CDBB92 100%); box-shadow: inset 0 0 22px rgba(74,46,30,.3)">
+            <span style="position: absolute; left: 73%; top: 27%; transform: translate(-50%, -50%) rotate(-45deg); font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 700; font-size: clamp(16px, 4.4vw, 22px); line-height: 1; color: rgba(74,46,30,.82); white-space: nowrap">уебок</span>
+          </div>
+          <button type="button" aria-label="Отклеить уголок" onClick="{{ peel }}" style="{{ peelStyle }}"></button>
+        </div>
         <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
           <div data-sent-card="1" style="padding: 18px 0 10px">
             <h3 style="margin: 0 0 8px; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Спасибо, записал!</h3>
@@ -291,7 +323,7 @@ window.__resources = {
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;answersUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;/api/answers&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;placeOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Spontan, Пивная диета, Хопс Кантина, Гоблинский пунш&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;beerOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Lager, IPA, Любое побольше, Weissbier&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
 class Component extends DCLogic {
-  state = { place: [], beer: [], sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null, notes: 0 };
+  state = { place: [], beer: [], sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null, notes: 0, peeled: false };
 
   // Ответы уезжают в тот же сервис, что и у гостей Сони (deploy/answers-api.py),
   // и читаются на /sonechka. Гость здесь один, поэтому ключ и имя — константы.
@@ -455,6 +487,28 @@ class Component extends DCLogic {
       '; transition: opacity .25s, transform .25s, filter .25s';
   }
 
+  // Поле залома: пока он не тронут, это уголок в 13% ширины этикетки — ровно её
+  // верхнее поле, под ним ещё нет текста. Отклеили — поле разъезжается до 40%,
+  // и из-под угла открывается место, где помещается слово.
+  peelBoxStyle(on) {
+    return 'position: absolute; top: 0; right: 0; aspect-ratio: 1; perspective: 1500px; z-index: 3' +
+      '; width: ' + (on ? '40%' : '13%') +
+      '; transition: width .75s cubic-bezier(.3,.85,.3,1)';
+  }
+
+  // Сам угол. Приподнят он всегда — иначе никто не поймёт, что за него можно
+  // взяться; поворот вокруг диагонали на 180° укладывает его внутрь карточки.
+  // Тень уходит влево-вниз, туда же, куда падает свет у самой этикетки.
+  peelStyle(on) {
+    return 'position: absolute; inset: 0; padding: 0; cursor: pointer' +
+      '; clip-path: polygon(0 0, 100% 0, 100% 100%); -webkit-clip-path: polygon(0 0, 100% 0, 100% 100%)' +
+      '; border: none; border-top: 1px solid rgba(74,46,30,.34); border-right: 1px solid rgba(74,46,30,.34)' +
+      '; background: linear-gradient(214deg, #FBF5E5 0%, #F3E8CE 52%, #EEDFC0 100%)' +
+      '; transform-origin: 50% 50%; transform: rotate3d(1, 1, 0, ' + (on ? 180 : 26) + 'deg)' +
+      '; filter: drop-shadow(-4px 4px 6px rgba(93,74,58,' + (on ? '.45' : '.34') + '))' +
+      '; transition: transform .75s cubic-bezier(.3,.85,.3,1), filter .75s';
+  }
+
   cardTitleStyle(active) {
     return "display: block; margin-top: 9px; font-family: 'Cormorant Garamond', serif; font-size: 18px; line-height: 1.3; text-align: center; transition: color .25s" +
       '; color: ' + (active ? '#4A2E1E' : '#3E342C') +
@@ -513,13 +567,36 @@ class Component extends DCLogic {
     return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }
 
+  // В блокноте три листа. Оторвал все — остаётся картонная обложка, и мысли
+  // больше не отправить. Считаем в state, а не в localStorage: перезагрузил
+  // страницу — блокнот новый. Иначе один раз доигравшийся Костя навсегда
+  // лишился бы возможности написать по делу.
+  sheets = 3;
+
+  // Стопка под верхним листом: чем меньше листов осталось, тем она тоньше.
+  // Уходят снизу — первым исчезает самый нижний и самый повёрнутый.
+  noteStack() {
+    const layers = [
+      'position: absolute; left: 6px; right: 6px; top: 5px; bottom: -9px; border-radius: 2px; background: #F2EADA; transform: rotate(1.2deg); box-shadow: 0 6px 14px rgba(93,74,58,.12)',
+      'position: absolute; left: 4px; right: 4px; top: 2px; bottom: -5px; border-radius: 2px; background: #F9F4E9; transform: rotate(-.8deg); box-shadow: 0 5px 12px rgba(93,74,58,.1)'
+    ];
+    const left = Math.max(0, this.sheets - this.state.notes);
+    const keep = Math.max(0, Math.min(layers.length, left - 1));
+    return layers.slice(layers.length - keep).map(style => ({ style }));
+  }
+
   // Отрыв листа: текст уходит на сервер, копия листа улетает за верх экрана,
   // а сам лист очищается и «подаётся» следующим. Копия — потому что настоящий
   // лист остаётся в вёрстке: улетать должна бумага, а не блок страницы.
   tearOff() {
     const sheet = document.querySelector('[data-note-sheet]');
     const field = document.querySelector('[data-note-field]');
-    if (!sheet || !field) return;
+    // Листов больше нет — обложке остаётся только отмахнуться.
+    if (!sheet || !field) {
+      const cover = document.querySelector('[data-note-cover]');
+      if (cover) this.nudgeSheet(cover);
+      return;
+    }
     const text = (field.value || '').trim();
     if (!text) { this.nudgeSheet(sheet); field.focus(); return; }
     this.sendNote(text);
@@ -645,7 +722,8 @@ class Component extends DCLogic {
   renderVals() {
     const s = this.state;
     return {
-      guestGreeting: this.guest.name + ', привет!',
+      // Приветствие короткое и без имени — так здороваются вживую.
+      guestGreeting: 'Здаров.',
       places: this.placeList().map((title, i) => ({
         title,
         slotId: 'inv-place-' + (i + 1),
@@ -666,6 +744,13 @@ class Component extends DCLogic {
       toggleHelp: () => this.setState(p => (p.helpOpen ? { helpOpen: false } : { helpOpen: true, jokeIndex: this.pickJoke() })),
       nextJoke: () => this.setState({ jokeIndex: this.pickJoke() }),
       tearOff: () => this.tearOff(),
+      underSheets: this.noteStack(),
+      hasSheets: s.notes < this.sheets,
+      noSheets: s.notes >= this.sheets,
+      tearLabel: s.notes >= this.sheets ? 'Листы кончились' : 'Отправить',
+      peelBoxStyle: this.peelBoxStyle(s.peeled),
+      peelStyle: this.peelStyle(s.peeled),
+      peel: () => this.setState(p => ({ peeled: !p.peeled })),
       hasNotes: s.notes > 0,
       notesLabel: this.plural(s.notes, 'улетела', 'улетели', 'улетело') + ' '
         + (s.notes === 1 ? 'одна' : s.notes) + ' '
