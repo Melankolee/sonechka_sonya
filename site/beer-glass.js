@@ -72,6 +72,7 @@
 
     var angle = 0, vel = 0, target = 0;   // градусы наклона поверхности
     var phase = 0;
+    var drips = [];                       // капли, ползущие снаружи по стеклу
 
     /* ------------------------------------------------------------- геометрия */
     function resize() {
@@ -325,9 +326,11 @@
 
       bottomGlass(m);
       silhouette(m);
+      domeEdge(m);
       veil(m);
       walls(m);
       topRim(m);
+      spill(m);
     }
 
     /* Всё за стенками — уже не бокал, там бумага бланка. Выше венчика стекла
@@ -348,18 +351,82 @@
         ctx.fill();
       }
       if (m.rim > -CW && m.rim < H + CW) {
-        var half = wall(m.rim, m), dome = CW * 0.1;
+        var half = wall(m.rim, m), x;
         ctx.beginPath();
-        ctx.moveTo(-2, -CW);
-        ctx.lineTo(W + 2, -CW);
-        ctx.lineTo(W + 2, m.rim);
-        ctx.lineTo(W / 2 + half, m.rim);
-        ctx.quadraticCurveTo(W / 2, m.rim - dome * 2, W / 2 - half, m.rim);
-        ctx.lineTo(-2, m.rim);
+        ctx.moveTo(-2, -CW * 2);
+        ctx.lineTo(W + 2, -CW * 2);
+        ctx.lineTo(W + 2, domeY(W + 2, m, half));
+        for (x = W + 2; x > -2; x -= 8) ctx.lineTo(x, domeY(x, m, half));
+        ctx.lineTo(-2, domeY(-2, m, half));
         ctx.closePath();
         ctx.fill();
       }
       ctx.restore();
+    }
+
+    /* Верх пенной шапки. Шапка лежит на пиве, а пиво держит уровень по земле —
+       значит при наклоне вся шапка кренится вместе с ним и сползает к нижней
+       кромке. Крен берём вполсилы настоящего: пена вязкая и отстаёт от жидкости.
+       Ровной дугой её край не бывает, поэтому сверху накинуты две синусоиды,
+       а по самой линии потом сажаются пузыри. */
+    function domeY(x, m, half) {
+      var t = clamp((x - W / 2) / half, -1, 1);
+      var bump = Math.pow(Math.cos(t * Math.PI / 2), 1.2);
+      var lean = Math.tan(angle * Math.PI / 180) * 0.45 * (x - W / 2);
+      var noise = (Math.sin(x / (37 * u) + phase * 0.6) +
+                   Math.sin(x / (71 * u) - phase * 0.4)) * CW * 0.007;
+      return m.rim + lean - CW * 0.1 * bump + noise;
+    }
+
+    /* Пузыри по краю шапки: без них купол выглядит вырезанным ножницами. */
+    function domeEdge(m) {
+      if (m.rim < -CW || m.rim > H + CW) return;
+      var half = wall(m.rim, m), seed = 7, x;
+      for (x = W / 2 - half; x <= W / 2 + half; x += 9 * u) {
+        seed = (seed * 9301 + 49297) % 233280;
+        var rnd = seed / 233280;
+        ctx.globalAlpha = 0.55 + rnd * 0.4;
+        ctx.fillStyle = rnd < 0.2 ? '#F2E4C6' : '#FFFDF7';
+        ctx.beginPath();
+        ctx.arc(x + rnd * 7 * u, domeY(x, m, half) + (rnd - 0.25) * 7 * u,
+                (1.4 + rnd * rnd * 6) * u, 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    /* Перелив через кромку. Наклонили — пиво копится у нижнего борта, пена
+       переваливает через него языком, а от языка отрываются капли и ползут по
+       стеклу снаружи. Рисуется последним: всё это уже вне силуэта. */
+    function spill(m) {
+      var half = wall(m.rim, m);
+      var side = angle < 0 ? 1 : -1;             // куда завалилась жидкость
+      var over = clamp((Math.abs(angle) - 3) / 9, 0, 1);
+      var k, d;
+
+      if (over > 0 && m.rim > -CW && m.rim < H + CW) {
+        var x = W / 2 + side * half;
+        var len = CW * 0.11 * over;
+        ctx.fillStyle = 'rgba(252,246,234,.95)';
+        for (k = 0; k <= 7; k++) {
+          var pp = k / 7;
+          var r = (7.5 - pp * 5) * u * (0.55 + over * 0.75);
+          ctx.beginPath();
+          ctx.arc(x - side * r * 0.35, m.rim + len * pp + r * 0.4, r, 0, 6.2832);
+          ctx.fill();
+        }
+      }
+
+      for (k = 0; k < drips.length; k++) {
+        d = drips[k];
+        ctx.globalAlpha = clamp(d.life * 1.6, 0, 1);
+        ctx.fillStyle = d.foam ? 'rgba(250,243,228,.95)' : 'rgba(231,170,48,.9)';
+        ctx.beginPath();
+        ctx.ellipse(W / 2 + d.side * (wall(d.y, m) - d.r * 0.35), d.y,
+                    d.r, d.r * 1.3, 0, 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
     }
 
     /* Стекло стенки: у самого борта смотришь сквозь всю толщу пива — там оно
@@ -639,10 +706,34 @@
         }
       }
 
+      stepDrips(steps);
       paint(amp);
 
       if (hintShown && !hintHidden && t - born > 12000) hideHint();
       requestAnimationFrame(frame);
+    }
+
+    /* Капля отрывается от языка пены и ползёт по стеклу: сначала медленно,
+       потом разгоняется. Живёт, пока не выцветет или не уйдёт за экран. */
+    function stepDrips(steps) {
+      var over = Math.abs(angle) - 5;
+      if (over > 0 && drips.length < 14 && Math.random() < Math.min(0.08, over / 200) * steps) {
+        drips.push({
+          y: marks().rim + CW * 0.03,
+          v: 0.15 * u,
+          side: angle < 0 ? 1 : -1,
+          r: (1.8 + Math.random() * 3) * u,
+          foam: Math.random() < 0.4,
+          life: 1
+        });
+      }
+      for (var i = drips.length - 1; i >= 0; i--) {
+        var d = drips[i];
+        d.v += 0.018 * u * steps;
+        d.y += d.v * steps;
+        d.life -= 0.0022 * steps;
+        if (d.life <= 0 || d.y > H + 20) drips.splice(i, 1);
+      }
     }
 
     /* Считать кадры под свёрнутой вкладкой незачем — это расход батареи. */
