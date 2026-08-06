@@ -119,7 +119,10 @@
     function profile(t) {
       var s = clamp(t / 0.38, 0, 1);
       s = s * s * (3 - 2 * s);
-      var w = 1 - 0.15 * s;
+      /* У венчика бокал чуть уже карточки: перелив должен стекать по стеклу
+         снаружи, а не упираться в край холста. Внизу ширина та же, что была,
+         иначе стенки полезли бы в карточки вопросов. */
+      var w = 0.96 - 0.11 * s;
       if (t > 0.93) {
         var f = clamp((t - 0.93) / 0.05, 0, 1);
         f = f * f * (3 - 2 * f);
@@ -401,18 +404,44 @@
     function spill(m) {
       var half = wall(m.rim, m);
       var side = angle < 0 ? 1 : -1;             // куда завалилась жидкость
-      var over = clamp((Math.abs(angle) - 3) / 9, 0, 1);
+      var over = clamp((Math.abs(angle) - 1.5) / 6, 0, 1);
       var k, d;
 
-      if (over > 0 && m.rim > -CW && m.rim < H + CW) {
+      if (over > 0 && m.rim > -CW * 2 && m.rim < H + CW) {
         var x = W / 2 + side * half;
-        var len = CW * 0.11 * over;
+
+        /* Струйка пива по внешнему стеклу: от кромки вниз, к концу сходит на
+           нет. Идёт вдоль силуэта, потому что ниже стенка уходит внутрь. */
+        var run = CW * 0.55 * over;
+        var wide = CW * 0.035 * (0.5 + over);
+        ctx.beginPath();
+        ctx.moveTo(x, m.rim);
+        for (k = 0; k <= 10; k++) {
+          var t = k / 10, yy = m.rim + run * t;
+          var wob = Math.sin(t * 6 + phase * 0.5) * wide * 0.35 * t;
+          ctx.lineTo(W / 2 + side * (wall(yy, m) + wob + wide * (1 - t * t) * 0.5), yy);
+        }
+        for (k = 10; k >= 0; k--) {
+          var t2 = k / 10, y2 = m.rim + run * t2;
+          ctx.lineTo(W / 2 + side * (wall(y2, m) - wide * (1 - t2 * t2)), y2);
+        }
+        ctx.closePath();
+        var gr = ctx.createLinearGradient(0, m.rim, 0, m.rim + run);
+        gr.addColorStop(0, 'rgba(233,171,44,.92)');
+        gr.addColorStop(1, 'rgba(240,190,70,.35)');
+        ctx.fillStyle = gr;
+        ctx.fill();
+
+        /* Язык пены через кромку: он толще струйки и держится у самого края. */
+        var len = CW * 0.26 * over;
         ctx.fillStyle = 'rgba(252,246,234,.95)';
-        for (k = 0; k <= 7; k++) {
-          var pp = k / 7;
-          var r = (7.5 - pp * 5) * u * (0.55 + over * 0.75);
+        for (k = 0; k <= 12; k++) {
+          var pp = k / 12;
+          var r = (9 - pp * 6.5) * u * (0.55 + over * 0.9);
           ctx.beginPath();
-          ctx.arc(x - side * r * 0.35, m.rim + len * pp + r * 0.4, r, 0, 6.2832);
+          ctx.arc(W / 2 + side * (wall(m.rim + len * pp, m) - r * 0.3) +
+                  Math.sin(pp * 5 + phase * 0.4) * r * 0.3,
+                  m.rim + len * pp + r * 0.4, r, 0, 6.2832);
           ctx.fill();
         }
       }
@@ -423,7 +452,7 @@
         ctx.fillStyle = d.foam ? 'rgba(250,243,228,.95)' : 'rgba(231,170,48,.9)';
         ctx.beginPath();
         ctx.ellipse(W / 2 + d.side * (wall(d.y, m) - d.r * 0.35), d.y,
-                    d.r, d.r * 1.3, 0, 0, 6.2832);
+                    d.r, d.r * (1.3 + d.v * 0.4), 0, 0, 6.2832);
         ctx.fill();
       }
       ctx.globalAlpha = 1;
@@ -716,22 +745,26 @@
     /* Капля отрывается от языка пены и ползёт по стеклу: сначала медленно,
        потом разгоняется. Живёт, пока не выцветет или не уйдёт за экран. */
     function stepDrips(steps) {
-      var over = Math.abs(angle) - 5;
-      if (over > 0 && drips.length < 14 && Math.random() < Math.min(0.08, over / 200) * steps) {
-        drips.push({
-          y: marks().rim + CW * 0.03,
-          v: 0.15 * u,
-          side: angle < 0 ? 1 : -1,
-          r: (1.8 + Math.random() * 3) * u,
-          foam: Math.random() < 0.4,
-          life: 1
-        });
+      var over = Math.abs(angle) - 2;
+      if (over > 0 && drips.length < 34) {
+        var chance = Math.min(0.5, over / 26) * steps;
+        for (var n = 0; n < 2; n++) {
+          if (Math.random() > chance) continue;
+          drips.push({
+            y: marks().rim + CW * (0.03 + Math.random() * 0.22),
+            v: (0.1 + Math.random() * 0.3) * u,
+            side: angle < 0 ? 1 : -1,
+            r: (2.2 + Math.random() * 4) * u,
+            foam: Math.random() < 0.35,
+            life: 1
+          });
+        }
       }
       for (var i = drips.length - 1; i >= 0; i--) {
         var d = drips[i];
         d.v += 0.018 * u * steps;
         d.y += d.v * steps;
-        d.life -= 0.0022 * steps;
+        d.life -= 0.0016 * steps;
         if (d.life <= 0 || d.y > H + 20) drips.splice(i, 1);
       }
     }
