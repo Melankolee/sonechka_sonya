@@ -104,7 +104,7 @@
       return {
         top: top,
         height: c.height || 1,
-        rim: top + CW * 0.06,
+        rim: top - CW * 0.05,
         surface: top + CW * FOAM_AT,
         base: top + (c.height || 1) - CW * BASE_AT
       };
