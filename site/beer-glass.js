@@ -72,7 +72,6 @@
 
     var angle = 0, vel = 0, target = 0;   // градусы наклона поверхности
     var phase = 0;
-    var drips = [];                       // капли, ползущие снаружи по стеклу
 
     /* ------------------------------------------------------------- геометрия */
     function resize() {
@@ -350,7 +349,6 @@
       veil(m);
       walls(m);
       topRim(m);
-      spill(m);
     }
 
     /* Всё за стенками — уже не бокал, там бумага бланка. Выше венчика стекла
@@ -410,66 +408,6 @@
         ctx.beginPath();
         ctx.arc(x + rnd * 7 * u, domeY(x, m, half) + (rnd - 0.25) * 7 * u,
                 (1.4 + rnd * rnd * 6) * u, 0, 6.2832);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    /* Перелив через кромку. Наклонили — пиво копится у нижнего борта, пена
-       переваливает через него языком, а от языка отрываются капли и ползут по
-       стеклу снаружи. Рисуется последним: всё это уже вне силуэта. */
-    function spill(m) {
-      var half = wall(m.rim, m);
-      var side = angle < 0 ? 1 : -1;             // куда завалилась жидкость
-      var over = clamp((Math.abs(angle) - 1.5) / 6, 0, 1);
-      var k, d;
-
-      if (over > 0 && m.rim > -CW * 2 && m.rim < H + CW) {
-        var x = W / 2 + side * half;
-
-        /* Струйка пива по внешнему стеклу: от кромки вниз, к концу сходит на
-           нет. Идёт вдоль силуэта, потому что ниже стенка уходит внутрь. */
-        var run = CW * 0.55 * over;
-        var wide = CW * 0.035 * (0.5 + over);
-        ctx.beginPath();
-        ctx.moveTo(x, m.rim);
-        for (k = 0; k <= 10; k++) {
-          var t = k / 10, yy = m.rim + run * t;
-          var wob = Math.sin(t * 6 + phase * 0.5) * wide * 0.35 * t;
-          ctx.lineTo(W / 2 + side * (wall(yy, m) + wob + wide * (1 - t * t) * 0.5), yy);
-        }
-        for (k = 10; k >= 0; k--) {
-          var t2 = k / 10, y2 = m.rim + run * t2;
-          ctx.lineTo(W / 2 + side * (wall(y2, m) - wide * (1 - t2 * t2)), y2);
-        }
-        ctx.closePath();
-        var gr = ctx.createLinearGradient(0, m.rim, 0, m.rim + run);
-        gr.addColorStop(0, 'rgba(233,171,44,.92)');
-        gr.addColorStop(1, 'rgba(240,190,70,.35)');
-        ctx.fillStyle = gr;
-        ctx.fill();
-
-        /* Язык пены через кромку: он толще струйки и держится у самого края. */
-        var len = CW * 0.26 * over;
-        ctx.fillStyle = 'rgba(252,246,234,.95)';
-        for (k = 0; k <= 12; k++) {
-          var pp = k / 12;
-          var r = (9 - pp * 6.5) * u * (0.55 + over * 0.9);
-          ctx.beginPath();
-          ctx.arc(W / 2 + side * (wall(m.rim + len * pp, m) - r * 0.3) +
-                  Math.sin(pp * 5 + phase * 0.4) * r * 0.3,
-                  m.rim + len * pp + r * 0.4, r, 0, 6.2832);
-          ctx.fill();
-        }
-      }
-
-      for (k = 0; k < drips.length; k++) {
-        d = drips[k];
-        ctx.globalAlpha = clamp(d.life * 1.6, 0, 1);
-        ctx.fillStyle = d.foam ? 'rgba(250,243,228,.95)' : 'rgba(231,170,48,.9)';
-        ctx.beginPath();
-        ctx.ellipse(W / 2 + d.side * (wall(d.y, m) - d.r * 0.35), d.y,
-                    d.r, d.r * (1.3 + d.v * 0.4), 0, 0, 6.2832);
         ctx.fill();
       }
       ctx.globalAlpha = 1;
@@ -752,38 +690,10 @@
         }
       }
 
-      stepDrips(steps);
       paint(amp);
 
       if (hintShown && !hintHidden && t - born > 12000) hideHint();
       requestAnimationFrame(frame);
-    }
-
-    /* Капля отрывается от языка пены и ползёт по стеклу: сначала медленно,
-       потом разгоняется. Живёт, пока не выцветет или не уйдёт за экран. */
-    function stepDrips(steps) {
-      var over = Math.abs(angle) - 2;
-      if (over > 0 && drips.length < 34) {
-        var chance = Math.min(0.5, over / 26) * steps;
-        for (var n = 0; n < 2; n++) {
-          if (Math.random() > chance) continue;
-          drips.push({
-            y: marks().rim + CW * (0.03 + Math.random() * 0.22),
-            v: (0.1 + Math.random() * 0.3) * u,
-            side: angle < 0 ? 1 : -1,
-            r: (2.2 + Math.random() * 4) * u,
-            foam: Math.random() < 0.35,
-            life: 1
-          });
-        }
-      }
-      for (var i = drips.length - 1; i >= 0; i--) {
-        var d = drips[i];
-        d.v += 0.018 * u * steps;
-        d.y += d.v * steps;
-        d.life -= 0.0016 * steps;
-        if (d.life <= 0 || d.y > H + 20) drips.splice(i, 1);
-      }
     }
 
     /* Считать кадры под свёрнутой вкладкой незачем — это расход батареи. */
