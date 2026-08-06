@@ -24,6 +24,7 @@ window.__resources = {
 <x-dc>
 <helmet>
 <link href="./fonts/fonts.css" rel="stylesheet">
+<script src="./image-slot.js"></script>
 <style>
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; background: #EFE9DE; color: #453C33; }
@@ -36,10 +37,31 @@ window.__resources = {
   @keyframes floatUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
   /* Соня выезжает снизу ровно наполовину: конечное состояние — translateY(50%).
      Тайминги сцены держим синхронно с ENVELOPE_FLIGHT в скрипте компонента:
-     0.35–2.95с подъём, 2.6–4.2с полёт конверта, 4.25с облачко,
-     7.2с (ровно через 3с после прилёта конверта) — уход вниз. */
+     0.35–2.95с подъём, 2.6–4.2с полёт конверта, 4.25с облачко «Не жду!»,
+     5.5–6.55с падение Артёма (удар на 5.98с), тогда же Соню и сплющивает,
+     6.2с — его «А я жду!», 9.8с — сцена уезжает вниз. */
   @keyframes sonyaRise { from { transform: translateY(100%); } to { transform: translateY(50%); } }
-  @keyframes sonyaLeave { from { transform: translateY(50%); } to { transform: translateY(100%); } }
+  /* Соню не уводит вниз, как на страницах гостей: её прибивает Артёмом. Уходит
+     не постепенно, а за четверть секунды — сплющило и нет. */
+  @keyframes sonyaSquash {
+    0% { opacity: 1; transform: translateY(50%) scale(1, 1); }
+    40% { opacity: 1; transform: translateY(50%) scale(1.07, .52); }
+    100% { opacity: 0; transform: translateY(50%) scale(1.12, .26); }
+  }
+  /* Артём валится из-за верхнего края: до удара разгон, после — отскок пузом.
+     Внутри keyframes своя кривая на каждый участок, потому что одним общим
+     easing падение и приземление не разделить. */
+  @keyframes artemDrop {
+    0% { transform: translate3d(0, -130vh, 0) rotate(-7deg); animation-timing-function: cubic-bezier(.55,.05,.9,.45); }
+    46% { transform: translate3d(0, 0, 0) rotate(0deg); animation-timing-function: cubic-bezier(.18,.9,.32,1); }
+    56% { transform: translate3d(0, 2%, 0) scale(1.09, .8); }
+    72% { transform: translate3d(0, -5%, 0) scale(.98, 1.04); }
+    88% { transform: translate3d(0, 0, 0) scale(1.01, .98); }
+    100% { transform: translate3d(0, 0, 0) scale(1, 1); }
+  }
+  /* Уход вниз висит на обёртке: на самом Артёме уже сидит artemDrop, а две
+     анимации на один transform не складываются. */
+  @keyframes artemLeave { from { transform: translateY(0); } to { transform: translateY(160%); } }
   @keyframes bubblePop {
     0% { opacity: 0; transform: scale(.3) rotate(-6deg); }
     62% { opacity: 1; transform: scale(1.09) rotate(1.5deg); }
@@ -48,12 +70,14 @@ window.__resources = {
   @media (prefers-reduced-motion: reduce) {
     [data-sonya] { animation: none !important; transform: translateY(50%); }
     [data-sonya-bubble] { animation: none !important; }
+    [data-artem-wrap], [data-artem], [data-artem-bubble] { animation: none !important; transform: none; }
   }
 </style>
 </helmet>
 <!-- Страница Кости — тот же бланк приглашения, что у гостей Сони, но зовут
-     здесь не на день рождения, а на пиво: нет площадки, матрёшек, фильмов и
-     вишлиста, вопросов два — куда пойдём и что пьём. -->
+     здесь не на день рождения, а на пиво: нет площадки, фильмов и вишлиста,
+     вопросов два — куда пойдём и что пьём. Бары выбираются карточками с фото,
+     как матрёшки в index.html. -->
 <div style="min-height: 100vh; background: #EFE9DE; display: flex; justify-content: center">
   <div style="width: 100%; max-width: 620px; position: relative; background: #EFE9DE; box-shadow: 0 0 80px rgba(93,74,58,.09)">
     <!-- Вся карточка — бокал пива: сверху пена, снизу донышко, между ними пиво
@@ -122,12 +146,17 @@ window.__resources = {
           <span style="font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(138,56,47,.7)">01</span>
           <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 27px; color: #3E342C">Куда пойдем?</h3>
         </div>
-        <p style="margin: 0 0 10px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Где встречаемся. Можно отметить несколько.</p>
-        <div style="max-width: 460px; margin: 0 auto">
+        <p style="margin: 0 0 20px 27px; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 13px; line-height: 1.7; color: #6A5C4F">Бары разные — ткни в те, куда пойдёшь. Можно отметить несколько.</p>
+        <!-- Карточками с фото, как матрёшки у гостей Сони (index.html): бар
+             выбирают глазами, а не по названию. Кадр 4:3 обрезается по месту —
+             снимки с разных сторон, и общий формат держит сетку ровной. -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 460px; margin: 0 auto">
           <sc-for list="{{ places }}" as="place" hint-placeholder-count="4">
-            <button type="button" onClick="{{ place.pick }}" style="{{ place.rowStyle }}">
-              <span style="{{ place.dotStyle }}"></span>
-              <span style="flex: 1; text-align: left">{{ place.title }}</span>
+            <button type="button" onClick="{{ place.pick }}" style="{{ place.cardStyle }}">
+              <span style="position: relative; display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 18px; background: rgba(138,56,47,.06)">
+                <image-slot id="{{ place.slotId }}" shape="rect" fit="cover" src="{{ place.src }}" placeholder="{{ place.slotHint }}"></image-slot>
+              </span>
+              <span style="{{ place.titleStyle }}">{{ place.title }}</span>
             </button>
           </sc-for>
         </div>
@@ -213,8 +242,8 @@ window.__resources = {
 
     <!-- Соня после «Я приду»: живёт вне секций с data-reveal, потому что floatUp
          вешает на них transform, а он делает из секции контейнер для position: fixed.
-         Реплика тут своя: на день рождения Костю никто не звал, шутка держится
-         до конца страницы. -->
+         Реплика тут своя: на день рождения Костю никто не звал — Соня говорит
+         «Не жду!», после чего сверху на неё падает Артём и договаривает. -->
     <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
       <!-- Конверт-ответ. Лежит в углу экрана с opacity: 0 и ждёт flyEnvelope():
            маршрут от карточки к Соне считается по факту, а не в CSS, — иначе он
@@ -226,9 +255,18 @@ window.__resources = {
       </div>
       <div style="position: fixed; left: 0; right: 0; bottom: 0; z-index: 12; display: flex; justify-content: center; pointer-events: none">
         <div style="position: relative; width: 100%; max-width: 620px; height: 0">
-          <div data-sonya="1" style="position: absolute; right: 0; bottom: 0; height: min(76vh, 640px); will-change: transform; animation: sonyaRise 2.6s cubic-bezier(.22,.68,.24,1) .35s both, sonyaLeave 1.5s cubic-bezier(.55,.06,.68,.19) 7.2s forwards">
+          <div data-sonya="1" style="position: absolute; right: 0; bottom: 0; height: min(76vh, 640px); transform-origin: 50% 100%; will-change: transform; animation: sonyaRise 2.6s cubic-bezier(.22,.68,.24,1) .35s both, sonyaSquash .25s cubic-bezier(.5,0,.7,.4) 5.98s forwards">
             <img src="./img/sonya.png" alt="Софья в праздничном колпаке" style="display: block; height: 100%; width: auto; filter: drop-shadow(0 6px 24px rgba(93,74,58,.3))">
             <div data-sonya-bubble="1" style="position: absolute; right: 64%; top: 2%; padding: 11px 20px 13px; background: #FBF8F2; border: 2px solid #3E342C; border-radius: 20px 20px 20px 5px; box-shadow: 3px 4px 0 rgba(62,52,44,.85); font-family: 'Cormorant Garamond', serif; font-weight: 600; font-style: italic; font-size: clamp(24px, 6.4vw, 32px); line-height: 1; color: #8A382F; white-space: nowrap; transform-origin: 92% 100%; animation: bubblePop .6s cubic-bezier(.2,1.5,.4,1) 4.25s both">Не жду!<span style="position: absolute; right: -16px; bottom: 7px; width: 0; height: 0; border-style: solid; border-width: 9px 0 9px 17px; border-color: transparent transparent transparent #3E342C"></span><span style="position: absolute; right: -11px; bottom: 10px; width: 0; height: 0; border-style: solid; border-width: 6px 0 6px 12px; border-color: transparent transparent transparent #FBF8F2"></span></div>
+          </div>
+          <!-- Артём падает сверху ровно на Соню и прибивает её: она сплющивается
+               и пропадает, а последнее слово остаётся за ним. Лежит выше Сони по
+               порядку в потоке — значит, и рисуется поверх. -->
+          <div data-artem-wrap="1" style="position: absolute; right: 0; bottom: 0; width: min(94vw, 580px); animation: artemLeave 1.5s cubic-bezier(.55,.06,.68,.19) 9.8s forwards">
+            <div data-artem="1" style="transform-origin: 50% 100%; will-change: transform; animation: artemDrop 1.05s linear 5.5s both">
+              <img src="./img/artem.png" alt="Артём лежит с бутылкой" style="display: block; width: 100%; height: auto; filter: drop-shadow(0 -4px 22px rgba(93,74,58,.32))">
+              <div data-artem-bubble="1" style="position: absolute; right: 6px; bottom: 88%; padding: 11px 20px 13px; background: #FBF8F2; border: 2px solid #3E342C; border-radius: 20px 20px 5px 20px; box-shadow: 3px 4px 0 rgba(62,52,44,.85); font-family: 'Cormorant Garamond', serif; font-weight: 600; font-style: italic; font-size: clamp(24px, 6.4vw, 32px); line-height: 1; color: #8A382F; white-space: nowrap; transform-origin: 88% 100%; animation: bubblePop .6s cubic-bezier(.2,1.5,.4,1) 6.2s both">А я жду!<span style="position: absolute; right: 20px; bottom: -17px; width: 0; height: 0; border-style: solid; border-width: 17px 9px 0 9px; border-color: #3E342C transparent transparent transparent"></span><span style="position: absolute; right: 23px; bottom: -11px; width: 0; height: 0; border-style: solid; border-width: 12px 6px 0 6px; border-color: #FBF8F2 transparent transparent transparent"></span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -239,7 +277,7 @@ window.__resources = {
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;answersUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;/api/answers&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;placeOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Spontan, Пивная диета, К тебе, На улице&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;beerOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Lager, IPA, Любое побольше, Weissbier&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;answersUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;/api/answers&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;placeOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Spontan, Пивная диета, Хопс Кантинка, Гоблинский пунш&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;beerOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Lager, IPA, Любое побольше, Weissbier&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
 class Component extends DCLogic {
   state = { place: [], beer: [], sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null, notes: 0 };
 
@@ -248,20 +286,20 @@ class Component extends DCLogic {
   guest = { key: 'kostya', name: 'Костя' };
 
   jokes = [
-    '— Петька, что такое нюанс?\n— Не знаю, Василий Иванович.\n— Ну вот смотри: и ты голый, и я голый. Но есть нюанс.',
-    '— Петька, ты чего такой довольный?\n— Так я, Василий Иванович, у Анки ночевал. Три раза!\n— Врёшь.\n— Ну два. Зато с разбегу.',
-    '— Василий Иванович, а правда, что вы всю ночь у Анки карту изучали?\n— Правда, Петька. Рельеф там сложный, без разведки не подступишься.',
-    '— Василий Иванович, а как отличить любовь от страсти?\n— Просто, Петька. Любовь — это когда до утра разговариваешь. А страсть — это когда поговорить некогда.',
-    '— Петька, ты чего в окно полез?\n— Так муж вернулся, Василий Иванович!\n— Петька, ты же холостой!\n— Я-то холостой. А вот Анка, оказывается, нет.',
-    '— Василий Иванович, Анка спрашивает: вы её уважаете?\n— Уважаю, Петька. Особенно после двух.\n— После двух чего?\n— Петька, ты не в том месте уточняешь.',
-    '— Василий Иванович, а что делать, если Анка говорит «не сегодня»?\n— Ждать, Петька.\n— А если «не сегодня» уже неделю?\n— Значит, Петька, это не Анка занята. Это ты неубедителен.',
-    '— Петька, чем занят?\n— Анку взглядом раздеваю, Василий Иванович.\n— Успехи есть?\n— Раздел. Теперь не соображу, как взглядом обратно одеть.',
-    '— Василий Иванович, а правда, что размер значения не имеет?\n— Правда, Петька. Так говорят двое: у кого его нет и кому уже всё равно.',
-    '— Василий Иванович, а что такое дуэль?\n— Это, Петька, когда двое стреляются из-за дамы.\n— А если дама не против обоих?\n— Тогда, Петька, это уже манёвры.',
-    '— Петька, ты Анке предложение делал?\n— Делал, Василий Иванович. Дважды.\n— И что?\n— В первый раз отказала. Во второй я предложение переформулировал — до сих пор детали согласовываем.',
-    '— Василий Иванович, а сколько раз в неделю — это норма?\n— Смотря чего, Петька.\n— Ну этого…\n— Тогда норма — это когда соседи стучат не по расписанию, а по вдохновению.',
-    '— Петька, что с рукой?\n— Анку из реки вытаскивал, Василий Иванович.\n— Так она плавает как рыба!\n— Плавает. Это я тонул. По-крупному и в правильном месте.',
-    '— Василий Иванович, Анка сказала, что я в дивизии лучший!\n— В чём, Петька?\n— Не уточнила. Но улыбалась так, что я до утра погоны искал.'
+    '— Поручик, как вам удаётся так нравиться дамам?\n— Всё просто, мадам: подхожу и предлагаю.\n— А по лицу?\n— Бывает и по лицу. Но чаще соглашаются.',
+    '— Поручик, а как вы находите Наташу Ростову?\n— Раздвигаю кусты, мадам, — а она там.',
+    '— Поручик, вы наступили мне на ногу!\n— Пардон, мадам. Целился выше.',
+    '— Поручик, вы такой начитанный! Много читаете?\n— Читаю, мадам. Но больше по губам.',
+    '— Поручик, а вы верите в любовь с первого взгляда?\n— Верю, мадам. Экономит уйму времени.',
+    '— Поручик, что вы делаете, когда дама говорит «нет»?\n— Откланиваюсь, мадам.\n— А если она говорит «нет, но…»?\n— А вот тогда остаюсь до утра.',
+    '— Поручик, у вас есть принципы?\n— Есть, мадам. Замужних — только по вторникам.',
+    '— Поручик, расскажите что-нибудь эдакое, только не пошло.\n— Не пошло, мадам.\n— Что не пошло?\n— Да вот, эдакое.',
+    '— Поручик, вы такой загадочный. О чём вы сейчас думаете?\n— О том же, мадам.\n— О чём «о том же»?!\n— Вот видите, мадам, и вы о том же.',
+    '— Поручик, а как вы относитесь к женской логике?\n— С восхищением, мадам. Всегда приводит меня в спальню, а каким путём — до сих пор не понимаю.',
+    '— Поручик, а комплименты дамам говорить умеете?\n— Умею, мадам. Но к тому моменту обычно уже некогда.',
+    '— Поручик, правда, что вы вчера увели с бала сразу двух дам?\n— Клевета, мадам! Трёх. Просто одна вернулась за веером.',
+    '— Поручик, а могли бы вы полюбить меня платонически?\n— Мог бы, мадам. Но начал бы всё равно с обычного.',
+    '— Поручик, откуда у вас мозоли на правой руке?\n— От шпаги, мадам.\n— А почему на левой нет?\n— Так левой я шпагу не держу.'
   ];
 
   pickJoke() {
@@ -353,8 +391,16 @@ class Component extends DCLogic {
   }
 
   placeList() {
-    const raw = this.props.placeOptions || 'Spontan, Пивная диета, К тебе, На улице';
+    const raw = this.props.placeOptions || 'Spontan, Пивная диета, Хопс Кантинка, Гоблинский пунш';
     return raw.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  // Фото баров лежат по порядку списка, а не по названию: placeOptions
+  // редактируется в пропсах, и привязка к тексту разъехалась бы. Расширение у
+  // каждого своё — три снимка пришли webp, четвёртый jpeg, и перегонять их
+  // нечем; поэтому имя файла целиком, а не собранное из индекса.
+  placeShots() {
+    return ['place-1.webp', 'place-2.webp', 'place-3.webp', 'place-4.jpg'];
   }
 
   beerList() {
@@ -382,6 +428,22 @@ class Component extends DCLogic {
     return 'flex: none; width: 10px; height: 10px; border-radius: 999px; transition: background .25s, border-color .25s' +
       '; border: 1px solid ' + (active ? '#8A382F' : 'rgba(138,56,47,.4)') +
       '; background: ' + (active ? '#8A382F' : 'transparent');
+  }
+
+  // Карточка бара: невыбранная отходит назад и гаснет, выбранная выходит
+  // вперёд с тенью. Отметка читается по самой карточке, поэтому галочки нет.
+  cardStyle(active) {
+    return 'display: block; width: 100%; cursor: pointer; background: transparent; border: none; border-radius: 20px; padding: 0 0 4px; color: #5C5046' +
+      '; opacity: ' + (active ? '1' : '.72') +
+      '; transform: ' + (active ? 'scale(1)' : 'scale(.96)') +
+      '; filter: drop-shadow(' + (active ? '0 6px 22px rgba(93,74,58,.22)' : '0 0 0 rgba(93,74,58,0)') + ')' +
+      '; transition: opacity .25s, transform .25s, filter .25s';
+  }
+
+  cardTitleStyle(active) {
+    return "display: block; margin-top: 9px; font-family: 'Cormorant Garamond', serif; font-size: 18px; line-height: 1.3; text-align: center; transition: color .25s" +
+      '; color: ' + (active ? '#8A382F' : '#3E342C') +
+      '; font-style: ' + (active ? 'italic' : 'normal');
   }
 
   // Ответы уезжают в свой сервис на сервере (deploy/answers-api.py), оттуда их
@@ -569,10 +631,13 @@ class Component extends DCLogic {
     const s = this.state;
     return {
       guestGreeting: this.guest.name + ', привет!',
-      places: this.placeList().map((title, i, arr) => ({
+      places: this.placeList().map((title, i) => ({
         title,
-        rowStyle: this.rowStyle(s.place.includes(title), i === arr.length - 1),
-        dotStyle: this.dotStyle(s.place.includes(title)),
+        slotId: 'inv-place-' + (i + 1),
+        src: './img/places/' + (this.placeShots()[i] || ''),
+        slotHint: title.toLowerCase(),
+        cardStyle: this.cardStyle(s.place.includes(title)),
+        titleStyle: this.cardTitleStyle(s.place.includes(title)),
         pick: () => this.setState(p => ({ place: this.toggle(p.place, title) }))
       })),
       beers: this.beerList().map((title, i, arr) => ({

@@ -104,7 +104,7 @@
       return {
         top: top,
         height: c.height || 1,
-        rim: top + CW * 0.17,
+        rim: top + CW * 0.06,
         surface: top + CW * FOAM_AT,
         base: top + (c.height || 1) - CW * BASE_AT
       };
@@ -171,7 +171,7 @@
        заходит за линию покоя на пару десятков пикселей — там живёт шипучая
        кромка, и волна не должна открывать под пеной дырку. */
     function buildFoam() {
-      var over = 18 * u;
+      var over = 30 * u;
       foamDeep = CW * FOAM_AT + Math.max(W, H) * 0.24;
       foamW = X1 - X0;
       foamH = foamDeep + over;
@@ -215,10 +215,14 @@
       f.globalAlpha = 1;
     }
 
-    /* Две синусоиды с разным шагом: одна волна выглядит нарисованной линейкой. */
+    /* Четыре синусоиды с несоразмерными шагами: одна волна выглядит начерченной
+       по лекалу, две — правильной зыбью. Мелкие дают ту неровность, с которой
+       пена и садится на пиво. */
     function wave(x, amp) {
-      return Math.sin(x / (52 * u) + phase) * amp +
-             Math.sin(x / (121 * u) - phase * 0.6) * amp * 0.6;
+      return (Math.sin(x / (52 * u) + phase) +
+              Math.sin(x / (121 * u) - phase * 0.6) * 0.6 +
+              Math.sin(x / (23 * u) + phase * 1.7) * 0.38 +
+              Math.sin(x / (9 * u) - phase * 0.4) * 0.2) * amp;
     }
 
     /* ---------------------------------------------------------------- кадр */
@@ -236,6 +240,12 @@
       sctx.translate(W / 2, H * 0.5);
       sctx.rotate(angle * Math.PI / 180);
       sctx.translate(-W / 2, -H * 0.5);
+
+      /* Пена ложится первой, пиво накрывает её своей волнистой кромкой: если
+         класть холст пены поверх, он обрежет пиво собственным прямым низом и
+         никакой волны видно не будет. */
+      var foamOn = y0 > YTOP - foamDeep && y0 < YBOT;
+      if (foamOn) sctx.drawImage(foamCv, X0, y0 - foamDeep, foamW, foamH);
 
       /* пиво заливает всё ниже линии пены и уходит за нижний край поля */
       var top = Math.max(YTOP, Math.min(y0, YBOT));
@@ -265,22 +275,29 @@
       }
       sctx.globalAlpha = 1;
 
-      /* Пена и её кромка — только когда граница вообще близко к экрану: ниже по
-         странице рисовать нечего, там сплошное пиво. */
-      if (y0 > YTOP - foamDeep && y0 < YBOT) {
-        sctx.drawImage(foamCv, X0, y0 - foamDeep, foamW, foamH);
-
-        /* пена не обрывается по линейке: вдоль самой волны сажаем живые кружки —
-           они и цепляются за пиво, когда оно уходит вбок */
-        var seed = 1;
-        for (x = X0; x < X1; x += 9 * u) {
+      if (foamOn) {
+        /* Кромка: пена садится на пиво не по линейке. Сначала её клочья свисают
+           в пиво, потом пиво горбами вылезает обратно в пену — от этих двух
+           проходов граница и получается рваной. */
+        var seed = 1, rnd;
+        for (x = X0; x < X1; x += 7 * u) {
           seed = (seed * 9301 + 49297) % 233280;
-          var rnd = seed / 233280;
+          rnd = seed / 233280;
           sctx.globalAlpha = 0.5 + rnd * 0.45;
           sctx.fillStyle = rnd < 0.22 ? '#F0DEB8' : '#FFFDF7';
           sctx.beginPath();
-          sctx.arc(x + rnd * 9 * u, y0 + wave(x, amp) - (rnd - 0.42) * 11 * u,
-                  (1.2 + rnd * rnd * 6) * u, 0, 6.2832);
+          sctx.arc(x + rnd * 9 * u, y0 + wave(x, amp) - (rnd - 0.45) * 17 * u,
+                  (1.6 + rnd * rnd * 8) * u, 0, 6.2832);
+          sctx.fill();
+        }
+        for (x = X0; x < X1; x += 24 * u) {
+          seed = (seed * 9301 + 49297) % 233280;
+          rnd = seed / 233280;
+          sctx.globalAlpha = 0.55 + rnd * 0.4;
+          sctx.fillStyle = COLOR.beerTop;
+          sctx.beginPath();
+          sctx.arc(x + rnd * 20 * u, y0 + wave(x, amp) + (rnd - 0.15) * 5 * u,
+                  (2.5 + rnd * rnd * 9) * u, 0, 6.2832);
           sctx.fill();
         }
         sctx.globalAlpha = 1;
@@ -378,7 +395,7 @@
       var lean = Math.tan(angle * Math.PI / 180) * 0.45 * (x - W / 2);
       var noise = (Math.sin(x / (37 * u) + phase * 0.6) +
                    Math.sin(x / (71 * u) - phase * 0.4)) * CW * 0.007;
-      return m.rim + lean - CW * 0.1 * bump + noise;
+      return m.rim + lean - CW * 0.15 * bump + noise;
     }
 
     /* Пузыри по краю шапки: без них купол выглядит вырезанным ножницами. */
@@ -720,7 +737,7 @@
         phase += 0.05 + Math.min(0.06, Math.abs(vel) * 0.02);
       }
 
-      var amp = Math.min(9 * u, (1.1 + Math.abs(vel) * 2.6) * u);
+      var amp = Math.min(11 * u, (3.2 + Math.abs(vel) * 2.6) * u);
 
       /* Пузырьки упираются в поверхность, а если она уже уехала за верх экрана —
          просто уходят за край поля и заводятся снизу заново. */
