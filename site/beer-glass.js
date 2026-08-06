@@ -1,44 +1,49 @@
-/* Пиво в шапке страницы Кости.
+/* Страница Кости как бокал пива.
 
-   Кадр во всю ширину: снизу пиво с пузырьками, сверху пенная шапка, над пеной —
-   бумага бланка. Всё рисуется на canvas, а не картинкой: пузырьков под сотню и
-   поверхность должна гнуться, фотографию так не согнёшь.
+   Вся карточка — один высокий бокал: сверху пенная шапка, снизу закруглённое
+   толстое донышко, между ними пиво, по которому идёт текст приглашения. Рисунок
+   собран на canvas по фотографии бокала, но не из неё: пузырьков под тысячу,
+   поверхность должна гнуться волной, а жидкость — жить отдельно от стекла.
 
-   Физика. Экран считаем окном в мир: кадр к нему приклеен, а поверхность пива
-   держится перпендикулярно земле. Направление «вниз» берём из deviceorientation —
-   beta/gamma дают проекцию гравитации на плоскость экрана, её угол и есть наклон
-   поверхности. Доводим угол пружиной, поэтому пиво не следует за телефоном
-   мгновенно: перелетает и пару секунд качается, а из гребня на резком движении
-   вылетают брызги.
+   Холст один и висит sticky на высоту экрана: рисовать полотно во всю длину
+   страницы нельзя (это десятки мегабайт), поэтому каждый кадр считаем, где
+   сейчас относительно экрана верх и низ карточки, и рисуем только видимый
+   кусок бокала. Прокрутка сама уносит пену вверх и подводит донышко снизу.
+
+   Физика наклона. Экран считаем окном в мир: бокал к нему приклеен, а
+   поверхность пива держится перпендикулярно земле. Направление «вниз» берём из
+   deviceorientation — beta/gamma дают проекцию гравитации на плоскость экрана,
+   её угол и есть наклон поверхности. Доводим угол пружиной, поэтому пиво не
+   следует за телефоном мгновенно: перелетает и пару секунд качается.
 
    iOS 13+ отдаёт гироскоп только после DeviceOrientationEvent.requestPermission(),
    и только из обработчика настоящего тапа — поэтому цепляемся к первому тапу по
    странице (обычно это тап по интро-конверту). Требуется https, он есть.
-   Где датчика нет вовсе (десктоп) — ведём наклон мышью плюс лёгкое покачивание,
-   чтобы кадр не выглядел мёртвым.
+   Где датчика нет вовсе (десктоп) — ведём наклон мышью плюс лёгкое покачивание.
 
    При prefers-reduced-motion рисуем один статичный кадр и не заводим цикл. */
 (function () {
   'use strict';
 
-  /* Все размеры заданы в «дизайнерских» пикселях при высоте кадра 460 и потом
-     умножаются на u = высота/460 — так рисунок одинаково выглядит и на телефоне,
-     и на широкой карточке. */
-  var BASE_H = 460;
-  var REST = 0.33;        // где стоит граница пены и пива в покое, доля высоты
+  /* Размеры бокала считаем от ширины карточки, а не от экрана: бокал должен
+     выглядеть одинаково и на телефоне, и на широкой карточке. */
+  var FOAM_AT = 0.30;     // от верха карточки до границы пены и пива
+  var BASE_AT = 0.17;     // от низа карточки до дуги донышка
   var MAX_TILT = 16;      // предел наклона поверхности, градусы
   var BEND = 1.55;        // во сколько раз стягивается картинка у самого борта
   var BEND_P = 3;         // как резко нарастает стягивание к краю
+  var VEIL = 0.66;        // забеливающая вуаль над пивом под текстом
 
   var COLOR = {
-    beerTop: '#E29A24',   // под самой пеной пиво самое густое
-    beerMid: '#F0B32C',
-    beerLow: '#F8CE38',   // к середине бокала оно светлеет, как на просвет
-    beerDeep: '#CE8214',  // у самого дна снова густеет
+    beerTop: '#EDA92C',   // под самой пеной пиво самое густое
+    beerMid: '#F5C136',
+    beerLow: '#F8CE38',
+    beerDeep: '#D28E1B',  // у самого дна снова густеет
     glass: '#F6EFDF',     // толстое стекло донышка
     foamTop: '#FFFFFF',
     foamMid: '#FCF6EA',
-    foamLow: '#F2E2C2'    // у самой границы пена подкрашена пивом
+    foamLow: '#F2E2C2',   // у самой границы пена подкрашена пивом
+    veil: '239,233,222'   // тот же кремовый, что у бумаги бланка
   };
 
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -47,9 +52,7 @@
   function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
 
   function mount(host) {
-    /* Две роли одного рисунка: сверху страницы — верх бокала с пенной шапкой,
-       в футере — дно, где пены нет, зато есть закруглённое толстое стекло. */
-    var mode = host.getAttribute('data-beer-mode') === 'bottom' ? 'bottom' : 'top';
+    var card = host.parentNode;
     var canvas = document.createElement('canvas');
     canvas.style.cssText = 'display: block; width: 100%; height: 100%';
     canvas.setAttribute('aria-hidden', 'true');
@@ -60,12 +63,12 @@
     var sctx = scene.getContext('2d');
     var hint = document.querySelector('[data-beer-hint]');
 
-    var W = 0, H = 0, u = 1, dpr = 1;
+    var W = 0, H = 0, CW = 0, u = 1, dpr = 1;
     var SIDE = 0, EXTRA = 0;                 // ширина искажённой полосы и запас исходника под неё
-    var X0 = 0, X1 = 0, YTOP = 0, YBOT = 0;  // поле рисования шире кадра: при повороте углы уезжают
+    var X0 = 0, X1 = 0, YTOP = 0, YBOT = 0;  // поле рисования шире экрана: при повороте углы уезжают
     var bubbles = [];
     var foamCv = document.createElement('canvas');   // фактура пены: она стоит на месте
-    var foamW = 0, foamH = 0;
+    var foamW = 0, foamH = 0, foamDeep = 0;
 
     var angle = 0, vel = 0, target = 0;   // градусы наклона поверхности
     var phase = 0;
@@ -74,62 +77,69 @@
     function resize() {
       W = host.clientWidth || 1;
       H = host.clientHeight || 1;
+      CW = Math.min(W, 620);          // ширина карточки задаёт масштаб бокала
       dpr = Math.min(2, window.devicePixelRatio || 1);
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       /* Сцена шире кадра на EXTRA с каждой стороны: полоса у борта показывает
          жидкость, которая на плоской картинке лежала бы за краем экрана. */
-      SIDE = Math.min(W * 0.17, H * 0.42);
+      SIDE = Math.min(W * 0.17, H * 0.3);
       EXTRA = SIDE * (BEND - 1);
       scene.width = Math.round((W + 2 * EXTRA) * dpr);
       scene.height = canvas.height;
-      u = H / BASE_H;
-      /* Запас по краям — на поворот: при 16° самый дальний угол уезжает примерно
-         на четверть большей стороны, дальше рисовать незачем. */
+      u = CW / 430;
       var pad = Math.max(W, H) * 0.24;
       X0 = -pad; X1 = W + pad; YTOP = -pad; YBOT = H + pad;
       makeBubbles();
-      if (mode === 'top') buildFoam();
+      buildFoam();
     }
 
-    /* Откуда начинается жидкость: сверху — от линии пены, у дна — от края поля,
-       потому что никакой свободной поверхности в дне бокала нет. */
-    function liquidTop() { return mode === 'bottom' ? YTOP : H * REST; }
+    /* Где сейчас на экране граница пены и дно. Считаем от карточки, а не от
+       холста: холст висит sticky и в конце страницы отлипает. */
+    function marks() {
+      var c = card.getBoundingClientRect();
+      var h = host.getBoundingClientRect();
+      return {
+        surface: c.top - h.top + CW * FOAM_AT,
+        base: c.bottom - h.top - CW * BASE_AT
+      };
+    }
 
     /* Пузырьки в пиве: на фото их сотни, поэтому считаем от площади поля.
        Мелких должно быть заметно больше крупных — отсюда квадрат случайной
        величины и в радиусе, и в скорости. */
     function makeBubbles() {
-      var span = X1 - X0, top = liquidTop(), depth = YBOT - top;
-      var count = clamp(Math.round(span * depth / 220), 200, 900);
+      var span = X1 - X0, depth = YBOT - YTOP;
+      var count = clamp(Math.round(span * depth / 260), 200, 820);
       bubbles.length = 0;
       for (var i = 0; i < count; i++) {
         var rr = Math.random();
         bubbles.push({
           x: X0 + Math.random() * span,
-          y: top + Math.random() * depth,
-          r: (0.9 + rr * rr * 5.2) * u,
+          y: YTOP + Math.random() * depth,
+          r: (0.8 + rr * rr * 4.6) * u,
           v: (0.18 + rr * 1.15) * u,        // крупные всплывают быстрее
-          a: 0.35 + Math.random() * 0.5
+          a: 0.3 + Math.random() * 0.5
         });
       }
     }
 
     /* Пена не течёт: её фактура стоит на месте относительно жидкости, поэтому
        рисуется один раз в отдельный холст и потом просто кладётся картинкой.
-       Иначе шесть сотен пузырьков пришлось бы перерисовывать каждый кадр.
-       Снизу холст заходит за линию покоя на пару десятков пикселей — там живёт
-       шипучая кромка, и волна не должна открывать под пеной дырку. */
+       Иначе тысячу ячеек пришлось бы перерисовывать каждый кадр. Снизу холст
+       заходит за линию покоя на пару десятков пикселей — там живёт шипучая
+       кромка, и волна не должна открывать под пеной дырку. */
     function buildFoam() {
       var over = 18 * u;
+      foamDeep = CW * FOAM_AT + Math.max(W, H) * 0.24;
       foamW = X1 - X0;
-      foamH = H * REST + over - YTOP;
+      foamH = foamDeep + over;
       foamCv.width = Math.round(foamW * dpr);
       foamCv.height = Math.round(foamH * dpr);
 
       var f = foamCv.getContext('2d');
       f.setTransform(dpr, 0, 0, dpr, 0, 0);
-      var g = f.createLinearGradient(0, foamH - H * 0.55, 0, foamH);
+      var g = f.createLinearGradient(0, foamH - CW * 0.55, 0, foamH);
       g.addColorStop(0, COLOR.foamTop);
       g.addColorStop(0.6, COLOR.foamMid);
       g.addColorStop(1, COLOR.foamLow);
@@ -147,9 +157,8 @@
         var r = (1 + rr * rr * 5) * u;
         /* Тени между ячейками — только у самой границы с пивом, где пена ещё
            мокрая. Выше она взбита в плотную белизну, и те же тени читаются там
-           как грязь. Порог считаем от видимой части шапки, а не от холста:
-           холст уходит вверх за кадр на запас под поворот. */
-        var shade = dy < H * REST * 0.45 && Math.random() < 0.32;
+           как грязь. */
+        var shade = dy < CW * 0.15 && Math.random() < 0.32;
         var cx = Math.random() * foamW, cy = foamH - dy;
         f.globalAlpha = shade ? 0.14 + Math.random() * 0.26 : 0.42 + Math.random() * 0.5;
         f.fillStyle = shade ? '#C6A874' : '#FFFFFF';
@@ -171,52 +180,37 @@
              Math.sin(x / (121 * u) - phase * 0.6) * amp * 0.6;
     }
 
-    function surfaceY() { return H * REST; }
-
     /* ---------------------------------------------------------------- кадр */
     /* Сцена рисуется плоской в отдельный холст, а на экран попадает уже через
        compose() — иначе искажение у бортов пришлось бы закладывать в каждую
        кривую отдельно. */
     function paint(amp) {
-      var y0 = surfaceY(), step = 14 * u;
+      var m = marks(), y0 = m.surface, step = 14 * u;
       var x, k;
 
       sctx.setTransform(dpr, 0, 0, dpr, EXTRA * dpr, 0);
       sctx.clearRect(-EXTRA, 0, W + 2 * EXTRA, H);
 
       sctx.save();
-      sctx.translate(W / 2, H * 0.55);
+      sctx.translate(W / 2, H * 0.5);
       sctx.rotate(angle * Math.PI / 180);
-      sctx.translate(-W / 2, -H * 0.55);
+      sctx.translate(-W / 2, -H * 0.5);
 
-      if (mode === 'top') {
-        /* пена лежит первой: пиво накроет её своей волнистой кромкой */
-        sctx.drawImage(foamCv, X0, YTOP, foamW, foamH);
-
-        /* пиво: волнистый верх, дальше вниз с запасом за нижний край кадра */
-        sctx.beginPath();
-        sctx.moveTo(X0, y0 + wave(X0, amp));
-        for (x = X0 + step; x < X1; x += step) sctx.lineTo(x, y0 + wave(x, amp));
-        sctx.lineTo(X1, y0 + wave(X1, amp));
-        sctx.lineTo(X1, YBOT);
-        sctx.lineTo(X0, YBOT);
-        sctx.closePath();
-        var grad = sctx.createLinearGradient(0, y0, 0, H * 1.05);
-        grad.addColorStop(0, COLOR.beerTop);
-        grad.addColorStop(0.45, COLOR.beerMid);
-        grad.addColorStop(1, COLOR.beerLow);
-        sctx.fillStyle = grad;
-        sctx.fill();
-      } else {
-        /* дно: свободной поверхности нет, жидкость заливает всё поле, а к самому
-           дну густеет — там смотришь сквозь толщу пива и через толстое стекло */
-        var gb = sctx.createLinearGradient(0, YTOP, 0, H);
-        gb.addColorStop(0, COLOR.beerLow);
-        gb.addColorStop(0.55, COLOR.beerMid);
-        gb.addColorStop(1, COLOR.beerDeep);
-        sctx.fillStyle = gb;
-        sctx.fillRect(X0, YTOP, X1 - X0, YBOT - YTOP);
-      }
+      /* пиво заливает всё ниже линии пены и уходит за нижний край поля */
+      var top = Math.max(YTOP, Math.min(y0, YBOT));
+      sctx.beginPath();
+      sctx.moveTo(X0, y0 + wave(X0, amp));
+      for (x = X0 + step; x < X1; x += step) sctx.lineTo(x, y0 + wave(x, amp));
+      sctx.lineTo(X1, y0 + wave(X1, amp));
+      sctx.lineTo(X1, YBOT);
+      sctx.lineTo(X0, YBOT);
+      sctx.closePath();
+      var grad = sctx.createLinearGradient(0, top, 0, top + CW * 2.2);
+      grad.addColorStop(0, COLOR.beerTop);
+      grad.addColorStop(0.4, COLOR.beerMid);
+      grad.addColorStop(1, COLOR.beerLow);
+      sctx.fillStyle = grad;
+      sctx.fill();
 
       /* пузырьки: поднимаются в системе жидкости, то есть перпендикулярно
          поверхности, а не к верху экрана */
@@ -230,23 +224,29 @@
       }
       sctx.globalAlpha = 1;
 
-      /* Кромка: пена не обрывается по линейке, поэтому вдоль самой волны сажаем
-         живые кружки — они и цепляются за пиво, когда оно уходит вбок. */
-      var seed = 1;
-      for (x = X0; mode === 'top' && x < X1; x += 9 * u) {
-        seed = (seed * 9301 + 49297) % 233280;
-        var rnd = seed / 233280;
-        sctx.globalAlpha = 0.5 + rnd * 0.45;
-        sctx.fillStyle = rnd < 0.22 ? '#F0DEB8' : '#FFFDF7';
-        sctx.beginPath();
-        sctx.arc(x + rnd * 9 * u, y0 + wave(x, amp) - (rnd - 0.42) * 11 * u,
-                (1.2 + rnd * rnd * 6) * u, 0, 6.2832);
-        sctx.fill();
+      /* Пена и её кромка — только когда граница вообще близко к экрану: ниже по
+         странице рисовать нечего, там сплошное пиво. */
+      if (y0 > YTOP - foamDeep && y0 < YBOT) {
+        sctx.drawImage(foamCv, X0, y0 - foamDeep, foamW, foamH);
+
+        /* пена не обрывается по линейке: вдоль самой волны сажаем живые кружки —
+           они и цепляются за пиво, когда оно уходит вбок */
+        var seed = 1;
+        for (x = X0; x < X1; x += 9 * u) {
+          seed = (seed * 9301 + 49297) % 233280;
+          var rnd = seed / 233280;
+          sctx.globalAlpha = 0.5 + rnd * 0.45;
+          sctx.fillStyle = rnd < 0.22 ? '#F0DEB8' : '#FFFDF7';
+          sctx.beginPath();
+          sctx.arc(x + rnd * 9 * u, y0 + wave(x, amp) - (rnd - 0.42) * 11 * u,
+                  (1.2 + rnd * rnd * 6) * u, 0, 6.2832);
+          sctx.fill();
+        }
+        sctx.globalAlpha = 1;
       }
-      sctx.globalAlpha = 1;
 
       sctx.restore();
-      compose();
+      compose(m);
     }
 
     /* Насколько далеко за экран уходит исходник для точки в полосе: v = 0 на
@@ -262,9 +262,9 @@
        на внутренней границе совпадают и масштаб, и само содержимое — иначе там
        был бы виден шов. Плюс мениск (у стенки жидкость лезет вверх), потемнение
        от толщи пива и блик на стекле. */
-    function compose() {
+    function compose(m) {
       var S = SIDE, E = EXTRA;
-      var lift = H * 0.035;
+      var lift = H * 0.02;
       var d = dpr, step = 2, x, w, t, up, s0, s1;
 
       ctx.setTransform(d, 0, 0, d, 0, 0);
@@ -286,45 +286,39 @@
                       W - x - w, -up, w + 0.6, H + up);
       }
 
+      bottomGlass(m.base);
+      veil(m);
+
       /* у стенки смотришь сквозь всю толщу пива — там оно гуще и темнее */
       var dark = ctx.createLinearGradient(0, 0, S * 1.1, 0);
-      dark.addColorStop(0, 'rgba(96,48,4,.45)');
-      dark.addColorStop(0.3, 'rgba(126,68,10,.16)');
+      dark.addColorStop(0, 'rgba(96,48,4,.4)');
+      dark.addColorStop(0.3, 'rgba(126,68,10,.14)');
       dark.addColorStop(1, 'rgba(126,68,10,0)');
-      ctx.fillStyle = dark;
-      ctx.fillRect(0, 0, S * 1.1, H);
-      ctx.save();
-      ctx.translate(W, 0);
-      ctx.scale(-1, 1);
-      ctx.fillStyle = dark;
-      ctx.fillRect(0, 0, S * 1.1, H);
-      ctx.restore();
-
       /* блик: стекло ловит свет полосой чуть в стороне от самого края */
       var hx = S * 0.46, hw = S * 0.34;
       var gl = ctx.createLinearGradient(hx - hw, 0, hx + hw, 0);
       gl.addColorStop(0, 'rgba(255,255,255,0)');
-      gl.addColorStop(0.5, 'rgba(255,255,255,.26)');
+      gl.addColorStop(0.5, 'rgba(255,255,255,.24)');
       gl.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = gl;
-      ctx.fillRect(hx - hw, 0, hw * 2, H);
-      ctx.save();
-      ctx.translate(W, 0);
-      ctx.scale(-1, 1);
-      ctx.fillStyle = gl;
-      ctx.fillRect(hx - hw, 0, hw * 2, H);
-      ctx.restore();
 
-      if (mode === 'bottom') bottomGlass();
+      for (var side = 0; side < 2; side++) {
+        ctx.save();
+        if (side) { ctx.translate(W, 0); ctx.scale(-1, 1); }
+        ctx.fillStyle = dark;
+        ctx.fillRect(0, 0, S * 1.1, H);
+        ctx.fillStyle = gl;
+        ctx.fillRect(hx - hw, 0, hw * 2, H);
+        ctx.restore();
+      }
     }
 
-    /* Донышко: жидкость обрывается дугой, ниже идёт толстое стекло. Дуга рисуется
+    /* Донышко: жидкость обрывается дугой, ниже идёт толстое стекло. Рисуется
        уже после искажения бортами — стекло приклеено к экрану и не наклоняется
        вместе с пивом. */
-    function bottomGlass() {
-      var bowl = H * 0.74;          // где начинается закругление
-      var dep = H * 0.15;           // насколько провисает середина
-      var thick = H * 0.07;         // толщина донышка
+    function bottomGlass(bowl) {
+      if (bowl > H + CW * 0.4 || bowl < -CW * 0.4) return;
+      var dep = CW * 0.1;           // насколько провисает середина
+      var thick = CW * 0.055;       // толщина донышка
 
       function arc(y) {
         ctx.moveTo(-2, y);
@@ -340,6 +334,20 @@
       ctx.lineTo(W + 2, H + 2);
       ctx.lineTo(-2, H + 2);
       ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      /* у самого дна пиво густеет */
+      ctx.save();
+      ctx.beginPath();
+      arc(bowl);
+      ctx.lineTo(W + 2, bowl - CW * 0.55);
+      ctx.lineTo(-2, bowl - CW * 0.55);
+      ctx.closePath();
+      var gd = ctx.createLinearGradient(0, bowl - CW * 0.55, 0, bowl + dep);
+      gd.addColorStop(0, 'rgba(210,142,27,0)');
+      gd.addColorStop(1, 'rgba(184,116,12,.55)');
+      ctx.fillStyle = gd;
       ctx.fill();
       ctx.restore();
 
@@ -369,12 +377,38 @@
       ctx.stroke();
     }
 
+    /* Забеливающая вуаль: под текстом пиво нужно погасить, иначе бланк не
+       читается. У пены и у донышка вуали нет — там пиво во всю силу. */
+    function veil(m) {
+      var a = m.surface + CW * 0.1;    // ниже пены вуаль набирает силу
+      var b = m.surface + CW * 0.7;
+      var c = m.base - CW * 0.7;       // к донышку сходит на нет
+      var e = m.base - CW * 0.12;
+      if (b > c) { b = c = (b + c) / 2; }
+
+      function at(y) { return clamp(y / H, 0, 1); }
+      var g = ctx.createLinearGradient(0, 0, 0, H);
+      var stops = [[at(a), 0], [at(b), VEIL], [at(c), VEIL], [at(e), 0]];
+      for (var i = 1; i < stops.length; i++) {
+        if (stops[i][0] < stops[i - 1][0]) stops[i][0] = stops[i - 1][0];
+      }
+      for (i = 0; i < stops.length; i++) {
+        g.addColorStop(stops[i][0], 'rgba(' + COLOR.veil + ',' + stops[i][1] + ')');
+      }
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+
     resize();
     if (window.ResizeObserver) new ResizeObserver(resize).observe(host);
     else window.addEventListener('resize', resize);
 
     /* ------------------------------------------------------- статичный режим */
-    if (reduce) { paint(0); return; }
+    if (reduce) {
+      paint(0);
+      window.addEventListener('scroll', function () { paint(0); }, { passive: true });
+      return;
+    }
 
     /* ------------------------------------------------------------ источники */
     var sensor = false;          // пришло хоть одно событие датчика
@@ -464,17 +498,16 @@
         phase += 0.05 + Math.min(0.06, Math.abs(vel) * 0.02);
       }
 
-      var y0 = surfaceY();
       var amp = Math.min(9 * u, (1.1 + Math.abs(vel) * 2.6) * u);
 
-      /* Пузырьки всплывают в системе жидкости: у дна им упираться не во что,
-         поэтому там они просто уходят за верх поля и заводятся снизу заново. */
-      var ceil = mode === 'bottom' ? YTOP : y0;
+      /* Пузырьки упираются в поверхность, а если она уже уехала за верх экрана —
+         просто уходят за край поля и заводятся снизу заново. */
+      var ceil = Math.max(YTOP, marks().surface);
       for (k = 0; k < bubbles.length; k++) {
         var b = bubbles[k];
         b.y -= b.v * steps;
         b.x += Math.sin(t / 900 + k) * 0.2 * u;
-        if (b.y < ceil + (mode === 'bottom' ? 0 : wave(b.x, amp)) + b.r) {
+        if (b.y < ceil + b.r) {
           b.y = YBOT - Math.random() * H * 0.15;
           b.x = X0 + Math.random() * (X1 - X0);
         }
@@ -486,19 +519,13 @@
       requestAnimationFrame(frame);
     }
 
-    /* Считать кадры под свёрнутой вкладкой или когда шапка укручена за экран
-       незачем — это чистый расход батареи на телефоне. */
+    /* Считать кадры под свёрнутой вкладкой незачем — это расход батареи. */
     function setRunning(on) {
       if (on === running) return;
       running = on;
       if (on) { last = now(); requestAnimationFrame(frame); }
     }
     document.addEventListener('visibilitychange', function () { setRunning(!document.hidden); });
-    if (window.IntersectionObserver) {
-      new IntersectionObserver(function (entries) {
-        setRunning(entries[0].isIntersecting && !document.hidden);
-      }, { threshold: 0 }).observe(host);
-    }
 
     paint(1.1 * u);
     requestAnimationFrame(frame);
@@ -509,16 +536,14 @@
   function waitForMount() {
     var tries = 0;
     var timer = setInterval(function () {
-      var hosts = document.querySelectorAll('[data-beer-header]');
-      for (var i = 0; i < hosts.length; i++) {
-        var host = hosts[i];
-        if (!host.clientHeight || host.dataset.beerReady) continue;
+      var host = document.querySelector('[data-beer-glass]');
+      if (host && host.clientHeight && !host.dataset.beerReady) {
         host.dataset.beerReady = '1';
+        clearInterval(timer);
         mount(host);
+      } else if (++tries > 80) {
+        clearInterval(timer);
       }
-      /* Блоков на странице два — шапка и футер, — и приезжают они одним рендером,
-         но ждём до конца отсчёта: вдруг футер отрисуется следующим тиком. */
-      if (++tries > 80) clearInterval(timer);
     }, 100);
   }
 
