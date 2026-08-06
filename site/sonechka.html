@@ -34,6 +34,11 @@
   .value { flex: 1; font-family: 'Cormorant Garamond', serif; font-size: 20px; line-height: 1.4; color: #3E342C; }
   .value.empty { font-style: italic; color: rgba(69,60,51,.4); }
   .note { margin: 14px 0 0; font-family: 'Manrope', sans-serif; font-weight: 300; font-size: 12px; color: rgba(69,60,51,.5); }
+  /* Мысли с листков блокнота: бумага в линейку, как на самой странице приглашения. */
+  .ideas { margin-top: 18px; }
+  .idea { margin-top: 10px; padding: 12px 14px; border-radius: 2px; background: #FFFDF8; border: 1px solid rgba(138,56,47,.14); border-left: 2px solid rgba(169,88,74,.4); }
+  .idea p { margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 19px; line-height: 1.45; color: #3E342C; white-space: pre-wrap; }
+  .idea .when { display: block; margin-top: 6px; text-align: left; }
   .waiting { margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 21px; color: rgba(69,60,51,.45); }
   .tally { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-bottom: 11px; border-bottom: 1px solid rgba(138,56,47,.14); font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #3E342C; }
   .tally:last-child { border-bottom: none; padding-bottom: 0; }
@@ -117,12 +122,34 @@ function plural(n, one, few, many) {
   return many;
 }
 
+function entryKey(a) {
+  return a.guest || 'other:' + (a.name || '');
+}
+
+// Мысль с листка блокнота приезжает своей записью — у неё непустое idea и нет
+// ни матрёшки, ни напитков. Такие записи не должны подменять собой ответ.
+function isIdea(a) {
+  return !!(a && a.idea);
+}
+
+function ideasByGuest(answers) {
+  var byKey = {};
+  answers.forEach(function (a) {
+    var key = entryKey(a);
+    (byKey[key] = byKey[key] || []).push(a);
+  });
+  Object.keys(byKey).forEach(function (k) {
+    byKey[k].sort(function (a, b) { return String(a.ts) < String(b.ts) ? -1 : 1; });
+  });
+  return byKey;
+}
+
 // Ответы хранятся append-only: гость мог нажать «Я приду» несколько раз.
 // Показываем последний, число попыток оставляем подписью.
 function latestByGuest(answers) {
   var byKey = {};
   answers.forEach(function (a) {
-    var key = a.guest || 'other:' + (a.name || '') ;
+    var key = entryKey(a);
     var prev = byKey[key];
     if (!prev) byKey[key] = { last: a, count: 1 };
     else {
@@ -160,21 +187,35 @@ function renderRow(label, value, emptyText) {
   return row;
 }
 
-function renderGuests(byKey) {
+function renderIdeas(list) {
+  var box = el('div', 'ideas');
+  box.appendChild(el('div', 'label', plural(list.length, 'Мысль', 'Мысли', 'Мысли')));
+  list.forEach(function (a) {
+    var item = el('div', 'idea');
+    item.appendChild(el('p', null, a.idea));
+    item.appendChild(el('span', 'when', fmtTime(a.ts)));
+    box.appendChild(item);
+  });
+  return box;
+}
+
+function renderGuests(byKey, ideasKey) {
   var box = document.getElementById('guests');
   box.textContent = '';
   var seen = {};
   var order = GUESTS.map(function (g) { return g.key; });
   // Сначала знакомые гости — в порядке списка, потом ответы с чужих адресов.
   Object.keys(byKey).forEach(function (k) { if (order.indexOf(k) === -1) order.push(k); });
+  Object.keys(ideasKey).forEach(function (k) { if (order.indexOf(k) === -1) order.push(k); });
 
   order.forEach(function (key) {
     if (seen[key]) return;
     seen[key] = true;
     var entry = byKey[key];
-    var card = el('div', 'card' + (entry ? '' : ' muted'));
+    var ideas = ideasKey[key] || [];
+    var card = el('div', 'card' + (entry || ideas.length ? '' : ' muted'));
     var top = el('div', 'card-top');
-    top.appendChild(el('h2', 'guest', guestTitle(key, entry && entry.last)));
+    top.appendChild(el('h2', 'guest', guestTitle(key, (entry && entry.last) || ideas[0])));
     if (entry) top.appendChild(el('span', 'when', fmtTime(entry.last.ts)));
     card.appendChild(top);
 
@@ -192,6 +233,7 @@ function renderGuests(byKey) {
           entry.count + ' ' + plural(entry.count, 'раз', 'раза', 'раз') + ', показан последний ответ'));
       }
     }
+    if (ideas.length) card.appendChild(renderIdeas(ideas));
     box.appendChild(card);
   });
 }
@@ -258,15 +300,19 @@ function load() {
       return r.json();
     })
     .then(function (data) {
-      var answers = (data && data.answers) || [];
-      total = answers.length;
+      var all = (data && data.answers) || [];
+      total = all.length;
       clearBtn.disabled = total === 0;
+      // Мысли с листков идут отдельным потоком: они не ответ «я приду» и не
+      // должны ни подменять его, ни попадать в подсчёт напитков.
+      var answers = all.filter(function (a) { return !isIdea(a); });
+      var ideasKey = ideasByGuest(all.filter(isIdea));
       var byKey = latestByGuest(answers);
       var count = Object.keys(byKey).length;
       document.getElementById('sub').textContent = count
         ? 'Ответили: ' + count + ' из ' + Math.max(count, GUESTS.length)
         : 'Пока никто не ответил.';
-      renderGuests(byKey);
+      renderGuests(byKey, ideasKey);
       renderSummary(byKey);
       status.textContent = 'обновлено в ' + now();
     })

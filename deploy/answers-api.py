@@ -32,17 +32,19 @@ ARCHIVE = os.path.join(os.path.dirname(STORE), 'archive')
 # каждого поля, число вариантов и общее число записей в файле.
 MAX_BODY = 8 * 1024
 MAX_TEXT = 200
+# idea — свободный текст с листка блокнота, ему 200 символов мало
+MAX_IDEA = 500
 MAX_ITEMS = 20
 MAX_RECORDS = 5000
 
 GUEST_RE = re.compile(r'^[a-z0-9_-]{1,32}$')
 
 
-def clean_text(value):
+def clean_text(value, limit=MAX_TEXT):
     if not isinstance(value, str):
         return ''
     # \x00 ломает json.loads на чтении, переводы строк рвут JSONL
-    return re.sub(r'[\x00-\x1f\x7f]', ' ', value).strip()[:MAX_TEXT]
+    return re.sub(r'[\x00-\x1f\x7f]', ' ', value).strip()[:limit]
 
 
 def clean_list(value):
@@ -70,6 +72,10 @@ def normalize(raw):
         # рождения, и вместо матрёшки с фильмом он выбирает, куда пойти.
         'place': clean_list(raw.get('place')),
         'drink': clean_list(raw.get('drink')),
+        # idea — мысль с листка блокнота. Приезжает своей записью, а не вместе с
+        # «Я приду»: листов можно оторвать сколько угодно. Страница /sonechka
+        # отличает такие записи от ответов именно по непустому idea.
+        'idea': clean_text(raw.get('idea'), MAX_IDEA),
     }
 
 
