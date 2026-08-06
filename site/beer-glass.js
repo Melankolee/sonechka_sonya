@@ -94,15 +94,51 @@
       buildFoam();
     }
 
-    /* Где сейчас на экране граница пены и дно. Считаем от карточки, а не от
-       холста: холст висит sticky и в конце страницы отлипает. */
+    /* Где сейчас на экране венчик, граница пены и дно. Считаем от карточки, а не
+       от холста: холст висит sticky и в конце страницы отлипает. */
     function marks() {
       var c = card.getBoundingClientRect();
       var h = host.getBoundingClientRect();
+      var top = c.top - h.top;
       return {
-        surface: c.top - h.top + CW * FOAM_AT,
-        base: c.bottom - h.top - CW * BASE_AT
+        top: top,
+        height: c.height || 1,
+        rim: top + CW * 0.055,
+        surface: top + CW * FOAM_AT,
+        base: top + (c.height || 1) - CW * BASE_AT
       };
+    }
+
+    /* Силуэт бокала из референса: сразу под венчиком стекло быстро сужается,
+       дальше идёт почти прямая стенка, у самого низа она расходится обратно в
+       ножку. Возвращает полуширину бокала в долях полуширины карточки.
+       Сужение взято мягче, чем на фотографии: там бокал в два с лишним раза
+       выше своей ширины, а страница — в десять, и настоящий раствор увёл бы
+       стенки прямо в текст. */
+    function profile(t) {
+      var s = clamp(t / 0.38, 0, 1);
+      s = s * s * (3 - 2 * s);
+      var w = 1 - 0.15 * s;
+      if (t > 0.93) {
+        var f = clamp((t - 0.93) / 0.05, 0, 1);
+        f = f * f * (3 - 2 * f);
+        w += 0.1 * f;
+      }
+      return w;
+    }
+
+    /* Полуширина бокала на строке y (координаты холста) */
+    function wall(y, m) {
+      return W / 2 * profile(clamp((y - m.top) / m.height, 0, 1));
+    }
+
+    /* Ломаная вдоль стенки: шаг 12px, силуэт всё равно почти прямой */
+    function wallPath(m, side, shift, from, to, back) {
+      var y, step = back ? -12 : 12;
+      for (y = from; back ? y > to : y < to; y += step) {
+        ctx.lineTo(W / 2 + side * (wall(y, m) - shift), y);
+      }
+      ctx.lineTo(W / 2 + side * (wall(to, m) - shift), to);
     }
 
     /* Пузырьки в пиве: на фото их сотни, поэтому считаем от площади поля.
@@ -286,43 +322,85 @@
                       W - x - w, -up, w + 0.6, H + up);
       }
 
-      bottomGlass(m.base);
+      bottomGlass(m);
+      silhouette(m);
       veil(m);
+      walls(m);
+      topRim(m);
+    }
 
-      /* у стенки смотришь сквозь всю толщу пива — там оно гуще и темнее */
-      var dark = ctx.createLinearGradient(0, 0, S * 1.1, 0);
-      dark.addColorStop(0, 'rgba(96,48,4,.4)');
-      dark.addColorStop(0.3, 'rgba(126,68,10,.14)');
-      dark.addColorStop(1, 'rgba(126,68,10,0)');
-      /* блик: стекло ловит свет полосой чуть в стороне от самого края */
-      var hx = S * 0.46, hw = S * 0.34;
-      var gl = ctx.createLinearGradient(hx - hw, 0, hx + hw, 0);
-      gl.addColorStop(0, 'rgba(255,255,255,0)');
-      gl.addColorStop(0.5, 'rgba(255,255,255,.24)');
-      gl.addColorStop(1, 'rgba(255,255,255,0)');
-
-      for (var side = 0; side < 2; side++) {
-        ctx.save();
-        if (side) { ctx.translate(W, 0); ctx.scale(-1, 1); }
-        ctx.fillStyle = dark;
-        ctx.fillRect(0, 0, S * 1.1, H);
-        ctx.fillStyle = gl;
-        ctx.fillRect(hx - hw, 0, hw * 2, H);
-        ctx.restore();
+    /* Всё за стенками — уже не бокал, там бумага бланка. */
+    function silhouette(m) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = '#000';   // destination-out стирает по альфе источника
+      for (var side = -1; side <= 1; side += 2) {
+        var edge = side < 0 ? -2 : W + 2;
+        ctx.beginPath();
+        ctx.moveTo(edge, -2);
+        wallPath(m, side, 0, -2, H + 2, false);
+        ctx.lineTo(edge, H + 2);
+        ctx.closePath();
+        ctx.fill();
       }
+      ctx.restore();
+    }
+
+    /* Стекло стенки: у самого борта смотришь сквозь всю толщу пива — там оно
+       гуще и темнее, а чуть внутрь стекло ловит свет длинным бликом. Полоса
+       идёт вдоль силуэта, поэтому на сужении она уезжает вместе со стенкой. */
+    function walls(m) {
+      var band = W * 0.17;
+      var mid = wall(H / 2, m);
+      for (var side = -1; side <= 1; side += 2) {
+        var x0 = W / 2 + side * mid;
+        var g = ctx.createLinearGradient(x0, 0, x0 - side * band, 0);
+        g.addColorStop(0, 'rgba(96,48,4,.42)');
+        g.addColorStop(0.22, 'rgba(126,68,10,.12)');
+        g.addColorStop(0.44, 'rgba(255,255,255,.24)');
+        g.addColorStop(0.72, 'rgba(255,255,255,0)');
+        ctx.beginPath();
+        ctx.moveTo(W / 2 + side * wall(-2, m), -2);
+        wallPath(m, side, 0, -2, H + 2, false);
+        wallPath(m, side, band, H + 2, -2, true);
+        ctx.closePath();
+        ctx.fillStyle = g;
+        ctx.fill();
+      }
+    }
+
+    /* Венчик: устье бокала стоит выше линии пены, пена над ним вспучена шапкой.
+       Ближняя кромка ярче дальней — на неё падает свет. */
+    function topRim(m) {
+      var y = m.rim;
+      if (y < -CW || y > H + CW * 0.4) return;
+      var half = wall(y, m), ry = half * 0.14;
+      ctx.save();
+      ctx.lineWidth = Math.max(1.5, 3 * u);
+      ctx.beginPath();
+      ctx.ellipse(W / 2, y, half, ry, 0, Math.PI, 0);          // дальняя кромка
+      ctx.strokeStyle = 'rgba(255,255,255,.42)';
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(W / 2, y, half, ry, 0, 0, Math.PI);          // ближняя
+      ctx.strokeStyle = 'rgba(255,255,255,.72)';
+      ctx.stroke();
+      ctx.restore();
     }
 
     /* Донышко: жидкость обрывается дугой, ниже идёт толстое стекло. Рисуется
        уже после искажения бортами — стекло приклеено к экрану и не наклоняется
        вместе с пивом. */
-    function bottomGlass(bowl) {
+    function bottomGlass(m) {
+      var bowl = m.base;
       if (bowl > H + CW * 0.4 || bowl < -CW * 0.4) return;
       var dep = CW * 0.1;           // насколько провисает середина
       var thick = CW * 0.055;       // толщина донышка
+      var half = wall(bowl, m) + 2;
 
       function arc(y) {
-        ctx.moveTo(-2, y);
-        ctx.quadraticCurveTo(W / 2, y + dep * 2, W + 2, y);
+        ctx.moveTo(W / 2 - half, y);
+        ctx.quadraticCurveTo(W / 2, y + dep * 2, W / 2 + half, y);
       }
 
       /* всё ниже дуги — уже не бокал */
@@ -341,8 +419,8 @@
       ctx.save();
       ctx.beginPath();
       arc(bowl);
-      ctx.lineTo(W + 2, bowl - CW * 0.55);
-      ctx.lineTo(-2, bowl - CW * 0.55);
+      ctx.lineTo(W / 2 + half, bowl - CW * 0.55);
+      ctx.lineTo(W / 2 - half, bowl - CW * 0.55);
       ctx.closePath();
       var gd = ctx.createLinearGradient(0, bowl - CW * 0.55, 0, bowl + dep);
       gd.addColorStop(0, 'rgba(210,142,27,0)');
@@ -354,8 +432,8 @@
       /* стекло между дугой жидкости и внешней дугой дна */
       ctx.beginPath();
       arc(bowl);
-      ctx.lineTo(W + 2, bowl + thick);
-      ctx.quadraticCurveTo(W / 2, bowl + thick + dep * 2, -2, bowl + thick);
+      ctx.lineTo(W / 2 + half, bowl + thick);
+      ctx.quadraticCurveTo(W / 2, bowl + thick + dep * 2, W / 2 - half, bowl + thick);
       ctx.closePath();
       var gg = ctx.createLinearGradient(0, bowl, 0, bowl + dep + thick);
       gg.addColorStop(0, 'rgba(214,150,44,.55)');

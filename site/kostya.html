@@ -62,7 +62,9 @@ window.__resources = {
          страницы нельзя, а прокрутка сама уносит пену и подводит дно. Роза,
          паттерн бумаги и накрытый стол со страницы Сони тут не нужны. -->
     <div data-beer-glass="1" aria-hidden="true" style="position: sticky; top: 0; height: 100vh; margin-bottom: -100vh; z-index: 0; pointer-events: none"></div>
-    <div style="position: relative; z-index: 1">
+    <!-- Боковой отступ у всего содержимого — под сужение бокала: ниже венчика
+         стенки уходят внутрь, и без него карточки вопросов лезли бы в стекло. -->
+    <div style="position: relative; z-index: 1; padding: 0 calc(min(100vw, 620px) * .04)">
 
     <div style="position: fixed; top: 18px; right: 18px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 10px">
       <button type="button" onClick="{{ toggleHelp }}" aria-label="Анекдот" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(247,243,236,.92); border: 1px solid rgba(138,56,47,.28); backdrop-filter: blur(6px); font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #8A382F; cursor: pointer; transition: background .25s, color .25s" style-hover="background: #8A382F; color: #FBF8F2">?</button>
@@ -85,7 +87,7 @@ window.__resources = {
              реально отозвался, и гаснет, как только гость наклонил телефон. -->
         <div data-reveal="1" style="padding: calc(min(100vw, 620px) * .46) 30px 6px; text-align: center">
           <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #8A382F">{{ guestGreeting }}</p>
-          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(32px, 8.8vw, 50px); line-height: 1.08; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Соня <em style="font-style: italic; color: #8A382F">не</em> приглашает тебя<br>на день рождения,<br><em style="font-style: italic; color: #8A382F">зато я приглашаю<br>пить пиво!</em></h1>
+          <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(30px, 7.7vw, 46px); line-height: 1.1; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Соня <em style="font-style: italic; color: #8A382F">не</em> приглашает тебя<br>на день рождения,<br><em style="font-style: italic; color: #8A382F">зато я приглашаю<br>пить пиво!</em></h1>
           <p data-beer-hint="1" style="margin: 18px 0 0; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: rgba(69,60,51,.45); opacity: 0; transition: opacity .7s ease">наклони телефон</p>
         </div>
       </div>
