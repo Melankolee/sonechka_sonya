@@ -55,18 +55,12 @@ window.__resources = {
      вишлиста, вопросов два — куда пойдём и что пьём. -->
 <div style="min-height: 100vh; background: #EFE9DE; display: flex; justify-content: center">
   <div style="width: 100%; max-width: 620px; position: relative; background: #EFE9DE; box-shadow: 0 0 80px rgba(93,74,58,.09)">
-    <!-- Фон карточки: три слоя тиснёной бумаги. Середина — паттерн, он повторяется
-         по вертикали; картинка склеена из оригинала и его зеркального отражения,
-         поэтому стык при repeat-y не виден. Роза сверху и накрытый стол снизу лежат
-         поверх паттерна и растворяются в нём градиентной маской, чтобы не было
-         границы между разными кадрами одной и той же бумаги. -->
+    <!-- Фон карточки: одна картинка — бокал пива во всю ширину сверху. Роза,
+         паттерн тиснёной бумаги и накрытый стол снизу (img/bg/*.jpg со страницы
+         Сони) тут убраны: у Кости не день рождения, а пиво. Пена растворяется в
+         кремовом фоне градиентной маской, чтобы не было жёсткой границы кадра. -->
     <div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none">
-      <div style="position: absolute; inset: 0; background: url('./img/bg/pattern.jpg') top center / 100% auto repeat-y"></div>
-      <!-- Забеливающая вуаль: гасит контраст паттерна, чтобы он не спорил с текстом.
-           Лежит только над паттерном — роза и стол рисуются выше и остаются яркими. -->
-      <div style="position: absolute; inset: 0; background: rgba(252,249,244,.62)"></div>
-      <div style="position: absolute; left: 0; right: 0; top: 0; aspect-ratio: 941 / 1672; background: url('./img/bg/top.jpg') top center / 100% auto no-repeat; -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%); mask-image: linear-gradient(180deg, #000 58%, transparent 100%)"></div>
-      <div style="position: absolute; left: 0; right: 0; bottom: 0; aspect-ratio: 941 / 1672; background: url('./img/bg/bottom.jpg') bottom center / 100% auto no-repeat; -webkit-mask-image: linear-gradient(0deg, #000 58%, transparent 100%); mask-image: linear-gradient(0deg, #000 58%, transparent 100%)"></div>
+      <div style="position: absolute; left: 0; right: 0; top: 0; height: calc(min(100vw, 620px) * .7); background: url('./img/bg/beer.jpg') top center / cover no-repeat; -webkit-mask-image: linear-gradient(180deg, #000 46%, transparent 100%); mask-image: linear-gradient(180deg, #000 46%, transparent 100%)"></div>
     </div>
     <div style="position: relative; z-index: 1">
 
@@ -86,11 +80,11 @@ window.__resources = {
 
     <section style="position: relative; padding: 0 0 4px">
       <div style="position: relative; width: 100%">
-        <!-- Верхний отступ отдан розе из фона: она занимает примерно 24% высоты
-             своей картинки, а та выводится во всю ширину карточки (соотношение
-             941:1672). Отсюда .45 от ширины — заголовок начинается под розой на
-             любом экране, а не только на телефоне. -->
-        <div data-reveal="1" style="padding: calc(min(100vw, 620px) * .45) 30px 6px; text-align: center">
+        <!-- Верхний отступ отдан пиву из фона: полоса высотой .7 от ширины
+             карточки, маска гасит её к низу начиная с 46%. Отсюда .6 от ширины —
+             приветствие начинается там, где кадр уже почти растворился, на любом
+             экране, а не только на телефоне. -->
+        <div data-reveal="1" style="padding: calc(min(100vw, 620px) * .6) 30px 6px; text-align: center">
           <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #8A382F">{{ guestGreeting }}</p>
           <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(32px, 8.8vw, 50px); line-height: 1.08; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Соня <em style="font-style: italic; color: #8A382F">не</em> приглашает тебя<br>на день рождения,<br><em style="font-style: italic; color: #8A382F">зато я приглашаю<br>пить пиво!</em></h1>
         </div>
@@ -156,15 +150,14 @@ window.__resources = {
       </div>
     </section>
 
-    <!-- Нижний отступ отдан накрытому столу из фона: рисунок занимает нижние ~47%
-         своей картинки, а та выводится во всю ширину карточки (941:1672). Отсюда
-         .92 от ширины — свечи начинаются под карточкой «Я приду», а не поверх неё. -->
-    <section data-reveal="1" style="padding: 62px 22px calc(min(100vw, 620px) * .92)">
+    <!-- Внизу картинки больше нет (накрытый стол убран вместе с остальным фоном),
+         поэтому отступ обычный — только чтобы кнопка не липла к краю экрана. -->
+    <section data-reveal="1" style="padding: 62px 22px 90px">
       <div style="position: relative; padding: 46px 24px 34px; background: linear-gradient(180deg, rgba(138,56,47,.05), rgba(138,56,47,.02)); border: 1px solid rgba(138,56,47,.2); border-radius: 30px; text-align: center">
-        <!-- Печать та же, что закрывает интро-конверт и летит к Соне в финале:
+        <!-- Крышка та же, что закрывает интро-конверт и летит к Соне в финале:
              один предмет проходит через всю страницу. Висит на верхней границе,
              поэтому overflow у карточки должен остаться видимым. -->
-        <img src="./img/seal.png" alt="" style="position: absolute; left: 50%; top: -26px; width: 56px; height: 56px; margin-left: -28px; transform: rotate(-8deg); filter: drop-shadow(0 4px 10px rgba(96,72,48,.24)); pointer-events: none">
+        <img src="./img/beer-cap.png" alt="" style="position: absolute; left: 50%; top: -26px; width: 56px; height: 56px; margin-left: -28px; transform: rotate(-8deg); filter: drop-shadow(0 4px 10px rgba(96,72,48,.24)); pointer-events: none">
         <!-- Уголковые засечки: приём из типографской вёрстки приглашений. Отступ
              14px выводит их из зоны скругления, радиус 6px рифмуется с ним. -->
         <div style="position: absolute; left: 14px; top: 14px; width: 16px; height: 16px; border-left: 1px solid rgba(138,56,47,.32); border-top: 1px solid rgba(138,56,47,.32); border-top-left-radius: 6px; pointer-events: none"></div>
@@ -197,7 +190,7 @@ window.__resources = {
       <div data-flying-envelope="1" style="position: fixed; left: 0; top: 0; z-index: 13; width: 132px; height: 86px; opacity: 0; pointer-events: none; will-change: transform, opacity">
         <div style="position: absolute; inset: 0; border-radius: 3px; background: linear-gradient(180deg, #E8DCC8, #DCCEB8); box-shadow: 0 12px 28px rgba(96,72,48,.28)"></div>
         <div style="position: absolute; left: 0; top: 0; width: 100%; height: 58%; background: linear-gradient(180deg, #EADFCB, #E8DCC8); clip-path: polygon(0 0, 100% 0, 50% 100%); -webkit-clip-path: polygon(0 0, 100% 0, 50% 100%); filter: drop-shadow(0 3px 4px rgba(96,72,48,.22))"></div>
-        <img src="./img/seal.png" alt="" style="position: absolute; left: 50%; top: 51%; display: block; width: 36px; height: 36px; margin: -18px 0 0 -18px">
+        <img src="./img/beer-cap.png" alt="" style="position: absolute; left: 50%; top: 51%; display: block; width: 36px; height: 36px; margin: -18px 0 0 -18px">
       </div>
       <div style="position: fixed; left: 0; right: 0; bottom: 0; z-index: 12; display: flex; justify-content: center; pointer-events: none">
         <div style="position: relative; width: 100%; max-width: 620px; height: 0">

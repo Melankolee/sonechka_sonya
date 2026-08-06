@@ -61,10 +61,21 @@
      так подписывают конверт. Без совпадения подпись просто не рисуется. */
   var ADDRESSEE = { nastia: 'Насте', uliya: 'Уле', ksusha: 'Ксюше', kostya: 'Косте' };
 
-  function addressee() {
+  /* Чем запечатан конверт. По умолчанию сургучная печать, у Кости — пивная
+     крышка: тот же предмет потом висит на «Я приду» и летит к Соне. */
+  var SEAL = { kostya: './img/beer-cap.png' };
+
+  function guestKey() {
     var path = location.pathname.split('/').pop().replace(/\.html$/, '');
-    var key = (new URLSearchParams(location.search).get('guest') || path || '').toLowerCase();
-    return ADDRESSEE[key] || '';
+    return (new URLSearchParams(location.search).get('guest') || path || '').toLowerCase();
+  }
+
+  function addressee() {
+    return ADDRESSEE[guestKey()] || '';
+  }
+
+  function sealSrc() {
+    return SEAL[guestKey()] || './img/seal.png';
   }
 
   /* ---------------------------------------------------------- математика */
@@ -225,7 +236,7 @@
     if (!back) {
       var line = el('div', 'position:absolute;left:0;top:88%;width:100%;height:0', wrap);
       seal = el('img', 'position:absolute;left:50%;top:50%;display:block', line);
-      seal.src = './img/seal.png';
+      seal.src = sealSrc();
       seal.alt = '';
     }
     return wrap;
