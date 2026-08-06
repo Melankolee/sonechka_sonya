@@ -156,7 +156,14 @@ window.__resources = {
           <sc-for list="{{ places }}" as="place" hint-placeholder-count="4">
             <button type="button" onClick="{{ place.pick }}" style="{{ place.cardStyle }}">
               <span style="position: relative; display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 18px; background: rgba(74,46,30,.06)">
-                <image-slot id="{{ place.slotId }}" shape="rect" fit="cover" src="{{ place.src }}" placeholder="{{ place.slotHint }}"></image-slot>
+                <!-- Слот вынут из потока (position: absolute) намеренно. У него
+                     своё width/height: 100% и aspect-ratio, и в WebKit это
+                     замыкалось в круг: рамка меряет ширину по слоту, слот —
+                     высоту по рамке, и каждый пересчёт лэйаута (а он идёт на
+                     каждый выбор бара) раздувал колонку сетки. На айфоне фото
+                     росли до бесконечности. Абсолютный слот в измерении сетки
+                     не участвует вообще. -->
+                <image-slot id="{{ place.slotId }}" shape="rect" fit="cover" src="{{ place.src }}" placeholder="{{ place.slotHint }}" style="position: absolute; inset: 0"></image-slot>
               </span>
               <span style="{{ place.titleStyle }}">{{ place.title }}</span>
             </button>
@@ -282,7 +289,7 @@ window.__resources = {
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;answersUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;/api/answers&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;placeOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Spontan, Пивная диета, Хопс Кантинка, Гоблинский пунш&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;beerOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Lager, IPA, Любое побольше, Weissbier&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;answersUrl&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;/api/answers&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Ответы&quot;}, &quot;placeOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Spontan, Пивная диета, Хопс Кантина, Гоблинский пунш&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;beerOptions&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Lager, IPA, Любое побольше, Weissbier&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Содержание&quot;}, &quot;reveal&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Анимация&quot;}}">
 class Component extends DCLogic {
   state = { place: [], beer: [], sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null, notes: 0 };
 
@@ -396,7 +403,7 @@ class Component extends DCLogic {
   }
 
   placeList() {
-    const raw = this.props.placeOptions || 'Spontan, Пивная диета, Хопс Кантинка, Гоблинский пунш';
+    const raw = this.props.placeOptions || 'Spontan, Пивная диета, Хопс Кантина, Гоблинский пунш';
     return raw.split(',').map(s => s.trim()).filter(Boolean);
   }
 
@@ -438,7 +445,10 @@ class Component extends DCLogic {
   // Карточка бара: невыбранная отходит назад и гаснет, выбранная выходит
   // вперёд с тенью. Отметка читается по самой карточке, поэтому галочки нет.
   cardStyle(active) {
-    return 'display: block; width: 100%; cursor: pointer; background: transparent; border: none; border-radius: 20px; padding: 0 0 4px; color: #5C5046' +
+    // min-width: 0 — карточка не должна расширять свою колонку сетки: колонки
+    // делят ширину поровну (1fr), а без этого их минимум считается по
+    // содержимому карточки (см. комментарий у слота с фото).
+    return 'display: block; width: 100%; min-width: 0; cursor: pointer; background: transparent; border: none; border-radius: 20px; padding: 0 0 4px; color: #5C5046' +
       '; opacity: ' + (active ? '1' : '.72') +
       '; transform: ' + (active ? 'scale(1)' : 'scale(.96)') +
       '; filter: drop-shadow(' + (active ? '0 6px 22px rgba(93,74,58,.22)' : '0 0 0 rgba(93,74,58,0)') + ')' +
