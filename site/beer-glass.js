@@ -103,7 +103,7 @@
       return {
         top: top,
         height: c.height || 1,
-        rim: top + CW * 0.055,
+        rim: top + CW * 0.17,
         surface: top + CW * FOAM_AT,
         base: top + (c.height || 1) - CW * BASE_AT
       };
@@ -329,17 +329,32 @@
       topRim(m);
     }
 
-    /* Всё за стенками — уже не бокал, там бумага бланка. */
+    /* Всё за стенками — уже не бокал, там бумага бланка. Выше венчика стекла
+       нет вовсе: там пена вспучена куполом, и всё за куполом тоже стирается —
+       иначе шапка выходит за кромки прямоугольником. */
     function silhouette(m) {
       ctx.save();
       ctx.globalCompositeOperation = 'destination-out';
       ctx.fillStyle = '#000';   // destination-out стирает по альфе источника
-      for (var side = -1; side <= 1; side += 2) {
-        var edge = side < 0 ? -2 : W + 2;
+      var side, edge;
+      for (side = -1; side <= 1; side += 2) {
+        edge = side < 0 ? -2 : W + 2;
         ctx.beginPath();
         ctx.moveTo(edge, -2);
         wallPath(m, side, 0, -2, H + 2, false);
         ctx.lineTo(edge, H + 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+      if (m.rim > -CW && m.rim < H + CW) {
+        var half = wall(m.rim, m), dome = CW * 0.1;
+        ctx.beginPath();
+        ctx.moveTo(-2, -CW);
+        ctx.lineTo(W + 2, -CW);
+        ctx.lineTo(W + 2, m.rim);
+        ctx.lineTo(W / 2 + half, m.rim);
+        ctx.quadraticCurveTo(W / 2, m.rim - dome * 2, W / 2 - half, m.rim);
+        ctx.lineTo(-2, m.rim);
         ctx.closePath();
         ctx.fill();
       }
@@ -359,10 +374,11 @@
         g.addColorStop(0.22, 'rgba(126,68,10,.12)');
         g.addColorStop(0.44, 'rgba(255,255,255,.24)');
         g.addColorStop(0.72, 'rgba(255,255,255,0)');
+        var from = Math.max(-2, Math.min(m.rim, H + 2));
         ctx.beginPath();
-        ctx.moveTo(W / 2 + side * wall(-2, m), -2);
-        wallPath(m, side, 0, -2, H + 2, false);
-        wallPath(m, side, band, H + 2, -2, true);
+        ctx.moveTo(W / 2 + side * wall(from, m), from);
+        wallPath(m, side, 0, from, H + 2, false);
+        wallPath(m, side, band, H + 2, from, true);
         ctx.closePath();
         ctx.fillStyle = g;
         ctx.fill();
@@ -377,13 +393,19 @@
       var half = wall(y, m), ry = half * 0.14;
       ctx.save();
       ctx.lineWidth = Math.max(1.5, 3 * u);
+      /* Кромку по белой пене одним белым не увидеть, поэтому ближняя идёт
+         светлой линией с тёплой тенью под ней, а дальняя — только тенью. */
       ctx.beginPath();
       ctx.ellipse(W / 2, y, half, ry, 0, Math.PI, 0);          // дальняя кромка
-      ctx.strokeStyle = 'rgba(255,255,255,.42)';
+      ctx.strokeStyle = 'rgba(186,156,104,.32)';
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(W / 2, y + ry * 0.12, half, ry, 0, 0, Math.PI);
+      ctx.strokeStyle = 'rgba(176,144,92,.34)';
       ctx.stroke();
       ctx.beginPath();
       ctx.ellipse(W / 2, y, half, ry, 0, 0, Math.PI);          // ближняя
-      ctx.strokeStyle = 'rgba(255,255,255,.72)';
+      ctx.strokeStyle = 'rgba(255,255,255,.85)';
       ctx.stroke();
       ctx.restore();
     }
