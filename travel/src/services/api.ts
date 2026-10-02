@@ -1,5 +1,6 @@
-// Всё, что ходит в сеть. Запросы — относительные и same-origin, так что
-// HTTP-авторизация перед сайтом (basic_auth в Caddy) работает без правок кода.
+// Всё, что ходит в сеть. Запросы — относительные и same-origin, cookie
+// входа (travel_session) уходит с ними сама. Без неё Caddy отвечает 401 —
+// это AuthError, и главный экран показывает форму входа.
 //
 // Чтение (/trips/…) — статика, её отдаёт Caddy. Запись (/api/…) — сервис
 // server/travel-api.py.
@@ -7,6 +8,9 @@ import type { Trip, TripDocument, TripIndex, TripSummary } from '../types/trip'
 
 /** Сеть недоступна или сервер не ответил. Пользователю показывается просто «Офлайн». */
 export class NetworkError extends Error {}
+
+/** Нет cookie входа или она устарела (сменили пароль). */
+export class AuthError extends Error {}
 
 /** Сервер ответил отказом; message — готовый текст для пользователя. */
 export class ApiError extends Error {
@@ -33,6 +37,7 @@ async function request(url: string, timeoutMs?: number): Promise<Response> {
   } catch {
     throw new NetworkError(url)
   }
+  if (res.status === 401) throw new AuthError(url)
   if (!res.ok) throw new NetworkError(`${url}: HTTP ${res.status}`)
   return res
 }
@@ -86,9 +91,15 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<T> 
   } catch {
     throw new NetworkError(url)
   }
+  if (res.status === 401) throw new AuthError(url)
   const data = (await res.json().catch(() => ({}))) as { error?: string; trip?: Trip }
   if (!res.ok) throw new ApiError(data.error ?? `Ошибка сервера (${res.status})`, res.status, data.trip)
   return data as T
+}
+
+/** Вход: сервер ставит cookie на 400 дней. */
+export function login(password: string): Promise<{ ok: true }> {
+  return call('POST', '/api/login', { password })
 }
 
 export function listTrips(): Promise<{ active: string | null; trips: TripSummary[] }> {
@@ -147,6 +158,7 @@ export function uploadDocument(
         // ответ не JSON — например, 413 от Caddy
       }
       if (xhr.status >= 200 && xhr.status < 300) resolve(data as Trip)
+      else if (xhr.status === 401) reject(new AuthError('upload'))
       else reject(new ApiError(data.error ?? (xhr.status === 413 ? 'Файл слишком большой' : `Ошибка сервера (${xhr.status})`), xhr.status))
     }
     xhr.send(file)
@@ -155,6 +167,7 @@ export function uploadDocument(
 
 /** Текст ошибки для экрана. */
 export function errorText(e: unknown): string {
+  if (e instanceof AuthError) return 'Нужно войти — вернись на главный экран.'
   if (e instanceof ApiError) return e.message
   if (e instanceof NetworkError) return 'Нет связи с сервером.'
   return 'Что-то пошло не так.'

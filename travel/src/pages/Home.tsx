@@ -1,3 +1,4 @@
+import { LoginCard } from '../components/LoginCard'
 import { OfflinePanel } from '../components/OfflinePanel'
 import { Check, Row } from '../components/ui'
 import { go } from '../hooks/useRoute'
@@ -19,8 +20,8 @@ const isStandalone =
   window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
 
 export function Home({ state, appUpdate }: Props) {
-  const { trip, loaded, network, updateAvailable, isDownloading } = state
-  const online = network === 'online'
+  const { trip, loaded, network, updateAvailable, isDownloading, needLogin } = state
+  const online = network === 'online' && !needLogin
 
   return (
     <main className="home">
@@ -48,6 +49,15 @@ export function Home({ state, appUpdate }: Props) {
         </div>
       )}
 
+      {needLogin && (
+        <LoginCard
+          onDone={() => {
+            void state.refresh()
+            if (state.isLocal) void state.downloadForOffline()
+          }}
+        />
+      )}
+
       {isIos && !isStandalone && (
         <p className="hint">
           Чтобы пользоваться без интернета, добавь страницу на экран «Домой» (Поделиться → На экран «Домой») и скачивай поездку уже оттуда. У
@@ -63,7 +73,9 @@ export function Home({ state, appUpdate }: Props) {
           <p className="muted">
             {!loaded || network === 'checking'
               ? 'Загрузка…'
-              : network === 'offline'
+              : needLogin
+                ? 'Войди, чтобы увидеть поездки.'
+                : network === 'offline'
                 ? 'Офлайн — на этом телефоне ещё нет сохранённой поездки.'
                 : 'Поездок пока нет.'}
           </p>

@@ -8,11 +8,13 @@
 travel.sonechka-sonya.ru {
 	encode zstd gzip
 
-	# Пароль на весь сайт. Хеш — только на сервере, в /etc/caddy/travel-auth.caddy
-	# (создаёт и меняет travel/deploy/travel-auth.sh), в git его нет. Приложение
-	# ходит относительными same-origin запросами, manifest грузится с
-	# credentials; офлайн пароль не нужен — оболочка из Service Worker, данные из
-	# IndexedDB.
+	# Вход. Матчер @locked (запросы к /api/* и /trips/* без верной cookie
+	# travel_session, кроме /api/login) лежит только на сервере в
+	# /etc/caddy/travel-auth.caddy — его вместе с хешем пароля пишет
+	# travel/deploy/travel-auth.sh, в git токена нет. Basic auth не годится:
+	# приложение с экрана «Домой» iOS не запоминает его и спрашивает пароль при
+	# каждом запуске, а cookie живёт 400 дней. Оболочка приложения (HTML, JS)
+	# открыта: в ней нет данных, а её код и так в публичном репозитории.
 	import /etc/caddy/travel-auth.caddy
 
 	header {
@@ -30,6 +32,7 @@ travel.sonechka-sonya.ru {
 	# API (travel/server/travel-api.py): создание и правка поездок, загрузка
 	# документов. Лимит — с запасом над 50 МБ, которые пропускает сам сервис.
 	handle /api/* {
+		respond @locked `{"error":"Нужно войти"}` 401
 		request_body {
 			max_size 60MB
 		}
@@ -40,6 +43,7 @@ travel.sonechka-sonya.ru {
 	# Всегда перепроверяются: версию поездки приложение сравнивает по свежему
 	# trip.json.
 	handle /trips/* {
+		respond @locked `{"error":"Нужно войти"}` 401
 		root * /var/lib/travel
 		header Cache-Control "no-cache"
 		file_server

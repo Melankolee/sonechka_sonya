@@ -10,7 +10,7 @@
 // правки (с ноутбука) — по кнопке «Обновить».
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getActiveTripId, getDocumentMeta, getSync, getTrip, type StoredDocument, type SyncMetadata } from '../storage/db'
-import { fetchActiveTrip } from '../services/api'
+import { AuthError, fetchActiveTrip } from '../services/api'
 import { DownloadError, downloadTrip, type DownloadProgress } from '../services/sync'
 import { verifyOffline, type Verification } from '../services/verify'
 import type { Trip } from '../types/trip'
@@ -29,6 +29,8 @@ export interface TripState {
   verification: Verification | null
   download: DownloadProgress | null
   downloadError: string | null
+  /** Сервер ответил 401: показать форму входа. Сохранённая копия при этом видна. */
+  needLogin: boolean
   loaded: boolean
 }
 
@@ -56,6 +58,7 @@ const initial: TripState = {
   verification: null,
   download: null,
   downloadError: null,
+  needLogin: false,
   loaded: false,
 }
 
@@ -72,9 +75,9 @@ export function useTrip() {
   const checkRemote = useCallback(async () => {
     try {
       const remote = await fetchActiveTrip()
-      setState((s) => ({ ...s, remote, network: 'online', trip: s.isLocal ? s.trip : remote }))
-    } catch {
-      setState((s) => ({ ...s, network: 'offline' }))
+      setState((s) => ({ ...s, remote, network: 'online', needLogin: false, trip: s.isLocal ? s.trip : remote }))
+    } catch (e) {
+      setState((s) => (e instanceof AuthError ? { ...s, network: 'online', needLogin: true } : { ...s, network: 'offline' }))
     }
   }, [])
 
@@ -132,8 +135,12 @@ export function useTrip() {
         }))
       } while (again.current)
     } catch (e) {
-      const message = e instanceof DownloadError ? e.message : 'Загрузка не удалась.'
-      setState((s) => ({ ...s, downloadError: `${message} Сохранённые раньше данные не тронуты.` }))
+      if (e instanceof AuthError) {
+        setState((s) => ({ ...s, download: null, needLogin: true }))
+      } else {
+        const message = e instanceof DownloadError ? e.message : 'Загрузка не удалась.'
+        setState((s) => ({ ...s, downloadError: `${message} Сохранённые раньше данные не тронуты.` }))
+      }
     } finally {
       downloading.current = false
       await verify()
@@ -144,5 +151,5 @@ export function useTrip() {
   const updateAvailable = !!(isLocal && trip && remote && (remote.id !== trip.id || remote.version > trip.version))
   const isDownloading = !!state.download && !state.download.finished && !state.downloadError
 
-  return { ...state, updateAvailable, isDownloading, downloadForOffline }
+  return { ...state, updateAvailable, isDownloading, downloadForOffline, refresh: checkRemote }
 }

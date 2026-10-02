@@ -21,7 +21,7 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 [ -f "$SRC" ] || { echo "Не найден $SRC — залей travel/deploy/ на сервер целиком" >&2; exit 1; }
-[ -f /etc/caddy/travel-auth.caddy ] || { echo "Нет /etc/caddy/travel-auth.caddy — сначала bash travel-auth.sh" >&2; exit 1; }
+grep -q "@locked" /etc/caddy/travel-auth.caddy 2>/dev/null || { echo "В /etc/caddy/travel-auth.caddy нет @locked — сначала bash travel-auth.sh" >&2; exit 1; }
 [ -d /var/www/travel.sonechka-sonya.ru ] || { echo "Нет /var/www/travel.sonechka-sonya.ru — сначала bash server-setup.sh" >&2; exit 1; }
 
 codes() {
@@ -59,12 +59,21 @@ echo "Caddy перезагружен"
 # Первый сертификат выпускается секунд за десять.
 sleep 15
 echo "--- проверки ---"
-# Без пароля должно быть 401 — значит, авторизация включена. С паролем
-# (TRAVEL_AUTH=логин:пароль bash caddy-travel.sh) — 200 и правильные типы.
-for p in / /sw.js /manifest.webmanifest /trips/index.json; do
-  curl -s -o /dev/null -w "GET $p без пароля: HTTP %{http_code}\n" --max-time 30 "$SITE$p" || true
-  [ -z "${TRAVEL_AUTH:-}" ] || curl -s -o /dev/null -u "$TRAVEL_AUTH" -w "GET $p: HTTP %{http_code}, %{content_type}\n" --max-time 30 "$SITE$p" || true
+# Оболочка открыта (200), данные без cookie входа — 401. С
+# TRAVEL_PASSWORD=… bash caddy-travel.sh — ещё и вход и те же адреса с cookie.
+for p in / /sw.js /manifest.webmanifest /trips/index.json /api/trips; do
+  curl -s -o /dev/null -w "GET $p без входа: HTTP %{http_code}\n" --max-time 30 "$SITE$p" || true
 done
+if [ -n "${TRAVEL_PASSWORD:-}" ]; then
+  JAR=$(mktemp)
+  curl -s -o /dev/null -c "$JAR" -H 'Content-Type: application/json' \
+    --data "$(python3 -c 'import json,os; print(json.dumps({"password": os.environ["TRAVEL_PASSWORD"]}))')" \
+    -w "POST /api/login: HTTP %{http_code}\n" --max-time 30 "$SITE/api/login" || true
+  for p in /trips/index.json /api/trips; do
+    curl -s -o /dev/null -b "$JAR" -w "GET $p со входом: HTTP %{http_code}, %{content_type}\n" --max-time 30 "$SITE$p" || true
+  done
+  rm -f "$JAR"
+fi
 AFTER=$(codes)
 echo "Соседи после правки: $AFTER"
 [ "$BEFORE" = "$AFTER" ] || echo "ВНИМАНИЕ: коды соседних сайтов изменились ($BEFORE → $AFTER)" >&2

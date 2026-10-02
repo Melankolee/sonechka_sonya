@@ -10,7 +10,7 @@
 // (commitTrip), поэтому оборванная загрузка оставляет прежнюю копию целой.
 import { clearAll, commitTrip, documentKey, findStoredDocument, getDocumentData, getTrip, pruneExcept, putDocument } from '../storage/db'
 import type { Trip } from '../types/trip'
-import { fetchActiveTrip, fetchDocument, NetworkError } from './api'
+import { AuthError, fetchActiveTrip, fetchDocument, NetworkError } from './api'
 
 export type StepStatus = 'pending' | 'active' | 'done' | 'failed'
 
@@ -42,6 +42,7 @@ export async function downloadTrip(onProgress: (p: DownloadProgress) => void): P
   try {
     trip = await fetchActiveTrip()
   } catch (e) {
+    if (e instanceof AuthError) throw e
     return fail(steps[0], e instanceof NetworkError ? 'Нет связи с сервером.' : 'Данные поездки на сервере повреждены.')
   }
   if (!trip) {
@@ -65,7 +66,8 @@ export async function downloadTrip(onProgress: (p: DownloadProgress) => void): P
     if (!data?.byteLength) {
       try {
         data = await fetchDocument(trip, doc)
-      } catch {
+      } catch (e) {
+        if (e instanceof AuthError) throw e
         return fail(step, `Не удалось скачать «${doc.title}».`)
       }
     }

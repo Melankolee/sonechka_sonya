@@ -6,8 +6,12 @@
 
 Только стандартная библиотека — как и у сервиса ответов, ставить на общий
 сервер pip-окружение ради нескольких ручек незачем. Слушает 127.0.0.1, наружу
-его выставляет Caddy под паролем (travel/deploy/caddy-travel.caddy), так что
-своей авторизации у сервиса нет.
+его выставляет Caddy (travel/deploy/caddy-travel.caddy).
+
+Вход: POST /api/login сверяет пароль с хешем из AUTH_FILE и ставит cookie
+travel_session. Сам токен проверяет Caddy — без него /api/* и /trips/* дают
+401. Basic auth не годится: приложение с экрана «Домой» iOS не запоминает его
+и спрашивает пароль при каждом запуске, а cookie живёт.
 
 Хранилище — обычные файлы, в том же виде, в каком их читает приложение:
 
@@ -23,6 +27,8 @@
 новый файл — новый id. Поэтому телефон не качает заново то, что у него уже есть.
 """
 
+import hashlib
+import hmac
 import json
 import os
 import re
@@ -31,6 +37,7 @@ import shutil
 import sys
 import tempfile
 import threading
+import time
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
@@ -40,6 +47,15 @@ PORT = int(os.environ.get('TRAVEL_PORT', '8788'))
 DATA = os.environ.get('TRAVEL_DATA', '/var/lib/travel')
 TRIPS = os.path.join(DATA, 'trips')
 INDEX = os.path.join(TRIPS, 'index.json')
+# {"salt", "hash", "token"} — пишет travel/deploy/travel-auth.sh. Нет файла —
+# режим разработки: вход принимает любой пароль.
+AUTH_FILE = os.environ.get('TRAVEL_AUTH_FILE', '/etc/travel/auth.json')
+SESSION_DAYS = 400
+# Перебор пароля: после ошибки — пауза, после MAX_FAILS ошибок с адреса за
+# FAIL_WINDOW секунд — отказ до конца окна.
+MAX_FAILS = 10
+FAIL_WINDOW = 15 * 60
+FAILS = {}
 
 MAX_JSON = 1024 * 1024
 MAX_UPLOAD = 50 * 1024 * 1024
@@ -184,6 +200,31 @@ def sniff(head):
     return None, None
 
 
+# ---------- вход ----------
+
+def scrypt(password, salt_hex):
+    return hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt_hex), n=2 ** 14, r=8, p=1).hex()
+
+
+def check_password(password):
+    """Токен сессии при верном пароле, иначе None."""
+    auth = read_json(AUTH_FILE)
+    if auth is None:
+        return 'dev'
+    if not isinstance(password, str) or not password:
+        return None
+    if hmac.compare_digest(scrypt(password, auth['salt']), auth['hash']):
+        return auth['token']
+    return None
+
+
+def too_many_fails(ip):
+    now_ts = time.time()
+    fails = [t for t in FAILS.get(ip, []) if now_ts - t < FAIL_WINDOW]
+    FAILS[ip] = fails
+    return len(fails) >= MAX_FAILS
+
+
 # ---------- HTTP ----------
 
 class Handler(BaseHTTPRequestHandler):
@@ -192,9 +233,11 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         sys.stderr.write('%s %s\n' % (self.command, fmt % args))
 
-    def send_json(self, code, payload):
+    def send_json(self, code, payload, cookie=None):
         body = json.dumps(payload, ensure_ascii=False).encode()
         self.send_response(code)
+        if cookie:
+            self.send_header('Set-Cookie', cookie)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'no-store')
@@ -270,8 +313,24 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def login(self):
+        # Caddy ставит X-Forwarded-For; сервис слушает только 127.0.0.1.
+        ip = (self.headers.get('X-Forwarded-For') or self.client_address[0]).split(',')[0].strip()
+        if too_many_fails(ip):
+            raise ApiError(429, 'Слишком много попыток. Подожди 15 минут.')
+        token = check_password(self.body_json().get('password'))
+        if not token:
+            FAILS.setdefault(ip, []).append(time.time())
+            time.sleep(1)
+            raise ApiError(403, 'Неверный пароль')
+        FAILS.pop(ip, None)
+        cookie = 'travel_session=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=Lax' % (token, SESSION_DAYS * 86400)
+        self.send_json(200, {'ok': True}, cookie)
+
     def post(self):
         parts, query = self.route()
+        if parts == ['api', 'login']:
+            return self.login()
         # POST /api/trips — новая поездка; первая сразу становится активной
         if parts == ['api', 'trips']:
             raw = self.body_json()
