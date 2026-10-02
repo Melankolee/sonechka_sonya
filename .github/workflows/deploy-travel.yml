@@ -1,0 +1,67 @@
+name: Deploy travel
+
+# Собирает travel/ и заливает dist/ в /var/www/travel.sonechka-sonya.ru.
+# С основным сайтом (deploy.yml) не пересекается: другие пути, другой каталог.
+# Данные поездок (/trips/) сюда не входят — их заливает
+# travel/deploy/deploy-trips.sh, и --exclude=/trips/ не даёт их стереть.
+# Секреты те же, что у основного сайта: DEPLOY_HOST, DEPLOY_USER,
+# DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'travel/**'
+      - '!travel/trips-demo/**'
+      - '!travel/deploy/**'
+      - '!travel/README.md'
+      - '.github/workflows/deploy-travel.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-travel
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: travel
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: travel/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Настроить SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      # В два прохода: сначала новые файлы рядом со старыми, без index.html и
+      # sw.js, потом точки входа и удаление лишнего. Так ни один клиент не
+      # получит index.html или sw.js, ссылающийся на ещё не залитый бандл.
+      - name: Залить сборку
+        run: |
+          SSH='ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes'
+          DEST="${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/travel.sonechka-sonya.ru/"
+          rsync -rlptz --exclude=/trips/ --exclude=/index.html --exclude=/sw.js -e "$SSH" dist/ "$DEST"
+          rsync -rlptz --delete --exclude=/trips/ --human-readable -e "$SSH" dist/ "$DEST"
+
+      # Сайт под паролем, поэтому ждём 401: значит, Caddy отвечает и
+      # авторизация на месте. Сами файлы уже залиты rsync выше.
+      - name: Проверить, что приложение отвечает
+        continue-on-error: true
+        run: |
+          for p in / /sw.js /manifest.webmanifest; do
+            curl -sS -o /dev/null -w "GET $p: HTTP %{http_code}, %{content_type}\n" "https://travel.sonechka-sonya.ru$p"
+          done

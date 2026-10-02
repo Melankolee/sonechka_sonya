@@ -1,0 +1,134 @@
+{
+  "id": "maldives-2026",
+  "title": "Maldives",
+  "location": { "country": "Maldives", "place": "Baa Atoll" },
+  "dateFrom": "2026-10-05",
+  "dateTo": "2026-10-10",
+  "version": 1,
+
+  "flights": [
+    {
+      "id": "outbound",
+      "label": "Outbound",
+      "airline": "Demo Air",
+      "flightNumber": "DA 101",
+      "from": { "code": "SVO", "city": "Moscow", "terminal": "C" },
+      "to": { "code": "MLE", "city": "Malé" },
+      "departure": "2026-10-05T01:10",
+      "arrival": "2026-10-05T09:40",
+      "bookingRef": "DEMO7Q",
+      "seat": "14A",
+      "baggage": "1 × 23 kg + 10 kg cabin",
+      "notes": "Check-in closes 50 minutes before departure. Online check-in opens 24 hours before.",
+      "documentId": "flights"
+    },
+    {
+      "id": "return",
+      "label": "Return",
+      "airline": "Demo Air",
+      "flightNumber": "DA 102",
+      "from": { "code": "MLE", "city": "Malé" },
+      "to": { "code": "SVO", "city": "Moscow", "terminal": "C" },
+      "departure": "2026-10-10T11:15",
+      "arrival": "2026-10-10T19:50",
+      "bookingRef": "DEMO7Q",
+      "seat": "14A",
+      "baggage": "1 × 23 kg + 10 kg cabin",
+      "documentId": "flights"
+    }
+  ],
+
+  "stays": [
+    {
+      "id": "resort",
+      "name": "Demo Island Resort",
+      "address": "Demo Island, Baa Atoll, Maldives",
+      "checkIn": "2026-10-05T14:00",
+      "checkOut": "2026-10-10T12:00",
+      "room": "Beach Villa",
+      "board": "Half board",
+      "bookingRef": "DIR-204518",
+      "phone": "+960 000 0000",
+      "notes": "Early check-in is requested but not guaranteed. Late check-out until 18:00 for USD 150.",
+      "documentId": "hotel"
+    }
+  ],
+
+  "transfers": [
+    {
+      "id": "arrival-seaplane",
+      "title": "Airport → Resort",
+      "mode": "Seaplane",
+      "departure": "2026-10-05T11:30",
+      "from": "Velana Airport, seaplane terminal",
+      "to": "Demo Island Resort",
+      "provider": "Demo Seaplanes",
+      "phone": "+960 000 0001",
+      "bookingRef": "SP-1188",
+      "notes": "The resort representative meets you after customs. Baggage limit on the seaplane is 20 kg + 5 kg hand luggage per person.",
+      "documentId": "transfer"
+    },
+    {
+      "id": "departure-seaplane",
+      "title": "Resort → Airport",
+      "mode": "Seaplane",
+      "departure": "2026-10-10T07:30",
+      "from": "Demo Island Resort",
+      "to": "Velana Airport, seaplane terminal",
+      "provider": "Demo Seaplanes",
+      "bookingRef": "SP-1189",
+      "notes": "The exact time is confirmed by the resort the evening before.",
+      "documentId": "transfer"
+    }
+  ],
+
+  "notes": [
+    {
+      "id": "demo",
+      "title": "This is a demo trip",
+      "text": "All names, numbers and documents here are placeholders. Replace this trip with real data as described in travel/README.md."
+    },
+    {
+      "id": "entry",
+      "title": "Entry",
+      "text": "Visa on arrival, free for 30 days. Passport valid for at least 6 months, return ticket and hotel booking.\n\nFill in the IMUGA traveller declaration within 96 hours before arrival."
+    },
+    {
+      "id": "money",
+      "title": "Money",
+      "text": "US dollars are accepted everywhere. Bring small notes for tips. Cards work at the resort."
+    },
+    {
+      "id": "power",
+      "title": "Power and connectivity",
+      "text": "Sockets type G (UK), 230 V. Resort Wi-Fi is free in villas and the main bar."
+    },
+    {
+      "id": "emergency",
+      "title": "Emergency",
+      "text": "Police 119, ambulance 102, fire 118. Insurance assistance: see the insurance policy in Documents."
+    }
+  ],
+
+  "checklist": [
+    { "id": "passport", "text": "Passport (6+ months validity)", "group": "Documents" },
+    { "id": "imuga", "text": "IMUGA declaration submitted", "group": "Documents" },
+    { "id": "insurance", "text": "Insurance policy saved offline", "group": "Documents" },
+    { "id": "offline", "text": "Trip downloaded for offline", "group": "Documents" },
+    { "id": "cash", "text": "USD cash in small notes", "group": "Packing" },
+    { "id": "adapter", "text": "Type G power adapter", "group": "Packing" },
+    { "id": "sunscreen", "text": "Reef-safe sunscreen", "group": "Packing" },
+    { "id": "snorkel", "text": "Snorkel mask", "group": "Packing" },
+    { "id": "meds", "text": "Personal medicine", "group": "Packing" },
+    { "id": "checkin", "text": "Online check-in for DA 101", "group": "Before leaving" },
+    { "id": "taxi", "text": "Taxi to the airport", "group": "Before leaving" }
+  ],
+
+  "documents": [
+    { "id": "guide", "title": "Full travel guide", "kind": "guide", "file": "documents/travel-guide.pdf", "mime": "application/pdf" },
+    { "id": "flights", "title": "Flights", "kind": "flight", "file": "documents/flights.pdf", "mime": "application/pdf" },
+    { "id": "hotel", "title": "Hotel booking", "kind": "hotel", "file": "documents/hotel.pdf", "mime": "application/pdf" },
+    { "id": "insurance", "title": "Insurance", "kind": "insurance", "file": "documents/insurance.pdf", "mime": "application/pdf" },
+    { "id": "transfer", "title": "Transfer", "kind": "transfer", "file": "documents/transfer.pdf", "mime": "application/pdf" }
+  ]
+}

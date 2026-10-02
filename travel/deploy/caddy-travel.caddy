@@ -1,0 +1,55 @@
+# Блок travel-приложения для /etc/caddy/Caddyfile на 185.103.101.75.
+# Вставляет и обновляет его travel/deploy/caddy-travel.sh — руками в Caddyfile
+# не править, скрипт заменит всё между своими маркерами. Блок
+# birthday.sonechka-sonya.ru (deploy/caddy-site.sh) живёт отдельно и не
+# затрагивается.
+#
+# Сертификат выпускает и продлевает сам Caddy.
+travel.sonechka-sonya.ru {
+	encode zstd gzip
+
+	# Пароль на весь сайт. Хеш — только на сервере, в /etc/caddy/travel-auth.caddy
+	# (создаёт и меняет travel/deploy/travel-auth.sh), в git его нет. Приложение
+	# ходит относительными same-origin запросами, manifest грузится с
+	# credentials; офлайн пароль не нужен — оболочка из Service Worker, данные из
+	# IndexedDB.
+	import /etc/caddy/travel-auth.caddy
+
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# Совпадает с CSP в vite.config.ts (preview). wasm-unsafe-eval — для
+		# wasm-декодеров pdf.js, blob: в worker-src — для его воркера.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; worker-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+	}
+
+	root * /var/www/travel.sonechka-sonya.ru
+
+	# Данные поездок (заливает travel/deploy/deploy-trips.sh). Всегда
+	# перепроверяются: версию поездки приложение сравнивает по свежему trip.json.
+	handle /trips/* {
+		header Cache-Control "no-cache"
+		file_server
+	}
+
+	# Сборка приложения (заливает .github/workflows/deploy-travel.yml).
+	# SPA-фолбэка нет: маршруты на хэше, а отсутствующий файл должен быть 404,
+	# а не index.html с кодом 200 — иначе Service Worker закешировал бы HTML
+	# вместо скрипта.
+	handle {
+		# Имена в /assets/ содержат хеш содержимого.
+		@immutable path /assets/*
+		header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+		# Точки входа обновления — всегда с сервера.
+		@revalidate path / /index.html /sw.js /manifest.webmanifest
+		header @revalidate Cache-Control "no-cache"
+
+		@manifest path *.webmanifest
+		header @manifest Content-Type "application/manifest+json"
+
+		file_server
+	}
+}
