@@ -3,8 +3,10 @@ import { useAppUpdate } from './hooks/useAppUpdate'
 import { useRoute } from './hooks/useRoute'
 import { useTrip } from './hooks/useTrip'
 import { DocumentPage } from './pages/DocumentPage'
+import { EditTripPage, NewTripPage } from './pages/EditTripPage'
 import { Home } from './pages/Home'
 import { SectionPage } from './pages/SectionPage'
+import { TripsPage } from './pages/TripsPage'
 
 export function App() {
   const state = useTrip()
@@ -17,6 +19,10 @@ export function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('has-overlay', overlay)
   }, [overlay])
+
+  // Любая правка на сервере сразу обновляет копию на телефоне. Документы,
+  // которые уже скачаны, повторно не качаются (см. services/sync.ts).
+  const onChanged = () => void state.downloadForOffline()
 
   const doc = route.screen === 'doc' ? trip?.documents?.find((d) => d.id === route.id) : undefined
 
@@ -33,6 +39,9 @@ export function App() {
           network={state.network}
         />
       )}
+      {route.screen === 'trips' && <TripsPage />}
+      {route.screen === 'new' && <NewTripPage onChanged={onChanged} />}
+      {route.screen === 'edit' && <EditTripPage key={route.id} id={route.id} onChanged={onChanged} />}
     </>
   )
 }

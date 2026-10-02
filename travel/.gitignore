@@ -2,6 +2,5 @@ node_modules/
 dist/
 # генерируется scripts/copy-pdfjs-assets.mjs
 public/pdfjs/
-# Реальные поездки с документами. Репозиторий публичный — паспорта и страховки
-# сюда не коммитим, на сервер их заливает deploy/deploy-trips.sh.
-trips/
+# Данные локального API в разработке (TRAVEL_DATA=./data npm run api).
+data/

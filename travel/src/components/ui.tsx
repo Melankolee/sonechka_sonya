@@ -18,20 +18,31 @@ export function Check() {
   )
 }
 
-export function Screen({ title, action, children, flush }: { title: string; action?: ReactNode; children: ReactNode; flush?: boolean }) {
+interface ScreenProps {
+  title: string
+  action?: ReactNode
+  children: ReactNode
+  flush?: boolean
+  /** Свой обработчик «назад» — например, чтобы спросить про несохранённое. */
+  onBack?: () => void
+  footer?: ReactNode
+}
+
+export function Screen({ title, action, children, flush, onBack, footer }: ScreenProps) {
   return (
     <div className="screen" role="dialog" aria-label={title}>
       <header className="screen-header">
-        <button className="back" onClick={back}>
+        <button className="back" onClick={onBack ?? back}>
           <svg viewBox="0 0 10 16" aria-hidden="true">
             <path d="M8.5 1.5L2 8l6.5 6.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Trip
+          Назад
         </button>
         <h2>{title}</h2>
         <div className="screen-action">{action}</div>
       </header>
       <div className={flush ? 'screen-body flush' : 'screen-body'}>{children}</div>
+      {footer && <div className="screen-footer">{footer}</div>}
     </div>
   )
 }
@@ -53,7 +64,7 @@ export function Row({ title, detail, trailing, onClick }: { title: ReactNode; de
 
 /** Пара «подпись — значение» в карточке раздела. Пустые значения не выводятся. */
 export function Field({ label, children }: { label: string; children?: ReactNode }) {
-  if (children === undefined || children === null || children === '') return null
+  if (children === undefined || children === null || children === '' || children === false) return null
   return (
     <div className="field">
       <dt>{label}</dt>

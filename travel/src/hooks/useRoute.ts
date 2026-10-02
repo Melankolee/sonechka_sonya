@@ -1,15 +1,24 @@
-// Навигация на хэше: #/section/flights, #/doc/insurance. Сервер про маршруты
-// ничего не знает, перезагрузка и кнопка «назад» работают сами.
+// Навигация на хэше: #/section/flights, #/doc/<id>, #/trips, #/new, #/edit/<id>.
+// Сервер про маршруты ничего не знает, перезагрузка и «назад» работают сами.
 import { useEffect, useState } from 'react'
 
 export type SectionId = 'flights' | 'stays' | 'transfers' | 'notes' | 'checklist'
 
-export type Route = { screen: 'home' } | { screen: 'section'; id: SectionId } | { screen: 'doc'; id: string }
+export type Route =
+  | { screen: 'home' }
+  | { screen: 'section'; id: SectionId }
+  | { screen: 'doc'; id: string }
+  | { screen: 'trips' }
+  | { screen: 'new' }
+  | { screen: 'edit'; id: string }
 
 function parse(hash: string): Route {
   const [, kind, id] = hash.replace(/^#/, '').split('/')
   if (kind === 'section' && id) return { screen: 'section', id: id as SectionId }
   if (kind === 'doc' && id) return { screen: 'doc', id: decodeURIComponent(id) }
+  if (kind === 'trips') return { screen: 'trips' }
+  if (kind === 'new') return { screen: 'new' }
+  if (kind === 'edit' && id) return { screen: 'edit', id: decodeURIComponent(id) }
   return { screen: 'home' }
 }
 
@@ -18,6 +27,11 @@ let pushedInApp = false
 export function go(path: string): void {
   pushedInApp = true
   window.location.hash = path
+}
+
+/** Переход без записи в историю: «создать» → «редактировать» не должен оставлять форму создания под «назад». */
+export function replace(path: string): void {
+  window.location.replace(`#${path}`)
 }
 
 /** Назад по истории, если пришли изнутри; иначе (открыли по ссылке) — на главный. */

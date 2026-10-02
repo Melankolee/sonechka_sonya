@@ -1,9 +1,9 @@
 name: Deploy travel
 
-# Собирает travel/ и заливает dist/ в /var/www/travel.sonechka-sonya.ru.
+# Собирает travel/ и заливает dist/ в /var/www/travel.sonechka-sonya.ru, а
+# если менялся travel/server/travel-api.py — обновляет API.
 # С основным сайтом (deploy.yml) не пересекается: другие пути, другой каталог.
-# Данные поездок (/trips/) сюда не входят — их заливает
-# travel/deploy/deploy-trips.sh, и --exclude=/trips/ не даёт их стереть.
+# Данные поездок живут в /var/lib/travel и сюда не входят.
 # Секреты те же, что у основного сайта: DEPLOY_HOST, DEPLOY_USER,
 # DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS.
 on:
@@ -11,7 +11,6 @@ on:
     branches: [main]
     paths:
       - 'travel/**'
-      - '!travel/trips-demo/**'
       - '!travel/deploy/**'
       - '!travel/README.md'
       - '.github/workflows/deploy-travel.yml'
@@ -54,8 +53,18 @@ jobs:
         run: |
           SSH='ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes'
           DEST="${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/travel.sonechka-sonya.ru/"
-          rsync -rlptz --exclude=/trips/ --exclude=/index.html --exclude=/sw.js -e "$SSH" dist/ "$DEST"
-          rsync -rlptz --delete --exclude=/trips/ --human-readable -e "$SSH" dist/ "$DEST"
+          rsync -rlptz --exclude=/index.html --exclude=/sw.js -e "$SSH" dist/ "$DEST"
+          rsync -rlptz --delete --human-readable -e "$SSH" dist/ "$DEST"
+
+      # API: файл — в staging пользователя deploy, дальше единственная
+      # разрешённая ему команда (ставится travel/deploy/api-setup.sh). Не
+      # изменился — сервис не перезапускается.
+      - name: Обновить API
+        run: |
+          SSH='ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes'
+          rsync -ptz -e "$SSH" server/travel-api.py \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:travel-api-staging/travel-api.py"
+          $SSH "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" 'sudo /usr/local/sbin/travel-update-api'
 
       # Сайт под паролем, поэтому ждём 401: значит, Caddy отвечает и
       # авторизация на месте. Сами файлы уже залиты rsync выше.

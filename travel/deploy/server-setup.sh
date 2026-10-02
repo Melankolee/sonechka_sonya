@@ -15,5 +15,5 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 id -u "$DEPLOY_USER" >/dev/null 2>&1 || { echo "Нет пользователя $DEPLOY_USER — сначала deploy/server-setup.sh основного сайта" >&2; exit 1; }
 
-install -d -m 755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$WEBROOT" "$WEBROOT/trips"
+install -d -m 755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$WEBROOT"
 echo "Готово: $WEBROOT принадлежит $DEPLOY_USER."

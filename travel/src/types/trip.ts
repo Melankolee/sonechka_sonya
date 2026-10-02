@@ -1,14 +1,14 @@
-// Формат данных поездки. Источник — /trips/<id>/trip.json, описание полей и
-// пример — в README.md и trips-demo/maldives-2026/trip.json.
+// Формат данных поездки. Источник — /trips/<id>/trip.json. Пишет его
+// server/travel-api.py по тому, что введено в интерфейсе.
 //
 // Даты — "YYYY-MM-DD", время — местное для точки, без часового пояса:
 // "2026-10-05T09:40". Приложение показывает его как есть и ничего не
 // пересчитывает, поэтому вылет в Москве и прилёт в Мале читаются так же, как в
 // билете.
 
-/** /trips/index.json — какая поездка сейчас активна. Остальные могут лежать рядом. */
+/** /trips/index.json — какая поездка сейчас активна. Остальные лежат рядом. */
 export interface TripIndex {
-  active: string
+  active: string | null
 }
 
 export interface Trip {
@@ -17,7 +17,7 @@ export interface Trip {
   location: Location
   dateFrom: string
   dateTo: string
-  /** Увеличивается вручную при любой правке поездки или её документов. */
+  /** Сервер увеличивает при любой правке поездки или её документов. */
   version: number
   flights?: Flight[]
   stays?: Stay[]
@@ -28,27 +28,29 @@ export interface Trip {
 }
 
 export interface Location {
-  country: string
+  country?: string
   /** Город, атолл, регион — что удобнее для заголовка. */
   place?: string
 }
 
+// Пустые поля сервер не хранит, поэтому почти всё необязательно.
+
 export interface Airport {
-  code: string
-  city: string
+  code?: string
+  city?: string
   terminal?: string
 }
 
 export interface Flight {
   id: string
-  /** Подпись над рейсом: "Outbound", "Return", "Connection". */
+  /** Подпись над рейсом: «Туда», «Обратно», «Пересадка». */
   label?: string
-  airline: string
-  flightNumber: string
-  from: Airport
-  to: Airport
-  departure: string
-  arrival: string
+  airline?: string
+  flightNumber?: string
+  from?: Airport
+  to?: Airport
+  departure?: string
+  arrival?: string
   bookingRef?: string
   seat?: string
   baggage?: string
@@ -59,10 +61,10 @@ export interface Flight {
 
 export interface Stay {
   id: string
-  name: string
+  name?: string
   address?: string
-  checkIn: string
-  checkOut: string
+  checkIn?: string
+  checkOut?: string
   room?: string
   board?: string
   bookingRef?: string
@@ -73,12 +75,12 @@ export interface Stay {
 
 export interface Transfer {
   id: string
-  title: string
-  /** "Seaplane", "Speedboat", "Car"… — свободный текст. */
+  title?: string
+  /** «Гидросамолёт», «Катер», «Машина»… — свободный текст. */
   mode?: string
-  departure: string
-  from: string
-  to: string
+  departure?: string
+  from?: string
+  to?: string
   provider?: string
   phone?: string
   bookingRef?: string
@@ -88,14 +90,14 @@ export interface Transfer {
 
 export interface Note {
   id: string
-  title: string
+  title?: string
   /** Абзацы разделяются пустой строкой. */
-  text: string
+  text?: string
 }
 
 export interface ChecklistItem {
   id: string
-  text: string
+  text?: string
   group?: string
 }
 
@@ -105,10 +107,21 @@ export interface TripDocument {
   id: string
   title: string
   kind: DocumentKind
-  /** Путь относительно каталога поездки: "documents/flights.pdf". */
+  /** Путь относительно каталога поездки: "documents/d-1a2b3c.pdf". */
   file: string
-  /** application/pdf, image/jpeg, image/png. */
+  /** application/pdf, image/jpeg, image/png, image/webp, image/heic. */
   mime: string
-  /** Размер в байтах, если известен заранее. После скачивания берётся фактический. */
+  /** Размер в байтах. Файл после загрузки не меняется: новый файл — новый id. */
   size?: number
+  uploadedAt?: string
+}
+
+/** Строка списка поездок (GET /api/trips). */
+export interface TripSummary {
+  id: string
+  title: string
+  location?: Location
+  dateFrom: string
+  dateTo: string
+  version: number
 }

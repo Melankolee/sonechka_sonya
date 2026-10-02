@@ -10,7 +10,7 @@
     "prebuild": "npm run pdfjs-assets",
     "build": "tsc --noEmit && tsc --noEmit -p tsconfig.sw.json && tsc --noEmit -p tsconfig.node.json && vite build",
     "preview": "vite preview",
-    "check-trips": "node scripts/check-trips.mjs"
+    "api": "python3 server/travel-api.py"
   },
   "dependencies": {
     "idb": "^8.0.3",

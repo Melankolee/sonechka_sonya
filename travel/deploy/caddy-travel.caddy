@@ -27,9 +27,20 @@ travel.sonechka-sonya.ru {
 
 	root * /var/www/travel.sonechka-sonya.ru
 
-	# Данные поездок (заливает travel/deploy/deploy-trips.sh). Всегда
-	# перепроверяются: версию поездки приложение сравнивает по свежему trip.json.
+	# API (travel/server/travel-api.py): создание и правка поездок, загрузка
+	# документов. Лимит — с запасом над 50 МБ, которые пропускает сам сервис.
+	handle /api/* {
+		request_body {
+			max_size 60MB
+		}
+		reverse_proxy 127.0.0.1:8788
+	}
+
+	# Данные поездок пишет API в /var/lib/travel/trips, а отдаёт Caddy напрямую.
+	# Всегда перепроверяются: версию поездки приложение сравнивает по свежему
+	# trip.json.
 	handle /trips/* {
+		root * /var/lib/travel
 		header Cache-Control "no-cache"
 		file_server
 	}

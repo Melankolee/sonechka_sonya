@@ -75,8 +75,8 @@ export default function PdfViewer({ file }: { file: File }) {
 
   return (
     <div className="pdf" ref={container}>
-      {failed && <p className="placeholder muted">This PDF could not be displayed. Use “Save to Files” to open it in another app.</p>}
-      {!pdf && !failed && <p className="placeholder muted">Opening…</p>}
+      {failed && <p className="placeholder muted">Не удалось показать PDF. Нажми «Сохранить в „Файлы“», чтобы открыть его в другом приложении.</p>}
+      {!pdf && !failed && <p className="placeholder muted">Открываю…</p>}
       {pdf && pageWidth > 0 && (
         <div className="pdf-pages" style={{ width: pageWidth + 16 }}>
           {sizes.map((size, i) => (
@@ -86,11 +86,11 @@ export default function PdfViewer({ file }: { file: File }) {
       )}
       {pdf && (
         <div className="zoom">
-          <button aria-label="Zoom out" disabled={zoom === 0} onClick={() => setZoom((z) => z - 1)}>
+          <button aria-label="Уменьшить" disabled={zoom === 0} onClick={() => setZoom((z) => z - 1)}>
             −
           </button>
           <span>{Math.round(ZOOMS[zoom] * 100)}%</span>
-          <button aria-label="Zoom in" disabled={zoom === ZOOMS.length - 1} onClick={() => setZoom((z) => z + 1)}>
+          <button aria-label="Увеличить" disabled={zoom === ZOOMS.length - 1} onClick={() => setZoom((z) => z + 1)}>
             +
           </button>
         </div>
@@ -142,7 +142,7 @@ function PdfPage({ pdf, pageNumber, cssWidth, cssHeight }: { pdf: PDFDocumentPro
 
   return (
     <div className="pdf-page" ref={wrapper} style={{ width: cssWidth, height: cssHeight }}>
-      <canvas ref={canvas} style={{ width: cssWidth, height: cssHeight }} aria-label={`Page ${pageNumber}`} />
+      <canvas ref={canvas} style={{ width: cssWidth, height: cssHeight }} aria-label={`Страница ${pageNumber}`} />
     </div>
   )
 }

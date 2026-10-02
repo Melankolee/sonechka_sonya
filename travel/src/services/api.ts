@@ -1,9 +1,23 @@
 // Всё, что ходит в сеть. Запросы — относительные и same-origin, так что
 // HTTP-авторизация перед сайтом (basic_auth в Caddy) работает без правок кода.
-import type { Trip, TripDocument, TripIndex } from '../types/trip'
+//
+// Чтение (/trips/…) — статика, её отдаёт Caddy. Запись (/api/…) — сервис
+// server/travel-api.py.
+import type { DocumentKind, Trip, TripDocument, TripIndex, TripSummary } from '../types/trip'
 
-/** Сеть недоступна или сервер не ответил. Пользователю показывается просто «Offline». */
+/** Сеть недоступна или сервер не ответил. Пользователю показывается просто «Офлайн». */
 export class NetworkError extends Error {}
+
+/** Сервер ответил отказом; message — готовый текст для пользователя. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly trip?: Trip,
+  ) {
+    super(message)
+  }
+}
 
 const CHECK_TIMEOUT_MS = 10_000
 
@@ -27,9 +41,15 @@ function encodePath(path: string): string {
   return path.split('/').map(encodeURIComponent).join('/')
 }
 
-export async function fetchActiveTrip(): Promise<Trip> {
+/** Активная поездка с сервера; null — поездок нет совсем. */
+export async function fetchActiveTrip(): Promise<Trip | null> {
   const index = (await (await request('/trips/index.json', CHECK_TIMEOUT_MS)).json()) as TripIndex
-  const trip = (await (await request(`/trips/${encodeURIComponent(index.active)}/trip.json`, CHECK_TIMEOUT_MS)).json()) as Trip
+  if (!index.active) return null
+  return fetchTrip(index.active)
+}
+
+export async function fetchTrip(id: string): Promise<Trip> {
+  const trip = (await (await request(`/trips/${encodeURIComponent(id)}/trip.json`, CHECK_TIMEOUT_MS)).json()) as Trip
   assertTrip(trip)
   return trip
 }
@@ -48,6 +68,94 @@ function assertTrip(trip: Trip): void {
     /^\d{4}-\d{2}-\d{2}$/.test(trip.dateFrom) &&
     /^\d{4}-\d{2}-\d{2}$/.test(trip.dateTo)
   if (!ok) throw new Error('trip.json: missing id, title, integer version or dates')
-  const ids = (trip.documents ?? []).map((d) => d.id)
-  if (new Set(ids).size !== ids.length) throw new Error('trip.json: duplicate document ids')
+  trip.location ??= {}
+}
+
+// ---------- редактирование ----------
+
+async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
+  let res: Response
+  try {
+    res = await fetch(url, {
+      method,
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+  } catch {
+    throw new NetworkError(url)
+  }
+  const data = (await res.json().catch(() => ({}))) as { error?: string; trip?: Trip }
+  if (!res.ok) throw new ApiError(data.error ?? `Ошибка сервера (${res.status})`, res.status, data.trip)
+  return data as T
+}
+
+export function listTrips(): Promise<{ active: string | null; trips: TripSummary[] }> {
+  return call('GET', '/api/trips')
+}
+
+export type TripBasics = Pick<Trip, 'title' | 'location' | 'dateFrom' | 'dateTo'>
+
+export function createTrip(basics: TripBasics): Promise<Trip> {
+  return call('POST', '/api/trips', basics)
+}
+
+export function saveTrip(trip: Trip): Promise<Trip> {
+  return call('PUT', `/api/trips/${encodeURIComponent(trip.id)}`, { baseVersion: trip.version, trip })
+}
+
+export function deleteTrip(id: string): Promise<{ active: string | null }> {
+  return call('DELETE', `/api/trips/${encodeURIComponent(id)}`)
+}
+
+export function setActiveTrip(id: string): Promise<{ active: string }> {
+  return call('POST', '/api/active', { id })
+}
+
+export function updateDocument(tripId: string, docId: string, patch: { title?: string; kind?: DocumentKind }): Promise<Trip> {
+  return call('PATCH', `/api/trips/${encodeURIComponent(tripId)}/documents/${encodeURIComponent(docId)}`, patch)
+}
+
+export function deleteDocument(tripId: string, docId: string): Promise<Trip> {
+  return call('DELETE', `/api/trips/${encodeURIComponent(tripId)}/documents/${encodeURIComponent(docId)}`)
+}
+
+/**
+ * Загрузка файла. Через XMLHttpRequest, а не fetch: только он сообщает
+ * прогресс отправки, а PDF по мобильной сети может ехать долго.
+ */
+export function uploadDocument(
+  tripId: string,
+  file: File,
+  meta: { title: string; kind: DocumentKind },
+  onProgress: (fraction: number) => void,
+): Promise<Trip> {
+  const query = new URLSearchParams({ title: meta.title, kind: meta.kind })
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `/api/trips/${encodeURIComponent(tripId)}/documents?${query}`)
+    xhr.withCredentials = true
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total)
+    xhr.onerror = () => reject(new NetworkError('upload'))
+    xhr.onload = () => {
+      let data: { error?: string } & Partial<Trip> = {}
+      try {
+        data = JSON.parse(xhr.responseText)
+      } catch {
+        // ответ не JSON — например, 413 от Caddy
+      }
+      if (xhr.status >= 200 && xhr.status < 300) resolve(data as Trip)
+      else reject(new ApiError(data.error ?? (xhr.status === 413 ? 'Файл слишком большой' : `Ошибка сервера (${xhr.status})`), xhr.status))
+    }
+    xhr.send(file)
+  })
+}
+
+/** Текст ошибки для экрана. */
+export function errorText(e: unknown): string {
+  if (e instanceof ApiError) return e.message
+  if (e instanceof NetworkError) return 'Нет связи с сервером.'
+  return 'Что-то пошло не так.'
 }

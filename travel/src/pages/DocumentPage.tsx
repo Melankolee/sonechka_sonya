@@ -57,20 +57,20 @@ export function DocumentPage({ trip, doc, stored, network }: Props) {
   const action =
     state.status === 'ready' ? (
       <button className="link" onClick={() => saveToFiles(state.file)}>
-        Save to Files
+        Сохранить в «Файлы»
       </button>
     ) : null
 
   return (
     <Screen title={doc.title} action={action} flush>
-      {state.status === 'loading' && <p className="placeholder muted">Loading…</p>}
+      {state.status === 'loading' && <p className="placeholder muted">Загрузка…</p>}
       {state.status === 'missing' && (
-        <p className="placeholder muted">This document isn’t saved on this device. Download the trip for offline while connected.</p>
+        <p className="placeholder muted">Этого документа нет на телефоне. Скачай поездку для офлайна, пока есть интернет.</p>
       )}
-      {state.status === 'error' && <p className="placeholder muted">Could not open this document.</p>}
+      {state.status === 'error' && <p className="placeholder muted">Не удалось открыть документ.</p>}
       {state.status === 'ready' && (
         <>
-          {state.fromNetwork && <p className="notice">Opened from the server — not saved for offline yet.</p>}
+          {state.fromNetwork && <p className="notice">Открыт с сервера — для офлайна ещё не скачан.</p>}
           <Viewer file={state.file} />
         </>
       )}
@@ -91,11 +91,11 @@ function Viewer({ file }: { file: File }) {
 
   if (file.type === 'application/pdf') {
     return (
-      <Suspense fallback={<p className="placeholder muted">Loading…</p>}>
+      <Suspense fallback={<p className="placeholder muted">Загрузка…</p>}>
         <PdfViewer file={file} />
       </Suspense>
     )
   }
   if (isImage) return url ? <img className="doc-image" src={url} alt={file.name} /> : null
-  return <p className="placeholder muted">No preview for this file type. Use “Save to Files” to open it in another app.</p>
+  return <p className="placeholder muted">Этот тип файла не показывается. Нажми «Сохранить в „Файлы“», чтобы открыть его в другом приложении.</p>
 }

@@ -640,3 +640,178 @@ section {
   max-width: 100%;
   margin: 0 auto;
 }
+
+/* ---- верхняя панель главного экрана ---- */
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  margin: -8px -4px 4px;
+}
+
+.link:disabled {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.empty {
+  padding: 8px 4px;
+}
+
+.trip-header .button {
+  margin-top: 16px;
+}
+
+/* ---- формы редактирования ---- */
+
+.screen-footer {
+  padding: 10px calc(env(safe-area-inset-right) + var(--gutter)) calc(env(safe-area-inset-bottom) + 10px)
+    calc(env(safe-area-inset-left) + var(--gutter));
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.screen-footer .button {
+  max-width: 528px;
+  margin: 0 auto;
+}
+
+.screen-footer .error {
+  max-width: 528px;
+  margin: 0 auto 8px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.form-field .label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  /* 16px — меньше iOS приближает страницу при фокусе */
+  font: inherit;
+  font-size: 16px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type='date'],
+input[type='datetime-local'] {
+  min-height: 44px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.airport {
+  display: grid;
+  grid-template-columns: 5.5em 1fr 4.5em;
+  gap: 6px;
+}
+
+.item {
+  padding: 0;
+}
+
+.item summary {
+  padding: 14px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.item summary::-webkit-details-marker {
+  display: none;
+}
+
+.item summary::after {
+  content: '›';
+  float: right;
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+
+.item[open] summary::after {
+  transform: rotate(90deg);
+}
+
+.item .form {
+  padding: 0 16px 16px;
+}
+
+.card + .button.add,
+section > .button.add {
+  margin-top: 10px;
+}
+
+.button.add {
+  background: var(--surface);
+}
+
+.button.danger {
+  color: var(--error);
+  background: var(--surface);
+}
+
+section > .button + .button {
+  margin-top: 10px;
+}
+
+.hint-line {
+  margin: -2px 4px 10px;
+}
+
+.doc-edit + .doc-edit,
+.upload {
+  margin-top: 12px;
+}
+
+.bar {
+  height: 6px;
+  margin-top: 8px;
+  border-radius: 3px;
+  background: var(--pill);
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s;
+}

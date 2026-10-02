@@ -2,9 +2,12 @@
 //
 // Порядок при запуске: сначала сохранённая копия из IndexedDB (мгновенно и без
 // сети), затем проверка офлайн-готовности, затем — тихий запрос trip.json с
-// сервера. Если сервер недоступен, это просто «Offline», без ошибок. Если на
-// сервере версия новее, показывается «Trip update available»; документы сами
-// не качаются, только по кнопке.
+// сервера. Если сервер недоступен, это просто «Офлайн», без ошибок. Если на
+// сервере версия новее, показывается «Доступно обновление поездки».
+//
+// После правок в интерфейсе (сохранение, загрузка файла) копия на телефоне
+// обновляется сама — downloadForOffline() из экрана редактирования. Чужие
+// правки (с ноутбука) — по кнопке «Обновить».
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getActiveTripId, getDocumentMeta, getSync, getTrip, type StoredDocument, type SyncMetadata } from '../storage/db'
 import { fetchActiveTrip } from '../services/api'
@@ -20,7 +23,8 @@ export interface TripState {
   isLocal: boolean
   sync: SyncMetadata | null
   docs: Map<string, StoredDocument>
-  remote: Trip | null
+  /** Активная поездка на сервере; null — поездок нет; undefined — ещё не знаем. */
+  remote: Trip | null | undefined
   network: Network
   verification: Verification | null
   download: DownloadProgress | null
@@ -47,7 +51,7 @@ const initial: TripState = {
   isLocal: false,
   sync: null,
   docs: new Map(),
-  remote: null,
+  remote: undefined,
   network: 'checking',
   verification: null,
   download: null,
@@ -58,6 +62,7 @@ const initial: TripState = {
 export function useTrip() {
   const [state, setState] = useState<TripState>(initial)
   const downloading = useRef(false)
+  const again = useRef(false)
 
   const verify = useCallback(async () => {
     const verification = await verifyOffline().catch(() => null)
@@ -105,21 +110,30 @@ export function useTrip() {
   }, [verify, checkRemote])
 
   const downloadForOffline = useCallback(async () => {
-    if (downloading.current) return
+    // Правка пришла посреди загрузки — догоним сразу после неё.
+    if (downloading.current) {
+      again.current = true
+      return
+    }
     downloading.current = true
     setState((s) => ({ ...s, download: { steps: [], finished: false }, downloadError: null }))
     try {
-      const remote = await downloadTrip((download) => setState((s) => ({ ...s, download })))
-      const local = await loadLocal()
-      setState((s) => ({
-        ...s,
-        remote,
-        network: 'online',
-        ...(local && { trip: local.trip, isLocal: true, sync: local.sync, docs: local.docs }),
-      }))
+      do {
+        again.current = false
+        const remote = await downloadTrip((download) => setState((s) => ({ ...s, download })))
+        const local = await loadLocal()
+        setState((s) => ({
+          ...s,
+          remote,
+          network: 'online',
+          ...(local
+            ? { trip: local.trip, isLocal: true, sync: local.sync, docs: local.docs }
+            : { trip: null, isLocal: false, sync: null, docs: new Map() }),
+        }))
+      } while (again.current)
     } catch (e) {
-      const message = e instanceof DownloadError ? e.message : 'Download failed.'
-      setState((s) => ({ ...s, downloadError: `${message} Previously saved data is untouched.` }))
+      const message = e instanceof DownloadError ? e.message : 'Загрузка не удалась.'
+      setState((s) => ({ ...s, downloadError: `${message} Сохранённые раньше данные не тронуты.` }))
     } finally {
       downloading.current = false
       await verify()
@@ -130,5 +144,5 @@ export function useTrip() {
   const updateAvailable = !!(isLocal && trip && remote && (remote.id !== trip.id || remote.version > trip.version))
   const isDownloading = !!state.download && !state.download.finished && !state.downloadError
 
-  return { ...state, updateAvailable, isDownloading, downloadForOffline, verify }
+  return { ...state, updateAvailable, isDownloading, downloadForOffline }
 }

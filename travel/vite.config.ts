@@ -1,12 +1,6 @@
-import { createReadStream, existsSync, statSync } from 'node:fs'
-import { extname, resolve, sep } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import type { Connect, Plugin } from 'vite'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-
-const here = fileURLToPath(new URL('.', import.meta.url))
 
 // Те же заголовки ставит Caddy (deploy/caddy-travel.caddy), здесь — чтобы
 // `npm run preview` ломался на нарушениях CSP так же, как прод.
@@ -23,55 +17,14 @@ const CSP = [
   "frame-ancestors 'none'",
 ].join('; ')
 
-// Поездки не входят в сборку: их на сервер заливает deploy/deploy-trips.sh
-// отдельно от приложения. В dev и preview /trips/ раздаётся отсюда:
-// реальные из trips/ (не в git), если каталог есть, иначе демо.
-function tripsRoot(): string {
-  if (process.env.TRIPS_DIR) return resolve(here, process.env.TRIPS_DIR)
-  return existsSync(resolve(here, 'trips')) ? resolve(here, 'trips') : resolve(here, 'trips-demo')
-}
-
-const MIME: Record<string, string> = {
-  '.json': 'application/json; charset=utf-8',
-  '.pdf': 'application/pdf',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.webp': 'image/webp',
-  '.heic': 'image/heic',
-}
-
-function serveTrips(): Plugin {
-  const root = tripsRoot()
-  const handler: Connect.NextHandleFunction = (req, res, next) => {
-    if (!req.url?.startsWith('/trips/')) return next()
-    const rel = decodeURIComponent(req.url.split('?')[0].slice('/trips/'.length))
-    const file = resolve(root, rel)
-    if (!file.startsWith(root + sep) || !existsSync(file) || !statSync(file).isFile()) {
-      res.statusCode = 404
-      res.end('Not found')
-      return
-    }
-    res.setHeader('Content-Type', MIME[extname(file).toLowerCase()] ?? 'application/octet-stream')
-    res.setHeader('Cache-Control', 'no-cache')
-    createReadStream(file).pipe(res)
-  }
-  return {
-    name: 'travel-trips',
-    configureServer(server) {
-      server.config.logger.info(`  trips: ${root}`)
-      server.middlewares.use(handler)
-    },
-    configurePreviewServer(server) {
-      server.middlewares.use(handler)
-    },
-  }
-}
+// В dev и preview /api и /trips уходят в локальный server/travel-api.py
+// (npm run api), на проде их разводит Caddy.
+const API = process.env.TRAVEL_API ?? 'http://127.0.0.1:8788'
+const proxy = { '/api': API, '/trips': API }
 
 export default defineConfig({
   plugins: [
     react(),
-    serveTrips(),
     VitePWA({
       // Свой Service Worker (src/sw.ts): precache оболочки + проверка, что она
       // целиком лежит в кеше.
@@ -89,15 +42,15 @@ export default defineConfig({
       includeManifestIcons: false,
       manifest: {
         id: '/',
-        name: 'Travel',
-        short_name: 'Travel',
-        description: 'Current trip, available offline',
+        name: 'Поездка',
+        short_name: 'Поездка',
+        description: 'Текущая поездка, доступна без интернета',
         start_url: '/',
         scope: '/',
         display: 'standalone',
         background_color: '#f6f4ef',
         theme_color: '#f6f4ef',
-        lang: 'en',
+        lang: 'ru',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -116,7 +69,9 @@ export default defineConfig({
   build: {
     target: 'safari16',
   },
+  server: { proxy },
   preview: {
+    proxy,
     headers: { 'Content-Security-Policy': CSP },
   },
 })

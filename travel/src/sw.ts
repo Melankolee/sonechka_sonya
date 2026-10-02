@@ -22,7 +22,7 @@ cleanupOutdatedCaches()
 
 // Любая навигация (в том числе запуск с Home Screen без сети) получает
 // index.html из precache.
-registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html'), { denylist: [/^\/trips\//] }))
+registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html'), { denylist: [/^\/trips\//, /^\/api\//] }))
 
 // Первая установка сразу берёт страницу под контроль, без лишней перезагрузки.
 // Обновления этим не затрагиваются: они ждут SKIP_WAITING.

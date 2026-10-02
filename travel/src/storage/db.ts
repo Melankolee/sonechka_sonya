@@ -77,6 +77,15 @@ export async function getDocumentMeta(tripId: string, version: number): Promise<
   return new Map(all.filter((d) => d.version === version).map((d) => [d.docId, d]))
 }
 
+/**
+ * Этот же документ из любой ранее сохранённой версии поездки. Документы на
+ * сервере неизменяемы, так что совпадение id (и размера) значит те же байты.
+ */
+export async function findStoredDocument(tripId: string, docId: string, size?: number): Promise<StoredDocument | null> {
+  const all = await (await db()).getAllFromIndex('documents', 'byTrip', tripId)
+  return all.find((d) => d.docId === docId && (size === undefined || d.size === size)) ?? null
+}
+
 export async function getDocumentData(key: string): Promise<ArrayBuffer | null> {
   return (await (await db()).get('blobs', key)) ?? null
 }
@@ -121,6 +130,19 @@ export async function pruneExcept(tripId: string, version: number): Promise<void
     }
   }
   await tx.done
+}
+
+/** Поездок на сервере не осталось — стереть и локальную копию. */
+export async function clearAll(): Promise<void> {
+  const tx = (await db()).transaction(['trips', 'documents', 'blobs', 'sync', 'kv'], 'readwrite')
+  await Promise.all([
+    tx.objectStore('trips').clear(),
+    tx.objectStore('documents').clear(),
+    tx.objectStore('blobs').clear(),
+    tx.objectStore('sync').clear(),
+    tx.objectStore('kv').delete('activeTripId'),
+    tx.done,
+  ])
 }
 
 export async function getChecked(tripId: string): Promise<string[]> {
