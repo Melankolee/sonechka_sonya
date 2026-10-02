@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Разовая (и повторяемая) установка сервиса ответов на 45.146.131.218.
+# Разовая (и повторяемая) установка сервиса ответов на 185.103.101.75.
 # Запускать от root из каталога deploy/:  bash answers-setup.sh
 #
 # Кладёт answers-api.py в /opt/sonechka, заводит системного пользователя
-# sonechka-api, поднимает systemd-юнит на 127.0.0.1:8787. Nginx НЕ трогает —
-# на сервере рядом живёт чужой прод, конфиг правится руками (см. README).
+# sonechka-api, поднимает systemd-юнит на 127.0.0.1:8787. Caddy НЕ трогает —
+# это отдельный шаг, deploy/caddy-site.sh.
 set -euo pipefail
 
 APP_USER=sonechka-api
@@ -41,7 +41,7 @@ Environment=SONECHKA_STORE=$DATA_DIR/answers.jsonl
 Restart=always
 RestartSec=2
 
-# Сервис смотрит в мир через nginx, поэтому прав ему нужно как можно меньше.
+# Сервис смотрит в мир через Caddy, поэтому прав ему нужно как можно меньше.
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
@@ -58,4 +58,4 @@ systemctl restart sonechka-answers
 
 sleep 1
 curl -fsS http://127.0.0.1:8787/api/health && echo
-echo "Готово. Дальше — добавить location /api/ в конфиг nginx (см. deploy/nginx-sonechka-sonya.conf)."
+echo "Готово. Дальше — bash caddy-site.sh, если сайт ещё не подключён к Caddy."

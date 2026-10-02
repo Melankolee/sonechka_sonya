@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Разовая настройка сервера под автодеплой из GitHub Actions.
-# Запускать на 45.146.131.218 от root:  bash server-setup.sh
+# Запускать на 185.103.101.75 от root:  bash server-setup.sh
 #
 # Заводит отдельного пользователя deploy, которому доступен ТОЛЬКО каталог сайта.
-# Ключ GitHub Actions намеренно не получает root: на этом сервере рядом живёт
-# чужой прод. Nginx скрипт не трогает.
+# Ключ GitHub Actions намеренно не получает root: на этом сервере рядом живут
+# другие сервисы (job-radar.su, aso-kw.ru). Caddy скрипт не трогает.
 set -euo pipefail
 
 DEPLOY_USER=deploy

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Разовая настройка: разрешить автодеплою обновлять сервис ответов.
-# Запускать на 45.146.131.218 от root:  bash ci-api-access.sh
+# Запускать на 185.103.101.75 от root:  bash ci-api-access.sh
 #
 # После этого правки deploy/answers-api.py уезжают на сервер обычным git push —
 # руками сюда больше заходить не нужно.
@@ -77,7 +77,7 @@ chmod 755 "$UPDATER"
 chown root:root "$UPDATER"
 
 # NOPASSWD — у CI нет пароля deploy и быть не должно. Через visudo -cf, иначе
-# кривой файл ломает sudo целиком, включая чужой прод по соседству.
+# кривой файл ломает sudo целиком, включая соседние сервисы.
 TMP_SUDOERS=$(mktemp)
 echo "$DEPLOY_USER ALL=(root) NOPASSWD: $UPDATER" > "$TMP_SUDOERS"
 if visudo -cf "$TMP_SUDOERS" >/dev/null; then

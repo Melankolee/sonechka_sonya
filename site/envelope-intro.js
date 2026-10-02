@@ -55,29 +55,6 @@
     'repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, rgba(96,52,58,.01) 1px 3px), ' +
     'radial-gradient(140% 120% at 26% 12%, rgba(255,255,255,.26), rgba(255,255,255,0) 60%)';
 
-  /* ------------------------------------------------------------ адресат */
-  /* Кому конверт: те же ключи, что у персональных страниц в index.html
-     (/nastia, /uliya, /ksusha или ?guest=…), но имена в дательном падеже —
-     так подписывают конверт. Без совпадения подпись просто не рисуется. */
-  var ADDRESSEE = { nastia: 'Насте', uliya: 'Уле', ksusha: 'Ксюше', kostya: 'Косте' };
-
-  /* Чем запечатан конверт. По умолчанию сургучная печать, у Кости — пивная
-     крышка: тот же предмет потом висит на «Я приду» и летит к Соне. */
-  var SEAL = { kostya: './img/beer-cap.png' };
-
-  function guestKey() {
-    var path = location.pathname.split('/').pop().replace(/\.html$/, '');
-    return (new URLSearchParams(location.search).get('guest') || path || '').toLowerCase();
-  }
-
-  function addressee() {
-    return ADDRESSEE[guestKey()] || '';
-  }
-
-  function sealSrc() {
-    return SEAL[guestKey()] || './img/seal.png';
-  }
-
   /* ---------------------------------------------------------- математика */
   var clampN = function (v, a, b) { return v < a ? a : v > b ? b : v; };
   var lerp = function (a, b, t) { return a + (b - a) * t; };
@@ -125,8 +102,7 @@
 
   var root, cam, shadowA, shadowB, envBack, backFace, backInner, flapBack,
     letterClip, letter, letterCol, envFront, frontL, frontR, frontFace,
-    flapFront, seal, tapWrap, tapRing, tapDot, ripple, hintText,
-    addrWrap, addrLabel, addrName, addrInk;
+    flapFront, seal, tapWrap, tapRing, tapDot, ripple, hintText;
 
   function build() {
     root = el('div',
@@ -183,24 +159,6 @@
       'filter:drop-shadow(0 -3px 6px rgba(96,72,48,.26))', envFront);
     grain(frontFace, 1);
 
-    /* подпись «кому» — на нижнем треугольнике, ниже печати, чтобы клапан её
-       не перекрывал ни закрытым, ни на просвет */
-    var who = addressee();
-    if (who) {
-      addrWrap = el('div',
-        'position:absolute;left:0;right:0;text-align:center;pointer-events:none;' +
-        'transform:rotate(-1.2deg);transform-origin:50% 0%', envFront);
-      addrLabel = el('div',
-        "font-family:'Manrope', system-ui, sans-serif;font-weight:300;" +
-        'text-transform:uppercase;color:rgba(138,56,47,.55)', addrWrap);
-      addrLabel.textContent = 'кому';
-      addrName = el('div',
-        "font-family:'Cormorant Garamond', serif;font-style:italic;font-weight:400;" +
-        'white-space:nowrap;color:rgba(122,58,50,.88)', addrWrap);
-      addrInk = el('span', 'display:inline-block;border-bottom:1px solid rgba(122,58,50,.3)', addrName);
-      addrInk.textContent = who;
-    }
-
     flapFront = makeFlap(envFront, false);
 
     /* подсказка «тапни» */
@@ -236,7 +194,7 @@
     if (!back) {
       var line = el('div', 'position:absolute;left:0;top:88%;width:100%;height:0', wrap);
       seal = el('img', 'position:absolute;left:50%;top:50%;display:block', line);
-      seal.src = sealSrc();
+      seal.src = './img/seal.png';
       seal.alt = '';
     }
     return wrap;
@@ -285,18 +243,6 @@
     seal.style.height = D + 'px';
     seal.style.marginLeft = (-D / 2) + 'px';
     seal.style.marginTop = (-D / 2) + 'px';
-
-    if (addrWrap) {
-      addrWrap.style.top = (envH * 0.7) + 'px';
-      addrLabel.style.fontSize = Math.max(7, Math.min(11, 18 * k)) + 'px';
-      addrLabel.style.letterSpacing = '.28em';
-      addrLabel.style.textIndent = '.28em';   // трекинг у последней буквы иначе сбивает центр
-      addrName.style.fontSize = (78 * k) + 'px';
-      addrName.style.lineHeight = '1.1';
-      addrName.style.marginTop = (8 * k) + 'px';
-      addrInk.style.paddingBottom = (9 * k) + 'px';
-      addrInk.style.borderBottomWidth = Math.max(1, 2 * k) + 'px';
-    }
 
     shadowA.style.left = (cx - 320 * k) + 'px';
     shadowA.style.width = (640 * k) + 'px';

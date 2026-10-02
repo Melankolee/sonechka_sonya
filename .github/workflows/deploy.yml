@@ -52,8 +52,8 @@ jobs:
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             'sudo /usr/local/sbin/sonechka-update-api'
 
-      # Пока зона sonechka-sonya.ru не создана, домен не резолвится — поэтому
-      # проверка информационная и не роняет деплой.
+      # Проверка информационная и не роняет деплой: файлы уже на месте, а
+      # временный сбой DNS или TLS не повод краснеть.
       - name: Проверить, что сайт отвечает
         continue-on-error: true
-        run: curl -fsS -o /dev/null -w 'HTTP %{http_code}\n' https://sonechka-sonya.ru/
+        run: curl -fsS -o /dev/null -w 'HTTP %{http_code}\n' https://birthday.sonechka-sonya.ru/

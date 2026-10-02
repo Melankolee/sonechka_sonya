@@ -1,0 +1,54 @@
+# Блок сайта для /etc/caddy/Caddyfile на 185.103.101.75.
+# Вставляет и обновляет его deploy/caddy-site.sh — руками в Caddyfile не править,
+# скрипт заменит всё между маркерами.
+#
+# Сертификат Caddy выпускает и продлевает сам, certbot не нужен. Лимита запросов
+# на /api/ (как limit_req в старом nginx) нет — в сборке Caddy нет модуля
+# rate_limit. От переполнения диска сервис защищён сам: MAX_BODY и MAX_RECORDS
+# в answers-api.py.
+#
+# Сайт живёт на поддомене birthday — голый домен оставлен свободным. Старые
+# ссылки (sonechka-sonya.ru/nastia, разосланные гостьям) редиректят туда же с
+# сохранением пути.
+birthday.sonechka-sonya.ru {
+	encode zstd gzip
+
+	# Ответы гостей: сервис sonechka-answers на 127.0.0.1:8787
+	# (deploy/answers-api.py, ставится через deploy/answers-setup.sh).
+	handle /api/* {
+		request_body {
+			max_size 8KB
+		}
+		reverse_proxy 127.0.0.1:8787
+		log_skip
+	}
+
+	handle {
+		root * /var/www/sonechka-sonya.ru
+		# route — чтобы заголовки ставились после try_files, по уже найденному
+		# файлу: /nastia к этому моменту становится /nastia.html.
+		route {
+			# {path}.html — чтобы персональные страницы открывались как /nastia
+			# (сами файлы — ссылки на index.html).
+			try_files {path} {path}.html {path}/
+
+			# Имена файлов шрифтов захешированы Google, версии React
+			# зафиксированы — можно кэшировать надолго.
+			@immutable path /fonts/* /vendor/*
+			header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+			# HTML не кэшируем, чтобы правки контента долетали сразу.
+			@html path / *.html
+			header @html Cache-Control "no-cache"
+
+			file_server
+		}
+	}
+}
+
+# 307, а не 301: браузеры не запомнят редирект навсегда, и голый домен потом
+# можно будет отдать под что-то другое. И метод сохраняется — POST /api/answers
+# со страницы, открытой до переезда, не превратится в GET.
+sonechka-sonya.ru, www.sonechka-sonya.ru {
+	redir https://birthday.sonechka-sonya.ru{uri} 307
+}

@@ -95,9 +95,6 @@ window.__resources = {
              941:1672). Отсюда .45 от ширины — заголовок начинается под розой на
              любом экране, а не только на телефоне. -->
         <div data-reveal="1" style="padding: calc(min(100vw, 620px) * .45) 30px 6px; text-align: center">
-          <sc-if value="{{ hasGuest }}" hint-placeholder-val="{{ true }}">
-            <p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.2; color: #8A382F">{{ guestGreeting }}</p>
-          </sc-if>
           <h1 style="margin: 16px 0 0; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(34px, 9.6vw, 54px); line-height: 1.08; letter-spacing: -.015em; color: #3E342C; text-wrap: pretty">Приглашаю тебя<br><em style="font-style: italic; color: #8A382F">на празднование</em><br>моего Дня Рождения!</h1>
         </div>
       </div>
@@ -314,27 +311,6 @@ window.__resources = {
 class Component extends DCLogic {
   state = { doll: null, watch: [], drink: [], name: '', sending: false, sent: false, error: '', helpOpen: false, jokeIndex: null, slide: 0, notes: 0 };
 
-  // Персональные страницы: /nastia, /uliya, /ksusha — те же файлы-ссылки на
-  // index.html (см. site/nastia.html), отличается только обращение в шапке.
-  // Имя берём из адреса; ?guest=nastia — та же подстановка при локальном
-  // просмотре одного index.html.
-  // noAlcohol — в списке напитков остаются только безалкогольные варианты.
-  guests = {
-    nastia: { name: 'Настя', gen: 'Насти', noAlcohol: true },
-    uliya:  { name: 'Уля',   gen: 'Ули' },
-    ksusha: { name: 'Ксюша', gen: 'Ксюши' }
-  };
-
-  guestKey() {
-    const path = location.pathname.split('/').pop().replace(/\.html$/, '');
-    const key = new URLSearchParams(location.search).get('guest') || path;
-    return this.guests[key.toLowerCase()] ? key.toLowerCase() : '';
-  }
-
-  guest() {
-    return this.guests[this.guestKey()] || null;
-  }
-
   jokes = [
     '— Петька, что такое нюанс?\n— Не знаю, Василий Иванович.\n— Ну вот смотри: и ты голый, и я голый. Но есть нюанс.',
     '— Петька, ты чего такой довольный?\n— Так я, Василий Иванович, у Анки ночевал. Три раза!\n— Врёшь.\n— Ну два. Зато с разбегу.',
@@ -362,8 +338,6 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
-    const guest = this.guest();
-    if (guest) document.title = 'Приглашение для ' + guest.gen + ' — Софья';
     // Пока играет конверт (envelope-intro.js), появления секций ждут:
     // страница должна ожить ровно в тот момент, когда письмо развернулось.
     if (window.__envelopeIntroActive) {
@@ -495,10 +469,8 @@ class Component extends DCLogic {
   // Мысль уезжает отдельной записью (поле idea): гостья может оторвать хоть
   // пять листов — до того, как нажала «Я приду», после, и вообще без этого.
   notePayload(text) {
-    const guest = this.guest();
     return {
-      guest: this.guestKey() || '',
-      name: guest ? guest.name : this.state.name,
+      name: this.state.name,
       idea: text
     };
   }
@@ -665,13 +637,9 @@ class Component extends DCLogic {
     return raw.split(',').map(s => s.trim()).filter(Boolean);
   }
 
-  alcoholic = ['Белое вино', 'Красное вино', 'Игристое', 'Сидр', 'Коктейли на джине'];
-
   drinkList() {
     const raw = this.props.drinkOptions || 'Белое вино, Красное вино, Игристое, Сидр, Коктейли на джине, Сок, Морс, Лимонад';
-    const list = raw.split(',').map(s => s.trim()).filter(Boolean);
-    const guest = this.guest();
-    return guest && guest.noAlcohol ? list.filter(t => !this.alcoholic.includes(t)) : list;
+    return raw.split(',').map(s => s.trim()).filter(Boolean);
   }
 
   plural(n, one, few, many) {
@@ -717,10 +685,8 @@ class Component extends DCLogic {
   async submit() {
     if (this.state.sending) return;
     this.setState({ sending: true, error: '' });
-    const guest = this.guest();
     const payload = {
-      guest: this.guestKey() || '',
-      name: guest ? guest.name : this.state.name,
+      name: this.state.name,
       doll: this.state.doll || '',
       watch: this.state.watch,
       drink: this.state.drink
@@ -763,10 +729,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const s = this.state;
-    const guest = this.guest();
     return {
-      hasGuest: !!guest,
-      guestGreeting: guest ? guest.name + ', привет!' : '',
       slides: this.loftShots().map((file, i) => ({
         src: './img/loft/' + file + '.jpg',
         alt: 'Фото площадки ' + (i + 1),
