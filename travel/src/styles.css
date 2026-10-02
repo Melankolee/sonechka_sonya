@@ -753,3 +753,41 @@ input.material-title:focus {
 .login {
   margin-bottom: 16px;
 }
+
+.material-title-wrap {
+  position: relative;
+  display: block;
+}
+
+.material-title-wrap input.material-title {
+  padding-right: 28px;
+  border-color: var(--line);
+  background: var(--bg);
+  margin-left: 0;
+}
+
+.material-pencil {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.list.guide .row-title {
+  font-weight: 600;
+}
+
+.title-button {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.title-button span {
+  color: var(--muted);
+  font-weight: 400;
+}

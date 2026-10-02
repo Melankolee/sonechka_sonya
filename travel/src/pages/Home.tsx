@@ -4,7 +4,7 @@ import { Check, Row } from '../components/ui'
 import { go } from '../hooks/useRoute'
 import type { useTrip } from '../hooks/useTrip'
 import { documentType, formatDateRange, formatSize } from '../services/format'
-import type { Trip } from '../types/trip'
+import type { Trip, TripDocument } from '../types/trip'
 
 type State = ReturnType<typeof useTrip>
 
@@ -93,10 +93,11 @@ export function Home({ state, appUpdate }: Props) {
 }
 
 function TripView({ trip, state }: { trip: Trip; state: State }) {
-  const { verification, network, docs } = state
+  const { verification, network } = state
   const place = [trip.location?.place, trip.location?.country].filter(Boolean).join(', ')
   const offlineReady = state.isLocal && verification?.ready
-  const materials = trip.documents ?? []
+  const guide = trip.documents?.find((d) => d.main)
+  const materials = (trip.documents ?? []).filter((d) => !d.main)
 
   return (
     <>
@@ -118,37 +119,51 @@ function TripView({ trip, state }: { trip: Trip; state: State }) {
         </p>
       </header>
 
+      {guide && (
+        <section>
+          <h3 className="group-title">Описание поездки</h3>
+          <ul className="list guide">
+            <DocRow doc={guide} state={state} />
+          </ul>
+        </section>
+      )}
+
       <section>
         <h3 className="group-title">Материалы</h3>
         {materials.length > 0 ? (
           <ul className="list">
-            {materials.map((d) => {
-              const stored = state.isLocal ? docs.get(d.id) : undefined
-              const saved = !!stored && !verification?.missing.some((m) => m.id === d.id)
-              const size = stored?.size ?? d.size
-              return (
-                <Row
-                  key={d.id}
-                  title={d.title}
-                  detail={[documentType(d.mime), size ? formatSize(size) : null].filter(Boolean).join(' · ')}
-                  trailing={
-                    saved ? (
-                      <span className="saved" aria-label="Сохранено для офлайна">
-                        <Check />
-                      </span>
-                    ) : (
-                      <span className="not-saved">Не скачан</span>
-                    )
-                  }
-                  onClick={() => go(`/doc/${encodeURIComponent(d.id)}`)}
-                />
-              )
-            })}
+            {materials.map((d) => (
+              <DocRow key={d.id} doc={d} state={state} />
+            ))}
           </ul>
         ) : (
-          <p className="muted empty">Материалов пока нет. Нажми «Изменить» и загрузи билеты, брони, страховку.</p>
+          <p className="muted empty">
+            {guide ? 'Других материалов нет.' : 'Материалов пока нет.'} Нажми «Изменить» и загрузи билеты, брони, страховку.
+          </p>
         )}
       </section>
     </>
+  )
+}
+
+function DocRow({ doc, state }: { doc: TripDocument; state: State }) {
+  const stored = state.isLocal ? state.docs.get(doc.id) : undefined
+  const saved = !!stored && !state.verification?.missing.some((m) => m.id === doc.id)
+  const size = stored?.size ?? doc.size
+  return (
+    <Row
+      title={doc.title}
+      detail={[documentType(doc.mime), size ? formatSize(size) : null].filter(Boolean).join(' · ')}
+      trailing={
+        saved ? (
+          <span className="saved" aria-label="Сохранено для офлайна">
+            <Check />
+          </span>
+        ) : (
+          <span className="not-saved">Не скачан</span>
+        )
+      }
+      onClick={() => go(`/doc/${encodeURIComponent(doc.id)}`)}
+    />
   )
 }

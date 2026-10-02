@@ -1,12 +1,12 @@
-// Создание и редактирование поездки: основное (название, место, даты) и
-// материалы.
+// Создание и редактирование поездки: основное (название, место, даты),
+// описание поездки (главный PDF) и материалы.
 //
 // Основное копится в черновике и уходит на сервер кнопкой «Сохранить» (с
 // проверкой версии — правка с другого устройства не затирается молча).
 // Материалы — сразу, см. MaterialsEditor. После любого изменения на сервере
 // вызывается onChanged: главный экран обновляет офлайн-копию на телефоне.
 import { useEffect, useMemo, useState } from 'react'
-import { MaterialsEditor } from '../components/MaterialsEditor'
+import { GuideEditor, MaterialsEditor } from '../components/MaterialsEditor'
 import { Screen } from '../components/ui'
 import { back, replace } from '../hooks/useRoute'
 import { ApiError, createTrip, deleteTrip, errorText, fetchTrip, listTrips, saveTrip, setActiveTrip, type TripBasics } from '../services/api'
@@ -196,6 +196,7 @@ export function EditTripPage({ id, onChanged }: { id: string; onChanged: () => v
     >
       <Basics draft={draft} set={(patch) => setDraft((d) => d && { ...d, ...patch })} />
 
+      <GuideEditor trip={draft} onServerTrip={fromServer} />
       <MaterialsEditor trip={draft} onServerTrip={fromServer} />
 
       <section>

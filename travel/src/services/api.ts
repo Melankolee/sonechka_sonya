@@ -141,8 +141,9 @@ export function uploadDocument(
   file: File,
   title: string,
   onProgress: (fraction: number) => void,
+  main = false,
 ): Promise<Trip> {
-  const query = new URLSearchParams({ title })
+  const query = new URLSearchParams({ title, ...(main && { main: '1' }) })
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', `/api/trips/${encodeURIComponent(tripId)}/documents?${query}`)

@@ -35,6 +35,8 @@ export function App() {
           doc={doc}
           stored={state.docs.get(doc.id)}
           network={state.network}
+          canEdit={state.network === 'online' && !state.needLogin}
+          onChanged={onChanged}
         />
       )}
       {route.screen === 'trips' && <TripsPage />}

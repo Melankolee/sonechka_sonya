@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """API travel-приложения: поездки и их материалы, которые создаются в интерфейсе.
 
-У поездки — название, место, даты и список материалов: загруженных файлов
-(PDF и фото). Других полей нет.
+У поездки — название, место, даты и материалы: загруженные файлы (PDF и
+фото). Один PDF может быть помечен main — это описание поездки, оно
+показывается отдельно над остальными. Других полей нет.
 
 Только стандартная библиотека — как и у сервиса ответов, ставить на общий
 сервер pip-окружение ради нескольких ручек незачем. Слушает 127.0.0.1, наружу
@@ -349,7 +350,7 @@ class Handler(BaseHTTPRequestHandler):
                 load_trip(trip_id)
                 set_active(trip_id)
             return self.send_json(200, {'active': trip_id})
-        # POST /api/trips/<id>/documents?title= — тело запроса и есть файл
+        # POST /api/trips/<id>/documents?title=&main=1 — тело запроса и есть файл
         if len(parts) == 4 and parts[:2] == ['api', 'trips'] and parts[3] == 'documents':
             return self.upload(parts[2], query)
         raise ApiError(404, 'Не найдено')
@@ -385,25 +386,41 @@ class Handler(BaseHTTPRequestHandler):
             mime, ext = sniff(head)
             if not mime:
                 raise ApiError(415, 'Поддерживаются PDF, JPEG, PNG, WebP и HEIC')
+            main = (query.get('main') or [''])[0] == '1'
+            if main and mime != 'application/pdf':
+                raise ApiError(415, 'Описание поездки — только PDF')
 
-            title = text((query.get('title') or [''])[0], 120) or 'Материал'
+            title = text((query.get('title') or [''])[0], 120) or ('Описание поездки' if main else 'Материал')
             doc_id = new_id('d-')
             with LOCK:
                 trip = load_trip(trip_id)
-                if len(trip.get('documents', [])) >= MAX_DOCS:
+                docs = trip.setdefault('documents', [])
+                if len(docs) >= MAX_DOCS:
                     raise ApiError(400, 'Слишком много материалов')
+                # Описание одно: новое заменяет прежнее, старый файл удаляется.
+                replaced = [d for d in docs if main and d.get('main')]
                 os.chmod(tmp, 0o644)
                 os.replace(tmp, os.path.join(directory, doc_id + ext))
-                trip.setdefault('documents', []).append({
+                doc = {
                     'id': doc_id,
                     'title': title,
                     'file': 'documents/' + doc_id + ext,
                     'mime': mime,
                     'size': length,
                     'uploadedAt': now(),
-                })
+                }
+                if main:
+                    doc['main'] = True
+                    trip['documents'] = [doc] + [d for d in docs if not d.get('main')]
+                else:
+                    docs.append(doc)
                 trip['version'] += 1
                 save_trip(trip)
+                for old in replaced:
+                    try:
+                        os.unlink(os.path.join(trip_dir(trip_id), old['file']))
+                    except FileNotFoundError:
+                        pass
             return self.send_json(201, trip)
         finally:
             if os.path.exists(tmp):

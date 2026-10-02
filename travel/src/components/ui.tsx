@@ -26,9 +26,11 @@ interface ScreenProps {
   /** Свой обработчик «назад» — например, чтобы спросить про несохранённое. */
   onBack?: () => void
   footer?: ReactNode
+  /** Название можно нажать — например, чтобы переименовать документ. */
+  onTitleClick?: () => void
 }
 
-export function Screen({ title, action, children, flush, onBack, footer }: ScreenProps) {
+export function Screen({ title, action, children, flush, onBack, footer, onTitleClick }: ScreenProps) {
   return (
     <div className="screen" role="dialog" aria-label={title}>
       <header className="screen-header">
@@ -38,7 +40,15 @@ export function Screen({ title, action, children, flush, onBack, footer }: Scree
           </svg>
           Назад
         </button>
-        <h2>{title}</h2>
+        <h2>
+          {onTitleClick ? (
+            <button className="title-button" onClick={onTitleClick} aria-label={`${title} — переименовать`}>
+              {title} <span aria-hidden="true">✎</span>
+            </button>
+          ) : (
+            title
+          )}
+        </h2>
         <div className="screen-action">{action}</div>
       </header>
       <div className={flush ? 'screen-body flush' : 'screen-body'}>{children}</div>

@@ -3,7 +3,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Screen } from '../components/ui'
 import type { Network } from '../hooks/useTrip'
-import { fetchDocument } from '../services/api'
+import { errorText, fetchDocument, renameDocument } from '../services/api'
 import { saveToFiles } from '../services/share'
 import { getDocumentData, type StoredDocument } from '../storage/db'
 import type { Trip, TripDocument } from '../types/trip'
@@ -23,10 +23,31 @@ interface Props {
   doc: TripDocument
   stored: StoredDocument | undefined
   network: Network
+  /** Есть сеть и вход — можно переименовать. */
+  canEdit: boolean
+  onChanged: () => void
 }
 
-export function DocumentPage({ trip, doc, stored, network }: Props) {
+export function DocumentPage({ trip, doc, stored, network, canEdit, onChanged }: Props) {
   const [state, setState] = useState<Loaded>({ status: 'loading' })
+  // Новое название видно сразу, не дожидаясь синхронизации.
+  const [title, setTitle] = useState(doc.title)
+
+  const rename = async () => {
+    if (!canEdit) {
+      window.alert('Переименовать можно, когда есть интернет.')
+      return
+    }
+    const next = window.prompt('Название', title)?.trim()
+    if (!next || next === title) return
+    try {
+      await renameDocument(trip.id, doc.id, next)
+      setTitle(next)
+      onChanged()
+    } catch (e) {
+      window.alert(errorText(e))
+    }
+  }
   const fileName = doc.file.split('/').pop() || `${doc.id}.pdf`
 
   useEffect(() => {
@@ -62,7 +83,7 @@ export function DocumentPage({ trip, doc, stored, network }: Props) {
     ) : null
 
   return (
-    <Screen title={doc.title} action={action} flush>
+    <Screen title={title} action={action} flush onTitleClick={() => void rename()}>
       {state.status === 'loading' && <p className="placeholder muted">Загрузка…</p>}
       {state.status === 'missing' && (
         <p className="placeholder muted">Этого материала нет на телефоне. Скачай поездку для офлайна, пока есть интернет.</p>
