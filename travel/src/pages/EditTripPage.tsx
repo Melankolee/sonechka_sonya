@@ -1,27 +1,20 @@
-// Создание и редактирование поездки.
+// Создание и редактирование поездки: основное (название, место, даты) и
+// материалы.
 //
-// Текстовые поля копятся в черновике и уходят на сервер кнопкой «Сохранить»
-// (одним PUT, с проверкой версии — правка с другого устройства не затирается
-// молча). Документы — отдельно и сразу, см. DocumentsEditor. После любого
-// изменения на сервере вызывается onChanged: главный экран обновляет
-// офлайн-копию на телефоне.
+// Основное копится в черновике и уходит на сервер кнопкой «Сохранить» (с
+// проверкой версии — правка с другого устройства не затирается молча).
+// Материалы — сразу, см. MaterialsEditor. После любого изменения на сервере
+// вызывается onChanged: главный экран обновляет офлайн-копию на телефоне.
 import { useEffect, useMemo, useState } from 'react'
-import { DocumentsEditor } from '../components/DocumentsEditor'
-import { ItemsEditor, SECTIONS } from '../components/ItemsEditor'
+import { MaterialsEditor } from '../components/MaterialsEditor'
 import { Screen } from '../components/ui'
 import { back, replace } from '../hooks/useRoute'
-import { ApiError, createTrip, deleteTrip, errorText, fetchTrip, listTrips, saveTrip, setActiveTrip } from '../services/api'
+import { ApiError, createTrip, deleteTrip, errorText, fetchTrip, listTrips, saveTrip, setActiveTrip, type TripBasics } from '../services/api'
 import type { Trip } from '../types/trip'
 
-type SectionKey = keyof typeof SECTIONS
-const SECTION_KEYS = Object.keys(SECTIONS) as SectionKey[]
+const basicsOf = (t: TripBasics): string => JSON.stringify([t.title, t.location?.country ?? '', t.location?.place ?? '', t.dateFrom, t.dateTo])
 
-/** То, что меняет форма: без версии, документов и служебных полей. */
-function editable(t: Trip): string {
-  return JSON.stringify([t.title, t.location, t.dateFrom, t.dateTo, ...SECTION_KEYS.map((k) => t[k] ?? [])])
-}
-
-function Basics({ draft, set }: { draft: Pick<Trip, 'title' | 'location' | 'dateFrom' | 'dateTo'>; set: (patch: Partial<Trip>) => void }) {
+function Basics({ draft, set }: { draft: TripBasics; set: (patch: Partial<TripBasics>) => void }) {
   return (
     <section>
       <h3 className="group-title">Основное</h3>
@@ -30,14 +23,16 @@ function Basics({ draft, set }: { draft: Pick<Trip, 'title' | 'location' | 'date
           <span className="label">Название</span>
           <input value={draft.title} onChange={(e) => set({ title: e.target.value })} placeholder="Мальдивы" />
         </label>
-        <label className="form-field">
-          <span className="label">Страна</span>
-          <input value={draft.location?.country ?? ''} onChange={(e) => set({ location: { ...draft.location, country: e.target.value } })} />
-        </label>
-        <label className="form-field">
-          <span className="label">Город или место</span>
-          <input value={draft.location?.place ?? ''} onChange={(e) => set({ location: { ...draft.location, place: e.target.value } })} />
-        </label>
+        <div className="two">
+          <label className="form-field">
+            <span className="label">Страна</span>
+            <input value={draft.location?.country ?? ''} onChange={(e) => set({ location: { ...draft.location, country: e.target.value } })} />
+          </label>
+          <label className="form-field">
+            <span className="label">Город или место</span>
+            <input value={draft.location?.place ?? ''} onChange={(e) => set({ location: { ...draft.location, place: e.target.value } })} />
+          </label>
+        </div>
         <div className="two">
           <label className="form-field">
             <span className="label">С</span>
@@ -54,7 +49,7 @@ function Basics({ draft, set }: { draft: Pick<Trip, 'title' | 'location' | 'date
 }
 
 export function NewTripPage({ onChanged }: { onChanged: () => void }) {
-  const [draft, setDraft] = useState({ title: '', location: {}, dateFrom: '', dateTo: '' } as Pick<Trip, 'title' | 'location' | 'dateFrom' | 'dateTo'>)
+  const [draft, setDraft] = useState<TripBasics>({ title: '', location: {}, dateFrom: '', dateTo: '' })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -84,7 +79,7 @@ export function NewTripPage({ onChanged }: { onChanged: () => void }) {
       }
     >
       <Basics draft={draft} set={(patch) => setDraft((d) => ({ ...d, ...patch }))} />
-      <p className="muted small hint-line">Перелёты, отель, заметки и документы добавляются на следующем шаге.</p>
+      <p className="muted small hint-line">Материалы добавляются на следующем шаге.</p>
     </Screen>
   )
 }
@@ -105,7 +100,7 @@ export function EditTripPage({ id, onChanged }: { id: string; onChanged: () => v
     try {
       const [trip, list] = await Promise.all([fetchTrip(id), listTrips()])
       setDraft(trip)
-      setSaved(editable(trip))
+      setSaved(basicsOf(trip))
       setActive(list.active)
     } catch (e) {
       setLoadError(`${errorText(e)} Редактировать можно только с интернетом.`)
@@ -116,25 +111,11 @@ export function EditTripPage({ id, onChanged }: { id: string; onChanged: () => v
     void load()
   }, [id])
 
-  const dirty = useMemo(() => !!draft && editable(draft) !== saved, [draft, saved])
+  const dirty = useMemo(() => !!draft && basicsOf(draft) !== saved, [draft, saved])
 
-  /** Ответ сервера после операции с документами: версия и документы — с сервера, правки формы — свои. */
+  /** Ответ сервера после операции с материалами: версия и материалы — с сервера, правки основного — свои. */
   const fromServer = (t: Trip) => {
-    setDraft((d) => {
-      if (!d) return t
-      const ids = new Set((t.documents ?? []).map((x) => x.id))
-      // Удалённый документ сервер уже отвязал от рейсов и отелей — в черновике тоже.
-      const unlink = <T extends { documentId?: string }>(items?: T[]) =>
-        items?.map((item) => (item.documentId && !ids.has(item.documentId) ? { ...item, documentId: undefined } : item))
-      return {
-        ...d,
-        version: t.version,
-        documents: t.documents,
-        flights: unlink(d.flights),
-        stays: unlink(d.stays),
-        transfers: unlink(d.transfers),
-      }
-    })
+    setDraft((d) => (d ? { ...d, version: t.version, documents: t.documents } : t))
     onChanged()
   }
 
@@ -145,7 +126,7 @@ export function EditTripPage({ id, onChanged }: { id: string; onChanged: () => v
     try {
       const trip = await saveTrip(draft)
       setDraft(trip)
-      setSaved(editable(trip))
+      setSaved(basicsOf(trip))
       onChanged()
     } catch (e) {
       const isConflict = e instanceof ApiError && e.status === 409
@@ -171,7 +152,7 @@ export function EditTripPage({ id, onChanged }: { id: string; onChanged: () => v
   }
 
   const remove = async () => {
-    if (!draft || !window.confirm(`Удалить поездку «${draft.title}» вместе со всеми документами? Это не отменить.`)) return
+    if (!draft || !window.confirm(`Удалить поездку «${draft.title}» вместе со всеми материалами? Это не отменить.`)) return
     try {
       await deleteTrip(id)
       onChanged()
@@ -215,17 +196,7 @@ export function EditTripPage({ id, onChanged }: { id: string; onChanged: () => v
     >
       <Basics draft={draft} set={(patch) => setDraft((d) => d && { ...d, ...patch })} />
 
-      <DocumentsEditor trip={draft} onServerTrip={fromServer} />
-
-      {SECTION_KEYS.map((key) => (
-        <ItemsEditor
-          key={key}
-          def={SECTIONS[key]}
-          items={(draft[key] ?? []) as unknown as ({ id: string } & Record<string, unknown>)[]}
-          documents={draft.documents ?? []}
-          onChange={(items) => setDraft((d) => d && { ...d, [key]: items })}
-        />
-      ))}
+      <MaterialsEditor trip={draft} onServerTrip={fromServer} />
 
       <section>
         <h3 className="group-title">Поездка</h3>

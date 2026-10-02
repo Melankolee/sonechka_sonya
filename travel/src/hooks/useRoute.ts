@@ -1,12 +1,9 @@
-// Навигация на хэше: #/section/flights, #/doc/<id>, #/trips, #/new, #/edit/<id>.
+// Навигация на хэше: #/doc/<id>, #/trips, #/new, #/edit/<id>.
 // Сервер про маршруты ничего не знает, перезагрузка и «назад» работают сами.
 import { useEffect, useState } from 'react'
 
-export type SectionId = 'flights' | 'stays' | 'transfers' | 'notes' | 'checklist'
-
 export type Route =
   | { screen: 'home' }
-  | { screen: 'section'; id: SectionId }
   | { screen: 'doc'; id: string }
   | { screen: 'trips' }
   | { screen: 'new' }
@@ -14,7 +11,6 @@ export type Route =
 
 function parse(hash: string): Route {
   const [, kind, id] = hash.replace(/^#/, '').split('/')
-  if (kind === 'section' && id) return { screen: 'section', id: id as SectionId }
   if (kind === 'doc' && id) return { screen: 'doc', id: decodeURIComponent(id) }
   if (kind === 'trips') return { screen: 'trips' }
   if (kind === 'new') return { screen: 'new' }

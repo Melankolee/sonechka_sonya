@@ -1,9 +1,8 @@
 import { OfflinePanel } from '../components/OfflinePanel'
 import { Check, Row } from '../components/ui'
-import { useChecklist } from '../hooks/useChecklist'
-import { go, type SectionId } from '../hooks/useRoute'
+import { go } from '../hooks/useRoute'
 import type { useTrip } from '../hooks/useTrip'
-import { documentType, formatDateRange, formatSize, plural } from '../services/format'
+import { documentType, formatDateRange, formatSize } from '../services/format'
 import type { Trip } from '../types/trip'
 
 type State = ReturnType<typeof useTrip>
@@ -82,35 +81,10 @@ export function Home({ state, appUpdate }: Props) {
 }
 
 function TripView({ trip, state }: { trip: Trip; state: State }) {
-  const { checked } = useChecklist(trip.id)
   const { verification, network, docs } = state
   const place = [trip.location?.place, trip.location?.country].filter(Boolean).join(', ')
   const offlineReady = state.isLocal && verification?.ready
-  const notes = trip.notes?.length ?? 0
-
-  const sections: { id: SectionId; title: string; detail?: string; show: boolean }[] = [
-    {
-      id: 'flights',
-      title: 'Перелёты',
-      detail: trip.flights?.map((f) => `${f.from?.code || '…'} → ${f.to?.code || '…'}`).join(', '),
-      show: !!trip.flights?.length,
-    },
-    { id: 'stays', title: 'Проживание', detail: trip.stays?.map((s) => s.name).filter(Boolean).join(', '), show: !!trip.stays?.length },
-    {
-      id: 'transfers',
-      title: 'Трансфер',
-      detail: [...new Set(trip.transfers?.map((t) => t.mode).filter(Boolean))].join(', '),
-      show: !!trip.transfers?.length,
-    },
-    { id: 'notes', title: 'Заметки', detail: `${notes} ${plural(notes, 'заметка', 'заметки', 'заметок')}`, show: notes > 0 },
-    {
-      id: 'checklist',
-      title: 'Чеклист',
-      detail: `${trip.checklist?.filter((c) => checked.has(c.id)).length ?? 0} из ${trip.checklist?.length ?? 0}`,
-      show: !!trip.checklist?.length,
-    },
-  ]
-  const visible = sections.filter((s) => s.show)
+  const materials = trip.documents ?? []
 
   return (
     <>
@@ -132,22 +106,11 @@ function TripView({ trip, state }: { trip: Trip; state: State }) {
         </p>
       </header>
 
-      {visible.length > 0 && (
-        <section>
-          <h3 className="group-title">Поездка</h3>
+      <section>
+        <h3 className="group-title">Материалы</h3>
+        {materials.length > 0 ? (
           <ul className="list">
-            {visible.map((s) => (
-              <Row key={s.id} title={s.title} detail={s.detail} onClick={() => go(`/section/${s.id}`)} />
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {!!trip.documents?.length && (
-        <section>
-          <h3 className="group-title">Документы</h3>
-          <ul className="list">
-            {trip.documents.map((d) => {
+            {materials.map((d) => {
               const stored = state.isLocal ? docs.get(d.id) : undefined
               const saved = !!stored && !verification?.missing.some((m) => m.id === d.id)
               const size = stored?.size ?? d.size
@@ -170,14 +133,10 @@ function TripView({ trip, state }: { trip: Trip; state: State }) {
               )
             })}
           </ul>
-        </section>
-      )}
-
-      {visible.length === 0 && !trip.documents?.length && (
-        <section>
-          <p className="muted empty">Здесь пока пусто. Нажми «Изменить» — добавь перелёты, отель, заметки и загрузи документы.</p>
-        </section>
-      )}
+        ) : (
+          <p className="muted empty">Материалов пока нет. Нажми «Изменить» и загрузи билеты, брони, страховку.</p>
+        )}
+      </section>
     </>
   )
 }

@@ -3,7 +3,7 @@
 //
 // Чтение (/trips/…) — статика, её отдаёт Caddy. Запись (/api/…) — сервис
 // server/travel-api.py.
-import type { DocumentKind, Trip, TripDocument, TripIndex, TripSummary } from '../types/trip'
+import type { Trip, TripDocument, TripIndex, TripSummary } from '../types/trip'
 
 /** Сеть недоступна или сервер не ответил. Пользователю показывается просто «Офлайн». */
 export class NetworkError extends Error {}
@@ -113,8 +113,8 @@ export function setActiveTrip(id: string): Promise<{ active: string }> {
   return call('POST', '/api/active', { id })
 }
 
-export function updateDocument(tripId: string, docId: string, patch: { title?: string; kind?: DocumentKind }): Promise<Trip> {
-  return call('PATCH', `/api/trips/${encodeURIComponent(tripId)}/documents/${encodeURIComponent(docId)}`, patch)
+export function renameDocument(tripId: string, docId: string, title: string): Promise<Trip> {
+  return call('PATCH', `/api/trips/${encodeURIComponent(tripId)}/documents/${encodeURIComponent(docId)}`, { title })
 }
 
 export function deleteDocument(tripId: string, docId: string): Promise<Trip> {
@@ -128,10 +128,10 @@ export function deleteDocument(tripId: string, docId: string): Promise<Trip> {
 export function uploadDocument(
   tripId: string,
   file: File,
-  meta: { title: string; kind: DocumentKind },
+  title: string,
   onProgress: (fraction: number) => void,
 ): Promise<Trip> {
-  const query = new URLSearchParams({ title: meta.title, kind: meta.kind })
+  const query = new URLSearchParams({ title })
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', `/api/trips/${encodeURIComponent(tripId)}/documents?${query}`)

@@ -61,14 +61,3 @@ export function Row({ title, detail, trailing, onClick }: { title: ReactNode; de
     </li>
   )
 }
-
-/** Пара «подпись — значение» в карточке раздела. Пустые значения не выводятся. */
-export function Field({ label, children }: { label: string; children?: ReactNode }) {
-  if (children === undefined || children === null || children === '' || children === false) return null
-  return (
-    <div className="field">
-      <dt>{label}</dt>
-      <dd>{children}</dd>
-    </div>
-  )
-}

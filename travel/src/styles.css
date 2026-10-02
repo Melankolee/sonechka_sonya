@@ -460,124 +460,6 @@ section {
   text-align: center;
 }
 
-/* ---- карточки разделов ---- */
-
-.card h4 {
-  margin: 0 0 4px;
-  font-size: 19px;
-}
-
-.card > p + p {
-  margin-top: 8px;
-}
-
-.card dl {
-  margin: 12px 0 0;
-}
-
-.card dl + p,
-.note p + p {
-  margin-top: 10px;
-}
-
-.note h4 + p {
-  margin-top: 6px;
-}
-
-.eyebrow {
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.route {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.route > div {
-  display: flex;
-  flex-direction: column;
-}
-
-.route .end {
-  text-align: right;
-}
-
-.code {
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.route-arrow {
-  color: var(--muted);
-  font-size: 22px;
-}
-
-.field {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 7px 0;
-  border-top: 1px solid var(--line);
-}
-
-.field dt {
-  color: var(--muted);
-  flex: none;
-}
-
-.field dd {
-  margin: 0;
-  text-align: right;
-}
-
-/* ---- чеклист ---- */
-
-.checklist label.row {
-  cursor: pointer;
-}
-
-.checklist input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.box {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex: none;
-  border: 2px solid var(--line);
-  border-radius: 50%;
-  color: transparent;
-}
-
-.row.done .box {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-text);
-}
-
-.row.done .row-title {
-  color: var(--muted);
-  text-decoration: line-through;
-}
-
-.checklist input:focus-visible + .box {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 /* ---- просмотр документов ---- */
 
 .pdf {
@@ -738,51 +620,6 @@ select:focus {
   gap: 10px;
 }
 
-.airport {
-  display: grid;
-  grid-template-columns: 5.5em 1fr 4.5em;
-  gap: 6px;
-}
-
-.item {
-  padding: 0;
-}
-
-.item summary {
-  padding: 14px 16px;
-  font-weight: 600;
-  cursor: pointer;
-  list-style: none;
-}
-
-.item summary::-webkit-details-marker {
-  display: none;
-}
-
-.item summary::after {
-  content: '›';
-  float: right;
-  color: var(--muted);
-  transition: transform 0.15s;
-}
-
-.item[open] summary::after {
-  transform: rotate(90deg);
-}
-
-.item .form {
-  padding: 0 16px 16px;
-}
-
-.card + .button.add,
-section > .button.add {
-  margin-top: 10px;
-}
-
-.button.add {
-  background: var(--surface);
-}
-
 .button.danger {
   color: var(--error);
   background: var(--surface);
@@ -794,11 +631,6 @@ section > .button + .button {
 
 .hint-line {
   margin: -2px 4px 10px;
-}
-
-.doc-edit + .doc-edit,
-.upload {
-  margin-top: 12px;
 }
 
 .bar {
@@ -814,4 +646,106 @@ section > .button + .button {
   height: 100%;
   background: var(--accent);
   transition: width 0.2s;
+}
+
+/* ---- материалы в редактировании ---- */
+
+.materials {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.material {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.material-n {
+  flex: none;
+  width: 22px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.material-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.material-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+input.material-title {
+  padding: 6px 8px;
+  margin-left: -8px;
+  border-color: transparent;
+  background: transparent;
+}
+
+input.material-title:focus {
+  background: var(--bg);
+}
+
+.material-delete {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.material-delete:active {
+  background: var(--pill);
+  color: var(--error);
+}
+
+.material-add {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 12px;
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-weight: 600;
+  text-align: left;
+}
+
+.material-add:active {
+  background: var(--surface);
+}
+
+.material-add > span:last-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.material-add .muted {
+  font-weight: 400;
+}
+
+.material-plus {
+  flex: none;
+  width: 22px;
+  font-size: 22px;
+  line-height: 1;
+  text-align: center;
 }

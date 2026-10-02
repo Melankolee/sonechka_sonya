@@ -4,7 +4,7 @@
 //   documents  метаданные документа: размер, тип, версия — читаются без байтов
 //   blobs      сами файлы, ArrayBuffer по тому же ключу, что и в documents
 //   sync       версия и время последней успешной синхронизации поездки
-//   kv         активная поездка и отметки чеклиста
+//   kv         активная поездка
 //
 // Файлы хранятся как ArrayBuffer, а не Blob: Blob, прочитанный из IndexedDB в
 // Safari, бывает ссылкой на внешний файл и иногда не читается
@@ -143,12 +143,4 @@ export async function clearAll(): Promise<void> {
     tx.objectStore('kv').delete('activeTripId'),
     tx.done,
   ])
-}
-
-export async function getChecked(tripId: string): Promise<string[]> {
-  return ((await (await db()).get('kv', `checklist:${tripId}`)) as string[] | undefined) ?? []
-}
-
-export async function setChecked(tripId: string, ids: string[]): Promise<void> {
-  await (await db()).put('kv', ids, `checklist:${tripId}`)
 }

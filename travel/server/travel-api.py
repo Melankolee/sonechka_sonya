@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""API travel-приложения: поездки и документы, которые создаются в интерфейсе.
+"""API travel-приложения: поездки и их материалы, которые создаются в интерфейсе.
+
+У поездки — название, место, даты и список материалов: загруженных файлов
+(PDF и фото). Других полей нет.
 
 Только стандартная библиотека — как и у сервиса ответов, ставить на общий
 сервер pip-окружение ради нескольких ручек незачем. Слушает 127.0.0.1, наружу
@@ -10,13 +13,13 @@
 
     <data>/trips/index.json                 {"active": "<id>" | null}
     <data>/trips/<id>/trip.json             поездка
-    <data>/trips/<id>/documents/<docId>.pdf файлы
+    <data>/trips/<id>/documents/<docId>.pdf материалы
 
 Читает их не сервис, а Caddy напрямую (/trips/*): сервис только пишет. Для
 разработки GET /trips/* отдаёт и он сам.
 
-Любая правка поездки или её документов увеличивает version — по нему телефон
-понимает, что пора обновить офлайн-копию. Документ после загрузки не меняется:
+Любая правка поездки или её материалов увеличивает version — по нему телефон
+понимает, что пора обновить офлайн-копию. Файл после загрузки не меняется:
 новый файл — новый id. Поэтому телефон не качает заново то, что у него уже есть.
 """
 
@@ -43,9 +46,7 @@ MAX_UPLOAD = 50 * 1024 * 1024
 # Запас свободного места, который загрузка не имеет права съесть: диск общий.
 KEEP_FREE = 1024 * 1024 * 1024
 MAX_DOCS = 60
-MAX_ITEMS = 300
 SHORT = 300
-LONG = 10000
 
 # Записи идут под одним замком: пользователь один, а гонка «два сохранения
 # одновременно» без замка дала бы потерянную правку.
@@ -53,8 +54,6 @@ LOCK = threading.Lock()
 
 ID_RE = re.compile(r'^[a-z0-9-]{1,64}$')
 DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
-DATETIME_RE = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$')
-KINDS = {'guide', 'flight', 'hotel', 'transfer', 'insurance', 'visa', 'other'}
 STATIC_TYPES = {
     '.json': 'application/json; charset=utf-8',
     '.pdf': 'application/pdf',
@@ -142,77 +141,14 @@ def set_active(trip_id):
 
 # ---------- чистка входных данных ----------
 
-def text(value, limit=SHORT, multiline=False):
+def text(value, limit=SHORT):
     if not isinstance(value, str):
         return ''
-    pattern = r'[\x00-\x09\x0b-\x1f\x7f]' if multiline else r'[\x00-\x1f\x7f]'
-    return re.sub(pattern, ' ', value).strip()[:limit]
-
-
-def long_text(value):
-    return text(value, LONG, multiline=True)
+    return re.sub(r'[\x00-\x1f\x7f]', ' ', value).strip()[:limit]
 
 
 def date(value):
     return value if isinstance(value, str) and DATE_RE.match(value) else ''
-
-
-def datetime_local(value):
-    return value if isinstance(value, str) and DATETIME_RE.match(value) else ''
-
-
-def airport(value):
-    if not isinstance(value, dict):
-        return {}
-    out = {
-        'code': text(value.get('code'), 8).upper(),
-        'city': text(value.get('city')),
-        'terminal': text(value.get('terminal'), 20),
-    }
-    return {k: v for k, v in out.items() if v}
-
-
-SECTIONS = {
-    'flights': {
-        'label': text, 'airline': text, 'flightNumber': text,
-        'from': airport, 'to': airport,
-        'departure': datetime_local, 'arrival': datetime_local,
-        'bookingRef': text, 'seat': text, 'baggage': text, 'notes': long_text, 'documentId': text,
-    },
-    'stays': {
-        'name': text, 'address': text, 'checkIn': datetime_local, 'checkOut': datetime_local,
-        'room': text, 'board': text, 'bookingRef': text, 'phone': text, 'notes': long_text, 'documentId': text,
-    },
-    'transfers': {
-        'title': text, 'mode': text, 'departure': datetime_local, 'from': text, 'to': text,
-        'provider': text, 'phone': text, 'bookingRef': text, 'notes': long_text, 'documentId': text,
-    },
-    'notes': {'title': text, 'text': long_text},
-    'checklist': {'text': text, 'group': text},
-}
-
-
-def clean_items(raw, fields, doc_ids):
-    if not isinstance(raw, list):
-        return []
-    out, seen = [], set()
-    for item in raw[:MAX_ITEMS]:
-        if not isinstance(item, dict):
-            continue
-        item_id = item.get('id')
-        if not isinstance(item_id, str) or not ID_RE.match(item_id) or item_id in seen:
-            item_id = new_id()
-        seen.add(item_id)
-        clean = {'id': item_id}
-        for key, cleaner in fields.items():
-            value = cleaner(item.get(key))
-            if key == 'documentId' and value not in doc_ids:
-                continue
-            if value:
-                clean[key] = value
-        if len(clean) > 1:
-            out.append(clean)
-    return out
 
 
 def apply_basics(trip, raw):
@@ -246,14 +182,6 @@ def sniff(head):
     if head[4:8] == b'ftyp' and head[8:12] in (b'heic', b'heix', b'mif1', b'msf1'):
         return 'image/heic', '.heic'
     return None, None
-
-
-def strip_document(trip, doc_id):
-    trip['documents'] = [d for d in trip.get('documents', []) if d['id'] != doc_id]
-    for section in ('flights', 'stays', 'transfers'):
-        for item in trip.get(section, []):
-            if item.get('documentId') == doc_id:
-                del item['documentId']
 
 
 # ---------- HTTP ----------
@@ -362,7 +290,7 @@ class Handler(BaseHTTPRequestHandler):
                 load_trip(trip_id)
                 set_active(trip_id)
             return self.send_json(200, {'active': trip_id})
-        # POST /api/trips/<id>/documents?title=&kind= — тело запроса и есть файл
+        # POST /api/trips/<id>/documents?title= — тело запроса и есть файл
         if len(parts) == 4 and parts[:2] == ['api', 'trips'] and parts[3] == 'documents':
             return self.upload(parts[2], query)
         raise ApiError(404, 'Не найдено')
@@ -399,19 +327,17 @@ class Handler(BaseHTTPRequestHandler):
             if not mime:
                 raise ApiError(415, 'Поддерживаются PDF, JPEG, PNG, WebP и HEIC')
 
-            title = text((query.get('title') or [''])[0], 120) or 'Документ'
-            kind = (query.get('kind') or ['other'])[0]
+            title = text((query.get('title') or [''])[0], 120) or 'Материал'
             doc_id = new_id('d-')
             with LOCK:
                 trip = load_trip(trip_id)
                 if len(trip.get('documents', [])) >= MAX_DOCS:
-                    raise ApiError(400, 'Слишком много документов')
+                    raise ApiError(400, 'Слишком много материалов')
                 os.chmod(tmp, 0o644)
                 os.replace(tmp, os.path.join(directory, doc_id + ext))
                 trip.setdefault('documents', []).append({
                     'id': doc_id,
                     'title': title,
-                    'kind': kind if kind in KINDS else 'other',
                     'file': 'documents/' + doc_id + ext,
                     'mime': mime,
                     'size': length,
@@ -424,7 +350,7 @@ class Handler(BaseHTTPRequestHandler):
             if os.path.exists(tmp):
                 os.unlink(tmp)
 
-    # PUT /api/trips/<id> {"baseVersion", "trip"} — сохранение формы
+    # PUT /api/trips/<id> {"baseVersion", "trip"} — название, место, даты
     def put(self):
         parts, _ = self.route()
         if len(parts) != 3 or parts[:2] != ['api', 'trips']:
@@ -438,14 +364,11 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(409, {'error': 'Поездку изменили в другом окне. Обновите страницу.', 'trip': trip})
                 return
             apply_basics(trip, incoming)
-            doc_ids = {d['id'] for d in trip.get('documents', [])}
-            for section, fields in SECTIONS.items():
-                trip[section] = clean_items(incoming.get(section), fields, doc_ids)
             trip['version'] += 1
             save_trip(trip)
         self.send_json(200, trip)
 
-    # PATCH /api/trips/<id>/documents/<docId> {"title", "kind"}
+    # PATCH /api/trips/<id>/documents/<docId> {"title"}
     def patch(self):
         parts, _ = self.route()
         if len(parts) != 5 or parts[:2] != ['api', 'trips'] or parts[3] != 'documents':
@@ -455,11 +378,8 @@ class Handler(BaseHTTPRequestHandler):
             trip = load_trip(parts[2])
             doc = next((d for d in trip.get('documents', []) if d['id'] == parts[4]), None)
             if not doc:
-                raise ApiError(404, 'Документ не найден')
-            if 'title' in raw:
-                doc['title'] = text(raw.get('title'), 120) or doc['title']
-            if raw.get('kind') in KINDS:
-                doc['kind'] = raw['kind']
+                raise ApiError(404, 'Материал не найден')
+            doc['title'] = text(raw.get('title'), 120) or doc['title']
             trip['version'] += 1
             save_trip(trip)
         self.send_json(200, trip)
@@ -481,8 +401,8 @@ class Handler(BaseHTTPRequestHandler):
                 trip = load_trip(parts[2])
                 doc = next((d for d in trip.get('documents', []) if d['id'] == parts[4]), None)
                 if not doc:
-                    raise ApiError(404, 'Документ не найден')
-                strip_document(trip, doc['id'])
+                    raise ApiError(404, 'Материал не найден')
+                trip['documents'] = [d for d in trip['documents'] if d['id'] != doc['id']]
                 trip['version'] += 1
                 save_trip(trip)
                 try:

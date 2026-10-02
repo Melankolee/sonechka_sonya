@@ -5,7 +5,6 @@ import { useTrip } from './hooks/useTrip'
 import { DocumentPage } from './pages/DocumentPage'
 import { EditTripPage, NewTripPage } from './pages/EditTripPage'
 import { Home } from './pages/Home'
-import { SectionPage } from './pages/SectionPage'
 import { TripsPage } from './pages/TripsPage'
 
 export function App() {
@@ -29,7 +28,6 @@ export function App() {
   return (
     <>
       <Home state={state} appUpdate={app} />
-      {route.screen === 'section' && trip && <SectionPage trip={trip} section={route.id} />}
       {doc && trip && (
         <DocumentPage
           key={`${trip.id}@${trip.version}/${doc.id}`}

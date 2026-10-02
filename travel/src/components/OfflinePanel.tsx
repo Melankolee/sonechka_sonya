@@ -56,8 +56,8 @@ function Summary({ v }: { v: NonNullable<State['verification']> }) {
       </p>
       <p>
         {v.total === 0
-          ? 'Документов нет'
-          : `Доступно ${v.available} из ${v.total} ${plural(v.total, 'документа', 'документов', 'документов')}`}
+          ? 'Материалов нет'
+          : `Доступно ${v.available} из ${v.total} ${plural(v.total, 'материала', 'материалов', 'материалов')}`}
       </p>
       {v.missing.length > 0 && <p className="muted">Не хватает: {v.missing.map((d) => d.title).join(', ')}</p>}
       {!v.shellOk && (

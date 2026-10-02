@@ -65,9 +65,9 @@ export function DocumentPage({ trip, doc, stored, network }: Props) {
     <Screen title={doc.title} action={action} flush>
       {state.status === 'loading' && <p className="placeholder muted">Загрузка…</p>}
       {state.status === 'missing' && (
-        <p className="placeholder muted">Этого документа нет на телефоне. Скачай поездку для офлайна, пока есть интернет.</p>
+        <p className="placeholder muted">Этого материала нет на телефоне. Скачай поездку для офлайна, пока есть интернет.</p>
       )}
-      {state.status === 'error' && <p className="placeholder muted">Не удалось открыть документ.</p>}
+      {state.status === 'error' && <p className="placeholder muted">Не удалось открыть материал.</p>}
       {state.status === 'ready' && (
         <>
           {state.fromNetwork && <p className="notice">Открыт с сервера — для офлайна ещё не скачан.</p>}
